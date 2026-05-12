@@ -1,0 +1,44 @@
+name: Deploy — Staging
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [develop]
+
+concurrency:
+  group: deploy-staging-frontend
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Build and deploy
+    runs-on: ubuntu-latest
+    environment:
+      name: staging
+      # url: https://staging.your-erp.example
+    if: github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/develop'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      # --- Skeleton only. Wire up once staging static host / CDN exists. ---
+      # Typical steps will include:
+      #  - rsync dist/ to the static host or upload to S3/CloudFront
+      #  - Invalidate CDN cache
+      - name: Placeholder
+        run: |
+          echo "Staging frontend deployment is not wired up yet."
+          echo "Build artifact is in dist/ — wire up rsync / S3 upload / CDN purge when the host is provisioned."
+          exit 0
