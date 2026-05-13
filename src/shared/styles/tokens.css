@@ -1,0 +1,162 @@
+/* ─────────────────────────────────────────────────────────────────────────────
+ * Design tokens — single source of truth.
+ *
+ * Two tiers in this file. A third tier lives in theme.css.
+ *
+ *   Tier 1 — primitive scales      (--app-primary-N, --app-neutral-N, ...)
+ *     Raw palette + numeric steps. Internal to this file. Components MUST NOT
+ *     consume these directly.
+ *
+ *   Tier 2 — semantic tokens       (--app-surface, --app-text-primary, ...)
+ *     Component-facing meanings. Each is a var() reference to a tier-1 token.
+ *     Used by raw CSS that bypasses Tailwind, and as the source for tier 3.
+ *
+ *   Tier 3 — Tailwind theme tokens (--color-surface, --text-base, ...)
+ *     Generated in theme.css via Tailwind v4's @theme block. Drives utility
+ *     classes (bg-surface, text-primary, etc). The primary API components use.
+ *
+ * Future dark mode (NOT in this slice — light mode only per CLAUDE.md §7.K):
+ *   Only tier-2 tokens get remapped under a [data-theme="dark"] selector.
+ *   Tier 1 stays untouched; tier 3 follows automatically via the var chain.
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
+
+:root {
+    /* ─── Tier 1: primitive scales ─────────────────────────────────────────── */
+
+    /* Brand — calm professional blue (hue 220°). */
+    --app-primary-50: hsl(220 100% 97%);
+    --app-primary-100: hsl(220 95% 93%);
+    --app-primary-200: hsl(220 90% 85%);
+    --app-primary-300: hsl(220 85% 72%);
+    --app-primary-400: hsl(220 80% 58%);
+    --app-primary-500: hsl(220 75% 48%);
+    --app-primary-600: hsl(220 75% 42%);
+    --app-primary-700: hsl(220 75% 35%);
+    --app-primary-800: hsl(220 70% 28%);
+    --app-primary-900: hsl(220 65% 20%);
+
+    /* Neutral — cool gray (slight blue tint). 11 steps. */
+    --app-neutral-0: hsl(0 0% 100%);
+    --app-neutral-50: hsl(220 14% 98%);
+    --app-neutral-100: hsl(220 13% 96%);
+    --app-neutral-200: hsl(220 13% 92%);
+    --app-neutral-300: hsl(220 12% 85%);
+    --app-neutral-400: hsl(220 10% 70%);
+    --app-neutral-500: hsl(220 9% 55%);
+    --app-neutral-600: hsl(220 10% 42%);
+    --app-neutral-700: hsl(220 12% 30%);
+    --app-neutral-800: hsl(220 14% 20%);
+    --app-neutral-900: hsl(220 16% 12%);
+    --app-neutral-1000: hsl(220 18% 6%);
+
+    /* Status — each colour has main / bg / text variants for badges + inline. */
+    --app-success-500: hsl(145 65% 38%);
+    --app-success-bg-50: hsl(145 65% 95%);
+    --app-success-text-800: hsl(145 70% 22%);
+
+    --app-warning-500: hsl(35 90% 48%);
+    --app-warning-bg-50: hsl(35 100% 95%);
+    --app-warning-text-800: hsl(35 90% 28%);
+
+    --app-danger-500: hsl(0 70% 48%);
+    --app-danger-bg-50: hsl(0 80% 96%);
+    --app-danger-text-800: hsl(0 70% 32%);
+
+    --app-info-500: hsl(205 80% 45%);
+    --app-info-bg-50: hsl(205 90% 95%);
+    --app-info-text-800: hsl(205 80% 28%);
+
+    /* Typography scale — exact §7.K values. */
+    --app-font-family-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+
+    --app-font-size-xs: 12px;
+    --app-font-size-sm: 14px;
+    --app-font-size-base: 15px;
+    --app-font-size-lg: 17px;
+    --app-font-size-xl: 20px;
+    --app-font-size-2xl: 24px;
+    --app-font-size-3xl: 30px;
+
+    --app-line-height-tight: 1.2;
+    --app-line-height-normal: 1.5;
+    --app-line-height-relaxed: 1.7;
+
+    --app-font-weight-regular: 400;
+    --app-font-weight-medium: 500;
+    --app-font-weight-semibold: 600;
+    --app-font-weight-bold: 700;
+
+    /* Spacing — Tailwind defaults aliased. Useful for raw CSS contexts. */
+    --app-spacing-0: 0;
+    --app-spacing-1: 4px;
+    --app-spacing-2: 8px;
+    --app-spacing-3: 12px;
+    --app-spacing-4: 16px;
+    --app-spacing-5: 20px;
+    --app-spacing-6: 24px;
+    --app-spacing-8: 32px;
+    --app-spacing-10: 40px;
+    --app-spacing-12: 48px;
+    --app-spacing-16: 64px;
+
+    /* Radii. Cards land on md per §7.K. */
+    --app-radius-sm: 4px;
+    --app-radius-md: 8px;
+    --app-radius-lg: 12px;
+    --app-radius-full: 9999px;
+
+    /* Shadows — used sparingly per §7.K. */
+    --app-shadow-sm: 0 1px 2px hsl(220 16% 12% / 0.04);
+    --app-shadow-md: 0 4px 12px hsl(220 16% 12% / 0.08);
+    --app-shadow-lg: 0 12px 32px hsl(220 16% 12% / 0.12);
+
+    /* Transitions. */
+    --app-duration-fast: 100ms;
+    --app-duration-base: 200ms;
+    --app-duration-slow: 300ms;
+    --app-ease-default: cubic-bezier(0.4, 0, 0.2, 1);
+
+    /* ─── Tier 2: semantic tokens (component-facing) ──────────────────────── */
+
+    /* Surfaces. */
+    --app-surface: var(--app-neutral-0);
+    --app-surface-sunken: var(--app-neutral-50);
+    --app-surface-overlay: var(--app-neutral-0);
+
+    /* Text. */
+    --app-text-primary: var(--app-neutral-900);
+    --app-text-secondary: var(--app-neutral-600);
+    --app-text-tertiary: var(--app-neutral-500);
+    --app-text-disabled: var(--app-neutral-400);
+    --app-text-inverse: var(--app-neutral-0);
+
+    /* Borders. */
+    --app-border: var(--app-neutral-200);
+    --app-border-strong: var(--app-neutral-300);
+    --app-border-focus: var(--app-primary-500);
+
+    /* Brand. */
+    --app-brand: var(--app-primary-600);
+    --app-brand-hover: var(--app-primary-700);
+    --app-brand-active: var(--app-primary-800);
+    --app-brand-bg-subtle: var(--app-primary-50);
+    --app-brand-text-on: var(--app-neutral-0);
+
+    /* Status semantics — each has a main + a bg + a text variant. */
+    --app-success: var(--app-success-500);
+    --app-success-bg: var(--app-success-bg-50);
+    --app-success-text: var(--app-success-text-800);
+
+    --app-warning: var(--app-warning-500);
+    --app-warning-bg: var(--app-warning-bg-50);
+    --app-warning-text: var(--app-warning-text-800);
+
+    --app-danger: var(--app-danger-500);
+    --app-danger-bg: var(--app-danger-bg-50);
+    --app-danger-text: var(--app-danger-text-800);
+
+    --app-info: var(--app-info-500);
+    --app-info-bg: var(--app-info-bg-50);
+    --app-info-text: var(--app-info-text-800);
+}

@@ -22,6 +22,9 @@ export default defineConfig({
     test: {
         globals: true,
         environment: 'jsdom',
-        css: false,
+        // CSS must process in tests so the tokens playground smoke test can
+        // resolve var(--app-*) and Tailwind v4 @theme variables in computed
+        // styles. See src/dev/__tests__/tokens-playground.spec.ts.
+        css: true,
     },
 });

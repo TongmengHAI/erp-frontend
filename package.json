@@ -16,6 +16,7 @@
         "e2e": "playwright test"
     },
     "dependencies": {
+        "@fontsource/inter": "^5.2.8",
         "@primevue/themes": "^4.2.0",
         "@tanstack/vue-query": "^5.59.0",
         "@vee-validate/zod": "^4.13.0",

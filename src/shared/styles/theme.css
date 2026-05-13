@@ -1,0 +1,93 @@
+/* ─────────────────────────────────────────────────────────────────────────────
+ * Tailwind v4 theme — Tier 3.
+ *
+ * Maps our semantic (Tier 2) tokens into Tailwind's theme namespace so utility
+ * classes like `bg-surface`, `text-primary`, `text-base`, `rounded-md` resolve
+ * to our design tokens. Tailwind v4 generates BOTH:
+ *
+ *   1. A CSS custom property at :root for each theme variable below
+ *      (e.g. --color-surface: var(--app-surface)), AND
+ *   2. The matching utility class (e.g. bg-surface { background-color: ... }).
+ *
+ * `@theme` (without `inline`) is intentional: the runtime :root emission lets
+ * non-utility CSS reference `var(--color-surface)` AND lets jsdom resolve the
+ * variable for our smoke test (see src/dev/__tests__/tokens-playground.spec.ts).
+ *
+ * Components MUST consume Tailwind utilities or `var(--color-*)`. They MUST
+ * NOT reference --app-* directly — those are private tier-1/tier-2 internals.
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
+
+@theme {
+    /* Surfaces. */
+    --color-surface: var(--app-surface);
+    --color-surface-sunken: var(--app-surface-sunken);
+    --color-surface-overlay: var(--app-surface-overlay);
+
+    /* Text. */
+    --color-text-primary: var(--app-text-primary);
+    --color-text-secondary: var(--app-text-secondary);
+    --color-text-tertiary: var(--app-text-tertiary);
+    --color-text-disabled: var(--app-text-disabled);
+    --color-text-inverse: var(--app-text-inverse);
+
+    /* Borders. */
+    --color-border-default: var(--app-border);
+    --color-border-strong: var(--app-border-strong);
+    --color-border-focus: var(--app-border-focus);
+
+    /* Brand. */
+    --color-brand: var(--app-brand);
+    --color-brand-hover: var(--app-brand-hover);
+    --color-brand-active: var(--app-brand-active);
+    --color-brand-bg-subtle: var(--app-brand-bg-subtle);
+    --color-brand-text-on: var(--app-brand-text-on);
+
+    /* Status. */
+    --color-success: var(--app-success);
+    --color-success-bg: var(--app-success-bg);
+    --color-success-text: var(--app-success-text);
+
+    --color-warning: var(--app-warning);
+    --color-warning-bg: var(--app-warning-bg);
+    --color-warning-text: var(--app-warning-text);
+
+    --color-danger: var(--app-danger);
+    --color-danger-bg: var(--app-danger-bg);
+    --color-danger-text: var(--app-danger-text);
+
+    --color-info: var(--app-info);
+    --color-info-bg: var(--app-info-bg);
+    --color-info-text: var(--app-info-text);
+
+    /* Typography. */
+    --font-sans: var(--app-font-family-sans);
+
+    --text-xs: var(--app-font-size-xs);
+    --text-sm: var(--app-font-size-sm);
+    --text-base: var(--app-font-size-base);
+    --text-lg: var(--app-font-size-lg);
+    --text-xl: var(--app-font-size-xl);
+    --text-2xl: var(--app-font-size-2xl);
+    --text-3xl: var(--app-font-size-3xl);
+
+    --leading-tight: var(--app-line-height-tight);
+    --leading-normal: var(--app-line-height-normal);
+    --leading-relaxed: var(--app-line-height-relaxed);
+
+    --font-weight-regular: var(--app-font-weight-regular);
+    --font-weight-medium: var(--app-font-weight-medium);
+    --font-weight-semibold: var(--app-font-weight-semibold);
+    --font-weight-bold: var(--app-font-weight-bold);
+
+    /* Radii. */
+    --radius-sm: var(--app-radius-sm);
+    --radius-md: var(--app-radius-md);
+    --radius-lg: var(--app-radius-lg);
+    --radius-full: var(--app-radius-full);
+
+    /* Shadows. */
+    --shadow-sm: var(--app-shadow-sm);
+    --shadow-md: var(--app-shadow-md);
+    --shadow-lg: var(--app-shadow-lg);
+}

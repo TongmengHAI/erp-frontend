@@ -1,9 +1,22 @@
 @import 'tailwindcss';
+@import './shared/styles/tokens.css';
+@import './shared/styles/theme.css';
 
-:root {
-    font-family: ui-sans-serif, system-ui, sans-serif;
-    line-height: 1.5;
-    color-scheme: light dark;
+/* ─────────────────────────────────────────────────────────────────────────────
+ * Global resets + base typography.
+ *
+ * Light mode only — no `color-scheme: light dark`, no dark: utilities.
+ * (CLAUDE.md §7.K: dark mode is deferred. Tokens are structured to support it
+ * later by remapping tier-2 --app-* tokens under [data-theme="dark"].)
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
+
+html {
+    font-family: var(--app-font-family-sans);
+    font-size: var(--app-font-size-base);
+    line-height: var(--app-line-height-normal);
+    color: var(--app-text-primary);
+    background-color: var(--app-surface-sunken);
 }
 
 body {
