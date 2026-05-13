@@ -1,4 +1,10 @@
 <script setup lang="ts">
+import Avatar from 'primevue/avatar';
+import Button from 'primevue/button';
+import InputText from 'primevue/inputtext';
+import Select from 'primevue/select';
+import Tag from 'primevue/tag';
+import { ref } from 'vue';
 import { RouterLink } from 'vue-router';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -135,6 +141,28 @@ const transitions = [
     { name: 'base (200ms)', cssVar: '--app-duration-base' },
     { name: 'slow (300ms)', cssVar: '--app-duration-slow' },
 ];
+
+// ─── PrimeVue-rendered section (F1.5) ───────────────────────────────────────
+// Renders the most common PV widgets in their default states so preset issues
+// surface here at F1 rather than downstream in F2+ component slices.
+const pvInputEmpty = ref('');
+const pvInputFilled = ref('jane@acme.example');
+const pvInputInvalid = ref('not-an-email');
+const pvSelectValue = ref<string | null>(null);
+const pvSelectFilled = ref('posted');
+const pvSelectOptions = [
+    { label: 'Draft', value: 'draft' },
+    { label: 'Posted', value: 'posted' },
+    { label: 'Reversed', value: 'reversed' },
+];
+const pvTagSeverities = [
+    { label: 'primary (default)', severity: undefined },
+    { label: 'secondary', severity: 'secondary' },
+    { label: 'success', severity: 'success' },
+    { label: 'info', severity: 'info' },
+    { label: 'warn', severity: 'warn' },
+    { label: 'danger', severity: 'danger' },
+] as const;
 </script>
 
 <template>
@@ -438,6 +466,87 @@ const transitions = [
                     >
                         {{ tr.name }}
                     </button>
+                </div>
+            </section>
+
+            <!-- ─── 9. PrimeVue-rendered (preset verification) ──────────── -->
+            <section class="mb-12">
+                <h2 class="mb-2 text-xl font-semibold text-text-primary">
+                    9. PrimeVue-rendered (preset verification)
+                </h2>
+                <p class="mb-6 text-sm text-text-secondary">
+                    Most common PrimeVue widgets in their default states. The point of this
+                    section is to surface preset misconfiguration at F1 — if Buttons render
+                    in zinc, InputTexts have dark backgrounds, or Tags appear off-palette,
+                    the issue is here, not in any downstream component slice.
+                </p>
+
+                <!-- Buttons -->
+                <h3 class="mb-2 text-sm font-medium text-text-secondary">Button</h3>
+                <div class="mb-6 flex flex-wrap items-center gap-3 rounded-md border border-border-default bg-surface p-4">
+                    <Button label="Primary" />
+                    <Button label="Secondary" severity="secondary" />
+                    <Button label="Danger" severity="danger" />
+                    <Button icon="pi pi-check" aria-label="Confirm" />
+                    <Button label="With icon" icon="pi pi-plus" />
+                    <Button label="Text" text />
+                    <Button label="Disabled" disabled />
+                </div>
+
+                <!-- InputText -->
+                <h3 class="mb-2 text-sm font-medium text-text-secondary">InputText</h3>
+                <div class="mb-6 flex flex-wrap items-center gap-3 rounded-md border border-border-default bg-surface p-4">
+                    <InputText v-model="pvInputEmpty" placeholder="Empty + placeholder" />
+                    <InputText v-model="pvInputFilled" />
+                    <InputText v-model="pvInputEmpty" placeholder="Disabled" disabled />
+                    <InputText v-model="pvInputInvalid" invalid />
+                </div>
+
+                <!-- Select -->
+                <h3 class="mb-2 text-sm font-medium text-text-secondary">Select</h3>
+                <div class="mb-6 flex flex-wrap items-center gap-3 rounded-md border border-border-default bg-surface p-4">
+                    <Select
+                        v-model="pvSelectValue"
+                        :options="pvSelectOptions"
+                        option-label="label"
+                        option-value="value"
+                        placeholder="Closed + placeholder"
+                    />
+                    <Select
+                        v-model="pvSelectFilled"
+                        :options="pvSelectOptions"
+                        option-label="label"
+                        option-value="value"
+                    />
+                    <Select
+                        v-model="pvSelectValue"
+                        :options="pvSelectOptions"
+                        option-label="label"
+                        option-value="value"
+                        placeholder="Disabled"
+                        disabled
+                    />
+                </div>
+
+                <!-- Tag -->
+                <h3 class="mb-2 text-sm font-medium text-text-secondary">Tag</h3>
+                <div class="mb-2 flex flex-wrap items-center gap-3 rounded-md border border-border-default bg-surface p-4">
+                    <Tag v-for="t in pvTagSeverities" :key="t.label" :severity="t.severity" :value="t.label" />
+                </div>
+                <p class="mb-6 text-sm text-text-secondary">
+                    Non-primary severities currently render in Aura's default palette
+                    (sky / green / orange / red). This is expected — overriding semantic
+                    colour primitives is a tracked preset-hardening follow-up (F1.6),
+                    not part of F1.5.
+                </p>
+
+                <!-- Avatar -->
+                <h3 class="mb-2 text-sm font-medium text-text-secondary">Avatar (initials mode)</h3>
+                <div class="flex flex-wrap items-center gap-3 rounded-md border border-border-default bg-surface p-4">
+                    <Avatar label="J" size="normal" shape="circle" />
+                    <Avatar label="JB" size="normal" shape="circle" />
+                    <Avatar label="JB" size="large" shape="circle" />
+                    <Avatar label="JB" size="xlarge" shape="circle" />
                 </div>
             </section>
 
