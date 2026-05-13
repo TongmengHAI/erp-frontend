@@ -26,5 +26,6 @@ export default defineConfig({
         // resolve var(--app-*) and Tailwind v4 @theme variables in computed
         // styles. See src/dev/__tests__/tokens-playground.spec.ts.
         css: true,
+        setupFiles: ['./vitest.setup.ts'],
     },
 });

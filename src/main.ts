@@ -10,6 +10,7 @@ import PrimeVue from 'primevue/config';
 
 import App from './App.vue';
 import router from './router';
+import { i18n } from '@/shared/i18n';
 import ErpPreset from '@/shared/styles/primevue-preset';
 
 import 'primeicons/primeicons.css';
@@ -19,6 +20,7 @@ const app = createApp(App);
 
 app.use(createPinia());
 app.use(router);
+app.use(i18n);
 app.use(VueQueryPlugin);
 app.use(PrimeVue, {
     theme: {

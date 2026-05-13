@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { RouterLink } from 'vue-router';
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Tokens playground — dev-only. Renders every design token visually for review.
 //
@@ -136,7 +138,19 @@ const transitions = [
 </script>
 
 <template>
-    <main class="min-h-screen px-8 py-10 bg-surface-sunken">
+    <main class="min-h-screen bg-surface-sunken">
+        <!-- Cross-playground nav banner -->
+        <div
+            class="border-b border-border-default bg-surface px-6 py-2 text-sm text-text-secondary"
+        >
+            <span class="mr-3 font-medium text-text-primary">Dev playgrounds:</span>
+            <span class="mr-3 font-medium text-text-primary">Tokens</span>
+            <RouterLink to="/__dev/components" class="text-brand hover:underline">
+                Components
+            </RouterLink>
+        </div>
+
+        <div class="px-8 py-10">
         <header class="mx-auto mb-10 max-w-[1440px]">
             <h1 class="text-3xl font-semibold text-text-primary">Design Tokens — Playground</h1>
             <p class="mt-2 text-base text-text-secondary">
@@ -435,6 +449,7 @@ const transitions = [
                 data-token-test="color"
                 :style="{ backgroundColor: 'var(--app-surface)' }"
             ></div>
+        </div>
         </div>
     </main>
 </template>

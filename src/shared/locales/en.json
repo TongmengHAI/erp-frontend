@@ -1,0 +1,20 @@
+{
+    "common": {
+        "retry": "Try again",
+        "error": {
+            "title": "Something went wrong",
+            "description": "Please try again or contact support."
+        },
+        "notFound": {
+            "title": "Page not found",
+            "description": "This page doesn't exist or has been moved.",
+            "action": "Go to dashboard"
+        },
+        "permissionDenied": {
+            "title": "You don't have access",
+            "description": "You don't have permission to view this page.",
+            "descriptionWithResource": "You don't have permission to view {resource}.",
+            "action": "Go to dashboard"
+        }
+    }
+}
