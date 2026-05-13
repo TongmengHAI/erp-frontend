@@ -25,6 +25,13 @@ app.use(VueQueryPlugin);
 app.use(PrimeVue, {
     theme: {
         preset: ErpPreset,
+        options: {
+            // Disable dark mode entirely (CLAUDE.md §7.K: light only). PrimeVue
+            // v4's default `darkModeSelector` is 'system' — without this override
+            // it activates dark scheme via prefers-color-scheme, causing
+            // Aura's zinc-* dark surfaces to render in our light app.
+            darkModeSelector: false,
+        },
     },
 });
 

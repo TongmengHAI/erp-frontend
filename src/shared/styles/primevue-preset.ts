@@ -84,6 +84,45 @@ const ErpPreset = definePreset(Aura, {
                     900: '{appNeutral.900}',
                     950: '{appNeutral.950}',
                 },
+                // Brand colours for buttons and focus rings. Bypasses Aura's
+                // {primary.500} indirection and points directly at our Tier 2
+                // tokens. `contrastColor` is what PrimeVue Button uses for
+                // text-on-brand fills.
+                primary: {
+                    color: 'var(--app-brand)',
+                    contrastColor: 'var(--app-brand-text-on)',
+                    hoverColor: 'var(--app-brand-hover)',
+                    activeColor: 'var(--app-brand-active)',
+                },
+                // Form field colours (InputText, InputNumber, Select, Textarea,
+                // Calendar, etc). Aura's defaults point at {surface.0..700} which
+                // SHOULD flow through our surface override, but binding directly
+                // removes any indirection and makes the contract explicit.
+                formField: {
+                    background: 'var(--app-surface)',
+                    disabledBackground: 'var(--app-surface-sunken)',
+                    filledBackground: 'var(--app-surface-sunken)',
+                    filledHoverBackground: 'var(--app-surface-sunken)',
+                    filledFocusBackground: 'var(--app-surface)',
+                    borderColor: 'var(--app-border)',
+                    hoverBorderColor: 'var(--app-border-strong)',
+                    focusBorderColor: 'var(--app-border-focus)',
+                    color: 'var(--app-text-primary)',
+                    disabledColor: 'var(--app-text-disabled)',
+                    placeholderColor: 'var(--app-text-tertiary)',
+                    iconColor: 'var(--app-text-tertiary)',
+                    // invalidBorderColor / invalidPlaceholderColor left at Aura's
+                    // {red.N} defaults — surfaced as out-of-scope; fix in a later
+                    // pass when we wire form-validation visuals.
+                },
+                // Generic text colours used in Tag, Chip, Menu, etc. when they
+                // reference {text.color}.
+                text: {
+                    color: 'var(--app-text-primary)',
+                    hoverColor: 'var(--app-text-primary)',
+                    mutedColor: 'var(--app-text-secondary)',
+                    hoverMutedColor: 'var(--app-text-primary)',
+                },
             },
         },
     },
