@@ -1,5 +1,7 @@
 {
     "common": {
+        "save": "Save",
+        "cancel": "Cancel",
         "retry": "Try again",
         "error": {
             "title": "Something went wrong",
@@ -15,6 +17,18 @@
             "description": "You don't have permission to view this page.",
             "descriptionWithResource": "You don't have permission to view {resource}.",
             "action": "Go to dashboard"
+        },
+        "confirm": {
+            "delete": "Delete",
+            "cancel": "Cancel",
+            "confirm": "Confirm"
+        },
+        "status": {
+            "success": "Success",
+            "warning": "Warning",
+            "danger": "Danger",
+            "info": "Info",
+            "neutral": "Neutral"
         }
     }
 }
