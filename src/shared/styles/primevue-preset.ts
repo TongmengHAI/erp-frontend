@@ -126,6 +126,109 @@ const ErpPreset = definePreset(Aura, {
             },
         },
     },
+    // Per-component severity overrides (F1.6). Aura's Tag preset references
+    // {green.100} / {sky.100} / {orange.100} / {red.100} directly from the
+    // primitive layer, and Button danger/success/warn/info reference
+    // {green.500} / {red.500} etc. Rather than overriding those primitive
+    // scales globally (risk of side effects on Message, Toast, etc.), we
+    // override the component severity blocks surgically. Hover/active shades
+    // use color-mix() since our Tier 2 status palette is flat — same pattern
+    // Aura uses for its own dark-mode color mixing.
+    components: {
+        tag: {
+            colorScheme: {
+                light: {
+                    success: {
+                        background: 'var(--app-success-bg)',
+                        color: 'var(--app-success-text)',
+                    },
+                    info: {
+                        background: 'var(--app-info-bg)',
+                        color: 'var(--app-info-text)',
+                    },
+                    warn: {
+                        background: 'var(--app-warning-bg)',
+                        color: 'var(--app-warning-text)',
+                    },
+                    danger: {
+                        background: 'var(--app-danger-bg)',
+                        color: 'var(--app-danger-text)',
+                    },
+                },
+            },
+        },
+        button: {
+            colorScheme: {
+                light: {
+                    root: {
+                        success: {
+                            background: 'var(--app-success)',
+                            hoverBackground:
+                                'color-mix(in srgb, var(--app-success), black 8%)',
+                            activeBackground:
+                                'color-mix(in srgb, var(--app-success), black 16%)',
+                            borderColor: 'var(--app-success)',
+                            hoverBorderColor:
+                                'color-mix(in srgb, var(--app-success), black 8%)',
+                            activeBorderColor:
+                                'color-mix(in srgb, var(--app-success), black 16%)',
+                            color: 'var(--app-brand-text-on)',
+                            hoverColor: 'var(--app-brand-text-on)',
+                            activeColor: 'var(--app-brand-text-on)',
+                            focusRing: { color: 'var(--app-success)', shadow: 'none' },
+                        },
+                        info: {
+                            background: 'var(--app-info)',
+                            hoverBackground: 'color-mix(in srgb, var(--app-info), black 8%)',
+                            activeBackground:
+                                'color-mix(in srgb, var(--app-info), black 16%)',
+                            borderColor: 'var(--app-info)',
+                            hoverBorderColor:
+                                'color-mix(in srgb, var(--app-info), black 8%)',
+                            activeBorderColor:
+                                'color-mix(in srgb, var(--app-info), black 16%)',
+                            color: 'var(--app-brand-text-on)',
+                            hoverColor: 'var(--app-brand-text-on)',
+                            activeColor: 'var(--app-brand-text-on)',
+                            focusRing: { color: 'var(--app-info)', shadow: 'none' },
+                        },
+                        warn: {
+                            background: 'var(--app-warning)',
+                            hoverBackground:
+                                'color-mix(in srgb, var(--app-warning), black 8%)',
+                            activeBackground:
+                                'color-mix(in srgb, var(--app-warning), black 16%)',
+                            borderColor: 'var(--app-warning)',
+                            hoverBorderColor:
+                                'color-mix(in srgb, var(--app-warning), black 8%)',
+                            activeBorderColor:
+                                'color-mix(in srgb, var(--app-warning), black 16%)',
+                            color: 'var(--app-brand-text-on)',
+                            hoverColor: 'var(--app-brand-text-on)',
+                            activeColor: 'var(--app-brand-text-on)',
+                            focusRing: { color: 'var(--app-warning)', shadow: 'none' },
+                        },
+                        danger: {
+                            background: 'var(--app-danger)',
+                            hoverBackground:
+                                'color-mix(in srgb, var(--app-danger), black 8%)',
+                            activeBackground:
+                                'color-mix(in srgb, var(--app-danger), black 16%)',
+                            borderColor: 'var(--app-danger)',
+                            hoverBorderColor:
+                                'color-mix(in srgb, var(--app-danger), black 8%)',
+                            activeBorderColor:
+                                'color-mix(in srgb, var(--app-danger), black 16%)',
+                            color: 'var(--app-brand-text-on)',
+                            hoverColor: 'var(--app-brand-text-on)',
+                            activeColor: 'var(--app-brand-text-on)',
+                            focusRing: { color: 'var(--app-danger)', shadow: 'none' },
+                        },
+                    },
+                },
+            },
+        },
+    },
 });
 
 export default ErpPreset;
