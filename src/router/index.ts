@@ -24,18 +24,29 @@ if (import.meta.env.DEV) {
         component: () => import('@/dev/ComponentsPlaygroundPage.vue'),
     });
 
-    // Stub `dashboard` named route. Several shared components (
-    // PermissionDeniedPage, NotFoundPage) link to { name: 'dashboard' } as the
-    // default fallback action. F4 will register the real route at `/` →
-    // DashboardPlaceholderPage and DELETE this stub. Until then, clicking the
-    // default action from the playground redirects somewhere harmless rather
-    // than logging a "no match for route name 'dashboard'" warning on every
-    // playground load. (Console noise costs us when real warnings appear in
-    // later slices.)
-    routes.push({
-        path: '/__dev/dashboard-stub',
-        name: 'dashboard',
-        redirect: { name: 'dev-components' },
+    // Stub named routes for components/links that target module destinations
+    // before the real routes register. PermissionDeniedPage / NotFoundPage
+    // link to { name: 'dashboard' }; F2c's AppSidebar links to each module's
+    // routeName. Without these stubs every playground load logs "no match
+    // for named route" warnings, and console noise costs us when real
+    // warnings appear in later slices.
+    //
+    // F4 registers the real dashboard route; Phase M registers the real
+    // module roots. Both deletions reduce this block to nothing.
+    const stubRouteNames = [
+        'dashboard',
+        'hrm',
+        'accounting',
+        'inventory',
+        'procurement',
+        'sales',
+    ];
+    stubRouteNames.forEach((name) => {
+        routes.push({
+            path: `/__dev/${name}-stub`,
+            name,
+            redirect: { name: 'dev-components' },
+        });
     });
 }
 

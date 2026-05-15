@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import Button from 'primevue/button';
+import Checkbox from 'primevue/checkbox';
 import InputText from 'primevue/inputtext';
 import Select from 'primevue/select';
-import { ref } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import { useForm } from 'vee-validate';
 import { z } from 'zod';
 import { toTypedSchema } from '@vee-validate/zod';
@@ -19,12 +20,18 @@ import PageHeader from '@/shared/components/layout/PageHeader.vue';
 import PageLayout from '@/shared/components/layout/PageLayout.vue';
 import Tab from '@/shared/components/layout/Tab.vue';
 import TabGroup from '@/shared/components/layout/TabGroup.vue';
+import AppSidebar from '@/shared/components/navigation/AppSidebar.vue';
+import AppTopBar from '@/shared/components/navigation/AppTopBar.vue';
+import Breadcrumbs from '@/shared/components/navigation/Breadcrumbs.vue';
 import EmptyState from '@/shared/components/state/EmptyState.vue';
 import ErrorState from '@/shared/components/state/ErrorState.vue';
 import LoadingState from '@/shared/components/state/LoadingState.vue';
 import NotFoundPage from '@/shared/components/state/NotFoundPage.vue';
 import PermissionDeniedPage from '@/shared/components/state/PermissionDeniedPage.vue';
 import { useAppConfirm } from '@/shared/composables/useAppConfirm';
+import { useAuthStore } from '@/shared/stores/useAuthStore';
+import { useTenantStore } from '@/shared/stores/useTenantStore';
+import { useUiStore } from '@/shared/stores/useUiStore';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Components playground — dev-only. Renders every F2a shared component in
@@ -51,6 +58,9 @@ const sections = [
     { id: 'user-avatar', label: '14. UserAvatar' },
     { id: 'form-field', label: '15. FormField + FormActions' },
     { id: 'confirm-dialog', label: '16. ConfirmDialog' },
+    { id: 'app-sidebar', label: '17. AppSidebar' },
+    { id: 'app-topbar', label: '18. AppTopBar' },
+    { id: 'breadcrumbs', label: '19. Breadcrumbs' },
 ];
 
 // FilterBar demo state
@@ -175,6 +185,99 @@ function demoReverse() {
         },
     });
 }
+
+// ─── F2c demo state ─────────────────────────────────────────────────────────
+//
+// Master decision 17: drive the real stores via $patch (no separate mock
+// layer). $reset() on unmount keeps demo state from bleeding into other
+// pages once AppShell mounts these stores globally in F4.
+
+const auth = useAuthStore();
+const tenant = useTenantStore();
+const ui = useUiStore();
+
+const DEMO_USER = {
+    id: 'u_demo',
+    name: 'Jane Bookkeeper',
+    email: 'jane@acme.example',
+    permissions: [
+        'hrm.access',
+        'accounting.access',
+        'inventory.access',
+        'procurement.access',
+        'sales.access',
+    ],
+};
+
+const DEMO_TENANT = { id: 't_demo', name: 'Acme Trading Co.' };
+
+function restoreDemo() {
+    auth.$patch({ user: { ...DEMO_USER } });
+    tenant.$patch({ current: { ...DEMO_TENANT } });
+}
+
+onMounted(() => {
+    restoreDemo();
+});
+
+onBeforeUnmount(() => {
+    auth.$reset();
+    tenant.$reset();
+    ui.$reset();
+});
+
+// 17. AppSidebar permission toggles
+const MODULE_PERMISSIONS = [
+    { key: 'hrm.access', label: 'HRM' },
+    { key: 'accounting.access', label: 'Accounting' },
+    { key: 'inventory.access', label: 'Inventory' },
+    { key: 'procurement.access', label: 'Procurement' },
+    { key: 'sales.access', label: 'Sales' },
+] as const;
+
+const permissionToggles = computed({
+    get: () => auth.user?.permissions ?? [],
+    set: (perms: string[]) => {
+        if (!auth.user) return;
+        auth.$patch({ user: { ...auth.user, permissions: perms } });
+    },
+});
+
+// 18. AppTopBar live-editable mock state
+const topbarUserName = computed({
+    get: () => auth.user?.name ?? '',
+    set: (v: string) => {
+        if (!auth.user) return;
+        auth.$patch({ user: { ...auth.user, name: v } });
+    },
+});
+const topbarUserEmail = computed({
+    get: () => auth.user?.email ?? '',
+    set: (v: string) => {
+        if (!auth.user) return;
+        auth.$patch({ user: { ...auth.user, email: v } });
+    },
+});
+const topbarTenantName = computed({
+    get: () => tenant.current?.name ?? '',
+    set: (v: string) => {
+        if (!tenant.current) {
+            tenant.$patch({ current: { id: 't_demo', name: v } });
+            return;
+        }
+        tenant.$patch({ current: { ...tenant.current, name: v } });
+    },
+});
+
+// 19. Breadcrumbs editable items
+const crumb1 = ref('Home');
+const crumb2 = ref('Accounting');
+const crumb3 = ref('Journal Entries');
+const editableCrumbs = computed(() => [
+    { label: crumb1.value, to: { name: 'dev-components' } },
+    { label: crumb2.value, to: { name: 'dev-components' } },
+    { label: crumb3.value },
+]);
 </script>
 
 <template>
@@ -657,6 +760,138 @@ function demoReverse() {
                     <div class="flex flex-wrap gap-3">
                         <Button label="Delete entry" severity="danger" icon="pi pi-trash" @click="demoDelete" />
                         <Button label="Reverse entry" severity="warn" icon="pi pi-undo" @click="demoReverse" />
+                    </div>
+                </section>
+
+                <!-- ─── 17. AppSidebar ───────────────────────────────────────── -->
+                <section id="app-sidebar">
+                    <h2 class="mb-4 text-xl font-semibold text-text-primary">17. AppSidebar</h2>
+                    <p class="mb-4 text-sm text-text-secondary">
+                        Live render of the sidebar against the real stores
+                        ($patch-driven mocks). Toggle the collapsed state and
+                        flip permissions to watch modules appear/disappear.
+                        Dashboard has no permission gate and always shows.
+                    </p>
+
+                    <div class="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+                        <CardSection title="Sidebar state">
+                            <div class="flex flex-col gap-3 text-sm">
+                                <div class="flex items-center gap-3">
+                                    <span class="font-medium text-text-primary">Collapsed:</span>
+                                    <span>{{ ui.sidebarCollapsed ? 'yes' : 'no' }}</span>
+                                </div>
+                                <Button
+                                    :label="ui.sidebarCollapsed ? 'Expand' : 'Collapse'"
+                                    icon="pi pi-bars"
+                                    severity="secondary"
+                                    @click="ui.toggleSidebar()"
+                                />
+                            </div>
+                        </CardSection>
+                        <CardSection title="Permissions">
+                            <div class="flex flex-col gap-2">
+                                <label
+                                    v-for="p in MODULE_PERMISSIONS"
+                                    :key="p.key"
+                                    class="flex items-center gap-2 text-sm"
+                                >
+                                    <Checkbox
+                                        v-model="permissionToggles"
+                                        :input-id="`perm-${p.key}`"
+                                        :value="p.key"
+                                    />
+                                    <span>{{ p.label }}</span>
+                                    <code class="ml-auto text-xs text-text-tertiary">
+                                        {{ p.key }}
+                                    </code>
+                                </label>
+                            </div>
+                        </CardSection>
+                    </div>
+
+                    <div class="overflow-hidden rounded-md border border-border-default">
+                        <div class="flex" style="height: 480px">
+                            <AppSidebar />
+                            <div class="flex-1 bg-surface-sunken p-6 text-sm text-text-secondary">
+                                <p class="font-medium text-text-primary">Page content area</p>
+                                <p class="mt-2">
+                                    Sidebar links route to stub destinations in dev (each
+                                    redirects back here). Permission checkboxes above
+                                    drive which modules appear.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ─── 18. AppTopBar ────────────────────────────────────────── -->
+                <section id="app-topbar">
+                    <h2 class="mb-4 text-xl font-semibold text-text-primary">18. AppTopBar</h2>
+                    <p class="mb-4 text-sm text-text-secondary">
+                        The top bar consumes <code>useAuthStore</code> and
+                        <code>useTenantStore</code> directly. Edit the fields
+                        below to drive the bar via <code>$patch</code>.
+                        Clicking <strong>Log out</strong> in the user menu
+                        calls the real <code>auth.logout()</code> contract
+                        which <code>$reset</code>s the store — the top bar
+                        clears as a result. Use <strong>Restore demo</strong>
+                        to repopulate.
+                    </p>
+
+                    <div class="mb-4 grid grid-cols-1 gap-3 md:grid-cols-3">
+                        <FormField name="topbar-user-name" label="User name">
+                            <InputText v-model="topbarUserName" name="topbar-user-name" class="w-full" />
+                        </FormField>
+                        <FormField name="topbar-user-email" label="User email">
+                            <InputText v-model="topbarUserEmail" name="topbar-user-email" class="w-full" />
+                        </FormField>
+                        <FormField name="topbar-tenant-name" label="Tenant name">
+                            <InputText v-model="topbarTenantName" name="topbar-tenant-name" class="w-full" />
+                        </FormField>
+                    </div>
+
+                    <div class="mb-4 flex flex-wrap items-center gap-3">
+                        <Button
+                            label="Restore demo"
+                            icon="pi pi-refresh"
+                            severity="secondary"
+                            @click="restoreDemo"
+                        />
+                        <span class="text-xs text-text-tertiary">
+                            Repopulates the auth + tenant mocks after a logout reset.
+                        </span>
+                    </div>
+
+                    <div class="overflow-hidden rounded-md border border-border-default">
+                        <AppTopBar />
+                    </div>
+                </section>
+
+                <!-- ─── 19. Breadcrumbs ──────────────────────────────────────── -->
+                <section id="breadcrumbs">
+                    <h2 class="mb-4 text-xl font-semibold text-text-primary">19. Breadcrumbs</h2>
+                    <p class="mb-4 text-sm text-text-secondary">
+                        Manual <code>items</code> prop demo. Edit the labels
+                        and watch the trail update. Auto-derivation from
+                        <code>route.matched</code> is exercised in F4 once
+                        the real router tree exists; here we only verify the
+                        prop-driven path.
+                    </p>
+
+                    <div class="mb-4 grid grid-cols-1 gap-3 md:grid-cols-3">
+                        <FormField name="crumb-1" label="Crumb 1 (link)">
+                            <InputText v-model="crumb1" name="crumb-1" class="w-full" />
+                        </FormField>
+                        <FormField name="crumb-2" label="Crumb 2 (link)">
+                            <InputText v-model="crumb2" name="crumb-2" class="w-full" />
+                        </FormField>
+                        <FormField name="crumb-3" label="Crumb 3 (current page)">
+                            <InputText v-model="crumb3" name="crumb-3" class="w-full" />
+                        </FormField>
+                    </div>
+
+                    <div class="rounded-md border border-border-default bg-surface p-4">
+                        <Breadcrumbs :items="editableCrumbs" />
                     </div>
                 </section>
             </div>

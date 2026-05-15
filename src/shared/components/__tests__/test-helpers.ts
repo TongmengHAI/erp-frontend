@@ -1,4 +1,5 @@
 import { mount, type VueWrapper } from '@vue/test-utils';
+import { createPinia, setActivePinia } from 'pinia';
 import PrimeVue from 'primevue/config';
 import type { Component, Plugin } from 'vue';
 import { createMemoryHistory, createRouter, type RouteRecordRaw } from 'vue-router';
@@ -51,6 +52,13 @@ export async function mountWithGlobals(
     await router.push(initialRoute ?? '/');
     await router.isReady();
 
+    // Fresh Pinia per mount — prevents state bleed across tests. setActivePinia
+    // makes the instance available to stores instantiated outside the
+    // component tree (e.g. when a test grabs a store directly via useFooStore()
+    // before mounting).
+    const pinia = createPinia();
+    setActivePinia(pinia);
+
     // PrimeVue install — required so components reading `$primevue.config`
     // (notably PV Tabs/TabList for aria labels) don't blow up on mount.
     const primeVuePlugin: [Plugin, Record<string, unknown>] = [
@@ -61,7 +69,13 @@ export async function mountWithGlobals(
     return mount(component, {
         ...mountOptions,
         global: {
-            plugins: [i18n as Plugin, router as Plugin, primeVuePlugin, ...extraPlugins],
+            plugins: [
+                pinia,
+                i18n as Plugin,
+                router as Plugin,
+                primeVuePlugin,
+                ...extraPlugins,
+            ],
         },
     });
 }

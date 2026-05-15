@@ -30,5 +30,28 @@
             "info": "Info",
             "neutral": "Neutral"
         }
+    },
+    "navigation": {
+        "modules": {
+            "dashboard": "Dashboard",
+            "hrm": "HRM",
+            "accounting": "Accounting",
+            "inventory": "Inventory",
+            "procurement": "Procurement",
+            "sales": "Sales"
+        },
+        "topbar": {
+            "logo": "MyERP",
+            "tenantPlaceholder": "—",
+            "menu": {
+                "profile": "Profile",
+                "settings": "Settings",
+                "logout": "Log out"
+            }
+        },
+        "sidebar": {
+            "collapse": "Collapse sidebar",
+            "expand": "Expand sidebar"
+        }
     }
 }
