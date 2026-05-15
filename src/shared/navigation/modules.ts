@@ -3,13 +3,13 @@ import type { SidebarModule } from '@/shared/types/navigation';
 // ─────────────────────────────────────────────────────────────────────────────
 // Hardcoded sidebar module list (master decision 13).
 //
-// Each entry's `label` is an i18n key resolved by AppSidebar at render time.
-// `permission` follows the Spatie convention `{domain}.access` — the gating
-// permission for whether the module appears in navigation at all. Dashboard
-// has no permission set (visible to every authenticated user).
+// Module-visibility uses `permissionPrefix` rather than an exact-match
+// `permission`. Rationale: "can see Accounting in nav" ≠ "can perform any
+// specific accounting action". The prefix gate means a user with ANY
+// `accounting.*` permission sees the Accounting nav item, without inventing
+// a synthetic `accounting.access` permission on the backend.
 //
-// When a domain ships sub-pages, they get their own routes within the domain
-// and do not appear here; only top-level navigation lives in this list.
+// Dashboard has no permission gate — visible to every authenticated user.
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const SIDEBAR_MODULES: readonly SidebarModule[] = Object.freeze([
@@ -22,30 +22,30 @@ export const SIDEBAR_MODULES: readonly SidebarModule[] = Object.freeze([
         label: 'navigation.modules.hrm',
         icon: 'pi pi-users',
         routeName: 'hrm',
-        permission: 'hrm.access',
+        permissionPrefix: 'hrm',
     },
     {
         label: 'navigation.modules.accounting',
         icon: 'pi pi-book',
         routeName: 'accounting',
-        permission: 'accounting.access',
+        permissionPrefix: 'accounting',
     },
     {
         label: 'navigation.modules.inventory',
         icon: 'pi pi-box',
         routeName: 'inventory',
-        permission: 'inventory.access',
+        permissionPrefix: 'inventory',
     },
     {
         label: 'navigation.modules.procurement',
         icon: 'pi pi-shopping-cart',
         routeName: 'procurement',
-        permission: 'procurement.access',
+        permissionPrefix: 'procurement',
     },
     {
         label: 'navigation.modules.sales',
         icon: 'pi pi-chart-line',
         routeName: 'sales',
-        permission: 'sales.access',
+        permissionPrefix: 'sales',
     },
 ]);

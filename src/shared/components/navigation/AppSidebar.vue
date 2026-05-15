@@ -28,8 +28,22 @@ const ui = useUiStore();
 const auth = useAuthStore();
 const route = useRoute();
 
+/**
+ * A module renders when:
+ *   - it has no permission/permissionPrefix (Dashboard-style ungated), OR
+ *   - `permission` is set and `auth.can(permission)` is true, OR
+ *   - `permissionPrefix` is set and `auth.canAny(permissionPrefix)` is true.
+ *
+ * Both fields combine as OR — either gate passes the module through. See
+ * SidebarModule JSDoc in types/navigation.ts for the semantics.
+ */
 const visibleModules = computed<SidebarModule[]>(() =>
-    SIDEBAR_MODULES.filter((m) => !m.permission || auth.can(m.permission)),
+    SIDEBAR_MODULES.filter((m) => {
+        if (!m.permission && !m.permissionPrefix) return true;
+        if (m.permission && auth.can(m.permission)) return true;
+        if (m.permissionPrefix && auth.canAny(m.permissionPrefix)) return true;
+        return false;
+    }),
 );
 
 function isActive(routeName: string): boolean {
@@ -40,7 +54,7 @@ function isActive(routeName: string): boolean {
 <template>
     <aside
         class="app-sidebar flex flex-col border-r border-border-default bg-surface transition-[width] duration-200"
-        :class="ui.sidebarCollapsed ? 'w-[60px]' : 'w-[240px]'"
+        :class="ui.sidebarCollapsed ? 'w-15' : 'w-60'"
         :data-collapsed="ui.sidebarCollapsed"
         aria-label="Primary navigation"
     >

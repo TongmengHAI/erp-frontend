@@ -27,10 +27,28 @@ export interface SidebarModule {
     /** vue-router named route. */
     routeName: string;
     /**
-     * Single permission key required to see this module. Omitted means the
-     * module is visible to all authenticated users (used by Dashboard).
+     * Exact-match permission key. The module renders only if the user has
+     * this specific permission. Use for fine-grained gates where the
+     * module shouldn't appear unless a specific capability exists.
      */
     permission?: string;
+    /**
+     * Prefix-match permission gate. The module renders if the user has
+     * ANY permission whose name equals `permissionPrefix` exactly or
+     * starts with `${permissionPrefix}.`.
+     *
+     * Use this for module-visibility gates where "can see Accounting in
+     * the sidebar" is semantically different from "can perform
+     * accounting.X.Y action". A user with `accounting.journal_entry.view`
+     * sees the Accounting nav item via `permissionPrefix: 'accounting'`.
+     *
+     * If both `permission` and `permissionPrefix` are set, the module
+     * appears when EITHER matches (OR, not AND).
+     *
+     * Omitted (both fields) = module is visible to all authenticated
+     * users (used by Dashboard).
+     */
+    permissionPrefix?: string;
     /**
      * Optional nested items. Not rendered by F2c — present for forward-compat
      * when a domain grows sub-modules.

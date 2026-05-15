@@ -1,11 +1,21 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router';
 
+import { authRoutes } from '@/modules/auth/routes';
+import { installGuards } from '@/router/guards';
+
 const routes: RouteRecordRaw[] = [
     {
         path: '/',
         name: 'home',
         component: () => import('@/shared/views/HomeView.vue'),
+        meta: {
+            // Default behavior, made explicit: every "real" page is auth-
+            // gated. F4 replaces this stub home with the dashboard inside
+            // AppShell.
+            requiresAuth: true,
+        },
     },
+    ...authRoutes,
 ];
 
 // Dev-only routes. Both branches below are guarded by `import.meta.env.DEV`,
@@ -16,12 +26,14 @@ if (import.meta.env.DEV) {
         path: '/__dev/tokens',
         name: 'dev-tokens',
         component: () => import('@/dev/TokensPlaygroundPage.vue'),
+        meta: { requiresAuth: false },
     });
 
     routes.push({
         path: '/__dev/components',
         name: 'dev-components',
         component: () => import('@/dev/ComponentsPlaygroundPage.vue'),
+        meta: { requiresAuth: false },
     });
 
     // Stub named routes for components/links that target module destinations
@@ -46,11 +58,16 @@ if (import.meta.env.DEV) {
             path: `/__dev/${name}-stub`,
             name,
             redirect: { name: 'dev-components' },
+            meta: { requiresAuth: false },
         });
     });
 }
 
-export default createRouter({
+const router = createRouter({
     history: createWebHistory(),
     routes,
 });
+
+installGuards(router);
+
+export default router;

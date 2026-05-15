@@ -204,22 +204,35 @@ const tenant = useTenantStore();
 const ui = useUiStore();
 
 const DEMO_USER = {
-    id: 'u_demo',
+    id: 1,
     name: 'Jane Bookkeeper',
     email: 'jane@acme.example',
-    permissions: [
-        'hrm.access',
-        'accounting.access',
-        'inventory.access',
-        'procurement.access',
-        'sales.access',
-    ],
+    email_verified_at: null,
 };
 
-const DEMO_TENANT = { id: 't_demo', name: 'Acme Trading Co.' };
+// Backend-shape permissions ({domain}.{resource}.{action}); the sidebar gate
+// uses canAny(prefix) so e.g. 'accounting.journal_entry.view' unlocks the
+// Accounting nav item via the 'accounting' prefix.
+const DEMO_PERMISSIONS = [
+    'hrm.employee.view',
+    'accounting.journal_entry.view',
+    'inventory.item.view',
+    'procurement.purchase_order.view',
+    'sales.invoice.view',
+];
+
+const DEMO_TENANT = {
+    id: 1,
+    slug: 'acme',
+    name: 'Acme Trading Co.',
+    country_code: 'KH',
+    default_currency: 'USD',
+    functional_currency: 'USD',
+    timezone: 'Asia/Phnom_Penh',
+};
 
 function restoreDemo() {
-    auth.$patch({ user: { ...DEMO_USER } });
+    auth.$patch({ user: { ...DEMO_USER }, permissions: [...DEMO_PERMISSIONS] });
     tenant.$patch({ current: { ...DEMO_TENANT } });
 }
 
@@ -233,20 +246,21 @@ onBeforeUnmount(() => {
     ui.$reset();
 });
 
-// 17. AppSidebar permission toggles
+// 17. AppSidebar permission toggles — backend-shape names so the canAny
+// prefix gate is actually exercised (e.g. 'accounting.journal_entry.view'
+// matches prefix 'accounting').
 const MODULE_PERMISSIONS = [
-    { key: 'hrm.access', label: 'HRM' },
-    { key: 'accounting.access', label: 'Accounting' },
-    { key: 'inventory.access', label: 'Inventory' },
-    { key: 'procurement.access', label: 'Procurement' },
-    { key: 'sales.access', label: 'Sales' },
+    { key: 'hrm.employee.view', label: 'HRM' },
+    { key: 'accounting.journal_entry.view', label: 'Accounting' },
+    { key: 'inventory.item.view', label: 'Inventory' },
+    { key: 'procurement.purchase_order.view', label: 'Procurement' },
+    { key: 'sales.invoice.view', label: 'Sales' },
 ] as const;
 
 const permissionToggles = computed({
-    get: () => auth.user?.permissions ?? [],
+    get: () => auth.permissions,
     set: (perms: string[]) => {
-        if (!auth.user) return;
-        auth.$patch({ user: { ...auth.user, permissions: perms } });
+        auth.$patch({ permissions: perms });
     },
 });
 
@@ -269,7 +283,7 @@ const topbarTenantName = computed({
     get: () => tenant.current?.name ?? '',
     set: (v: string) => {
         if (!tenant.current) {
-            tenant.$patch({ current: { id: 't_demo', name: v } });
+            tenant.$patch({ current: { ...DEMO_TENANT, name: v } });
             return;
         }
         tenant.$patch({ current: { ...tenant.current, name: v } });

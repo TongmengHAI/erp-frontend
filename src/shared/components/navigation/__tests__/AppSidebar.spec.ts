@@ -25,17 +25,21 @@ function seedAllPermissions(): void {
     const auth = useAuthStore();
     auth.$patch({
         user: {
-            id: 'u_1',
+            id: 1,
             name: 'Admin User',
             email: 'admin@acme.example',
-            permissions: [
-                'hrm.access',
-                'accounting.access',
-                'inventory.access',
-                'procurement.access',
-                'sales.access',
-            ],
+            email_verified_at: null,
         },
+        // Realistic backend-shape permissions ({domain}.{resource}.{action}).
+        // The sidebar gate uses canAny(prefix), so any 'accounting.*'
+        // permission unlocks the Accounting module, etc.
+        permissions: [
+            'hrm.employee.view',
+            'accounting.journal_entry.view',
+            'inventory.item.view',
+            'procurement.purchase_order.view',
+            'sales.invoice.view',
+        ],
     });
 }
 
@@ -43,11 +47,12 @@ function seedSomePermissions(perms: string[]): void {
     const auth = useAuthStore();
     auth.$patch({
         user: {
-            id: 'u_2',
+            id: 2,
             name: 'Limited User',
             email: 'limited@acme.example',
-            permissions: perms,
+            email_verified_at: null,
         },
+        permissions: perms,
     });
 }
 
@@ -72,7 +77,8 @@ describe('AppSidebar', () => {
 
     it('hides modules the user lacks permission for (Dashboard always shows)', async () => {
         const w = await mountWithGlobals(AppSidebar, { routes: NAV_ROUTES });
-        seedSomePermissions(['accounting.access']);
+        // Single accounting permission — only 'accounting' prefix matches.
+        seedSomePermissions(['accounting.journal_entry.view']);
         await w.vm.$nextTick();
 
         const names = w
@@ -100,8 +106,8 @@ describe('AppSidebar', () => {
         await w.vm.$nextTick();
 
         const aside = w.find('aside');
-        expect(aside.classes()).toContain('w-[60px]');
-        expect(aside.classes()).not.toContain('w-[240px]');
+        expect(aside.classes()).toContain('w-15');
+        expect(aside.classes()).not.toContain('w-60');
         expect(aside.attributes('data-collapsed')).toBe('true');
     });
 
@@ -112,8 +118,8 @@ describe('AppSidebar', () => {
         await w.vm.$nextTick();
 
         const aside = w.find('aside');
-        expect(aside.classes()).toContain('w-[240px]');
-        expect(aside.classes()).not.toContain('w-[60px]');
+        expect(aside.classes()).toContain('w-60');
+        expect(aside.classes()).not.toContain('w-15');
     });
 
     it('toggle button calls ui.toggleSidebar()', async () => {

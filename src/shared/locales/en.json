@@ -66,5 +66,27 @@
         "selectedCount": "{n} selected",
         "rowActions": "Row actions",
         "rowsPerPage": "Rows per page"
+    },
+    "auth": {
+        "login": {
+            "title": "Sign in",
+            "subtitle": "Welcome back. Sign in to continue.",
+            "fields": {
+                "email": "Email",
+                "password": "Password"
+            },
+            "submit": "Sign in",
+            "submitting": "Signing in...",
+            "errors": {
+                "invalidCredentials": "Invalid email or password.",
+                "rateLimited": "Too many attempts. Please try again in {seconds} seconds.",
+                "unknown": "Something went wrong. Please try again."
+            }
+        },
+        "tenantSuspended": {
+            "title": "Tenant suspended",
+            "description": "Your organization's access has been suspended. Please contact your administrator or sign out to switch accounts.",
+            "logout": "Log out"
+        }
     }
 }

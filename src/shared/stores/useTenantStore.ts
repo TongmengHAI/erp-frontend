@@ -1,26 +1,26 @@
 import { defineStore } from 'pinia';
 
-// ─────────────────────────────────────────────────────────────────────────────
-// useTenantStore — STUB for F2c.
-//
-// Surfaces the minimal contract AppTopBar needs:
-//   - state.current: null | Tenant
-//
-// F3 replaces the body with:
-//   - fetchCurrent()  → GET /api/v1/tenants/current (resolves on bootstrap)
-//
-// Master decision 12: there is no tenant switcher in the UI. The top bar
-// renders the current tenant's name as static text. If a user belongs to
-// multiple tenants, switching happens elsewhere (out of scope indefinitely).
-// ─────────────────────────────────────────────────────────────────────────────
+import type { AuthTenant } from '@/modules/auth/types';
 
-export interface Tenant {
-    id: string;
-    name: string;
-}
+// ─────────────────────────────────────────────────────────────────────────────
+// useTenantStore — mirrors the current tenant from useAuthStore.
+//
+// The authoritative tenant lives in useAuthStore.tenant (set by /auth/me).
+// useAuthBootstrap installs a `watch(auth.tenant, ...)` that $patches this
+// store. We keep the mirror so AppTopBar and future tenant-aware components
+// can read `useTenantStore().current` directly without coupling to auth.
+//
+// No actions: this store is written to only by the bootstrap composable.
+// No fetch* — there is no `/tenants/current` endpoint; tenant identity flows
+// through /auth/me.
+//
+// Master decision 12: tenant is presented as static text in the top bar.
+// No switcher UX is exposed; if a user needs to switch, that's an out-of-
+// band concern deferred indefinitely.
+// ─────────────────────────────────────────────────────────────────────────────
 
 interface TenantState {
-    current: Tenant | null;
+    current: AuthTenant | null;
 }
 
 export const useTenantStore = defineStore('tenant', {

@@ -1,0 +1,73 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// Auth module types — mirror backend/docs/api/v1/auth.md exactly.
+//
+// Source of truth is the backend contract. Any drift here is a bug — if a
+// field shape changes upstream, update both this file and the consuming
+// callsites in a single slice.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface AuthUser {
+    /** Stable user identifier (int). */
+    id: number;
+    name: string;
+    email: string;
+    /** ISO 8601 string or null. */
+    email_verified_at: string | null;
+}
+
+export interface AuthTenant {
+    id: number;
+    /** URL-safe short identifier (≤63 chars). */
+    slug: string;
+    name: string;
+    /** ISO 3166-1 alpha-2. Business context (fiscal calendar, NBC rates). */
+    country_code: string;
+    /** ISO 4217 — display currency preference. */
+    default_currency: string;
+    /**
+     * ISO 4217 — the tenant's books currency. Always use this for monetary
+     * `Intl.NumberFormat`, NOT default_currency.
+     */
+    functional_currency: string;
+    /** IANA timezone string. */
+    timezone: string;
+}
+
+export interface LoginRequest {
+    email: string;
+    password: string;
+}
+
+export interface LoginResponse {
+    data: {
+        user: AuthUser;
+        tenant: AuthTenant;
+    };
+}
+
+export interface AuthMeResponse {
+    data: {
+        user: AuthUser;
+        tenant: AuthTenant;
+        /**
+         * Role names assigned in the current tenant. Display-only. NEVER
+         * branch UI on role names — only on permissions.
+         */
+        roles: string[];
+        /** Flat list of permission names; drives can() / canAny(). */
+        permissions: string[];
+    };
+}
+
+/**
+ * Open-ended error_code union. Only `tenant_inactive` is currently
+ * specified; future slices append more.
+ */
+export type AuthErrorCode = 'tenant_inactive' | (string & Record<never, never>);
+
+export interface ApiErrorBody {
+    message: string;
+    error_code?: AuthErrorCode;
+    /** 422 shape — field → array of error messages. */
+    errors?: Record<string, string[]>;
+}
