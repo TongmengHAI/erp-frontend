@@ -20,6 +20,12 @@ import PageHeader from '@/shared/components/layout/PageHeader.vue';
 import PageLayout from '@/shared/components/layout/PageLayout.vue';
 import Tab from '@/shared/components/layout/Tab.vue';
 import TabGroup from '@/shared/components/layout/TabGroup.vue';
+import DataTable from '@/shared/components/data-table/DataTable.vue';
+import type {
+    DataTableColumn,
+    DataTableSort,
+    RowAction,
+} from '@/shared/components/data-table/types';
 import AppSidebar from '@/shared/components/navigation/AppSidebar.vue';
 import AppTopBar from '@/shared/components/navigation/AppTopBar.vue';
 import Breadcrumbs from '@/shared/components/navigation/Breadcrumbs.vue';
@@ -61,6 +67,7 @@ const sections = [
     { id: 'app-sidebar', label: '17. AppSidebar' },
     { id: 'app-topbar', label: '18. AppTopBar' },
     { id: 'breadcrumbs', label: '19. Breadcrumbs' },
+    { id: 'data-table', label: '20. DataTable' },
 ];
 
 // FilterBar demo state
@@ -278,6 +285,166 @@ const editableCrumbs = computed(() => [
     { label: crumb2.value, to: { name: 'dev-components' } },
     { label: crumb3.value },
 ]);
+
+// ─── 20. DataTable demo ─────────────────────────────────────────────────────
+interface DemoEntry extends Record<string, unknown> {
+    id: string;
+    reference: string;
+    transactionDate: string;
+    amount: string;
+    currency: 'USD' | 'KHR';
+    status: 'draft' | 'posted' | 'reversed';
+    tags: string[];
+    line: { count: number };
+}
+
+function buildDemoData(): DemoEntry[] {
+    const statuses: DemoEntry['status'][] = ['draft', 'posted', 'reversed'];
+    const tags = [['payable'], ['expense'], ['revenue'], ['payroll'], ['adjustment']];
+    return Array.from({ length: 47 }, (_, i) => ({
+        id: `je_${i + 1}`,
+        reference: `JE-${String(i + 1).padStart(4, '0')}`,
+        transactionDate: `2026-${String(((i % 12) + 1)).padStart(2, '0')}-${String(((i % 28) + 1)).padStart(2, '0')}T08:00:00`,
+        amount: `${(1000 + i * 137).toFixed(0)}.${(i * 11) % 9999}`.padEnd(0, '0'),
+        currency: i % 2 === 0 ? 'USD' : 'KHR',
+        status: statuses[i % 3],
+        tags: tags[i % tags.length],
+        line: { count: 2 + (i % 8) },
+    }));
+}
+
+// Demo state — declared up front for column resolvers to close over.
+const dtData = ref<DemoEntry[]>(buildDemoData());
+const dtLoading = ref(false);
+const dtError = ref<string | null>(null);
+const dtSelected = ref<DemoEntry[]>([]);
+const dtDensity = ref<'comfortable' | 'compact'>('comfortable');
+const dtMode = ref<'client' | 'server'>('client');
+const dtSort = ref<DataTableSort | null>(null);
+const dtPage = ref(1);
+const dtPageSize = ref(10);
+
+// Receive-emit log so the reviewer can see server-mode emits firing.
+const dtEmitLog = ref<string[]>([]);
+function logEmit(kind: string, payload: unknown) {
+    const ts = new Date().toISOString().substring(11, 19);
+    dtEmitLog.value.unshift(`${ts}  ${kind} → ${JSON.stringify(payload)}`);
+    if (dtEmitLog.value.length > 8) dtEmitLog.value.length = 8;
+}
+
+const dtColumns: DataTableColumn<DemoEntry>[] = [
+    { field: 'reference', label: 'Reference', type: 'text', sortable: true, width: '140px' },
+    {
+        field: 'transactionDate',
+        label: 'Date',
+        type: 'date',
+        dateFormat: 'iso-date',
+        sortable: true,
+        width: '120px',
+    },
+    {
+        field: 'amount',
+        label: 'Amount',
+        type: 'money',
+        currency: (row) => row.currency,
+        sortable: true,
+        width: '160px',
+    },
+    {
+        field: 'line.count',
+        label: 'Lines',
+        type: 'numeric',
+        sortable: true,
+        width: '80px',
+    },
+    {
+        field: 'status',
+        label: 'Status',
+        type: 'status',
+        severity: (row) =>
+            row.status === 'posted'
+                ? 'success'
+                : row.status === 'reversed'
+                  ? 'warning'
+                  : 'neutral',
+        width: '120px',
+    },
+    { field: 'tags', label: 'Tags', type: 'custom' },
+];
+
+const dtRowActions: RowAction<DemoEntry>[] = [
+    {
+        key: 'edit',
+        label: 'Edit',
+        icon: 'pi pi-pencil',
+        onClick: (row) => logEmit('row-action:edit', { id: row.id }),
+    },
+    {
+        key: 'reverse',
+        label: 'Reverse',
+        icon: 'pi pi-undo',
+        visible: (row) => row.status === 'posted',
+        onClick: (row) => logEmit('row-action:reverse', { id: row.id }),
+    },
+    {
+        key: 'delete',
+        label: 'Delete',
+        icon: 'pi pi-trash',
+        severity: 'danger',
+        onClick: (row) => logEmit('row-action:delete', { id: row.id }),
+    },
+];
+
+function dtToggleLoading() {
+    dtLoading.value = !dtLoading.value;
+}
+
+function dtTriggerError() {
+    dtError.value = 'Simulated network failure — click Retry below.';
+}
+
+function dtClearData() {
+    dtData.value = [];
+}
+
+function dtRestoreData() {
+    dtData.value = buildDemoData();
+    dtError.value = null;
+    dtLoading.value = false;
+}
+
+function dtToggleDensity() {
+    dtDensity.value = dtDensity.value === 'comfortable' ? 'compact' : 'comfortable';
+}
+
+function dtToggleMode() {
+    dtMode.value = dtMode.value === 'client' ? 'server' : 'client';
+    // Reset volatile state so the remounted table doesn't carry over.
+    dtSelected.value = [];
+    dtPage.value = 1;
+    dtSort.value = null;
+    dtEmitLog.value = [];
+}
+
+// Server-mode "fake backend": slice the underlying buildDemoData() by current
+// page/sort so the user sees pagination math driven by `total` (47) rather
+// than data.length.
+const dtServerTotal = computed(() => dtData.value.length);
+const dtServerView = computed<DemoEntry[]>(() => {
+    if (dtMode.value !== 'server') return dtData.value;
+    const view = [...dtData.value];
+    if (dtSort.value) {
+        const { field, order } = dtSort.value;
+        view.sort((a, b) => {
+            const av = String((a as Record<string, unknown>)[field] ?? '');
+            const bv = String((b as Record<string, unknown>)[field] ?? '');
+            const cmp = av.localeCompare(bv);
+            return order === 'asc' ? cmp : -cmp;
+        });
+    }
+    const start = (dtPage.value - 1) * dtPageSize.value;
+    return view.slice(start, start + dtPageSize.value);
+});
 </script>
 
 <template>
@@ -893,6 +1060,172 @@ const editableCrumbs = computed(() => [
                     <div class="rounded-md border border-border-default bg-surface p-4">
                         <Breadcrumbs :items="editableCrumbs" />
                     </div>
+                </section>
+
+                <!-- ─── 20. DataTable ────────────────────────────────────────── -->
+                <section id="data-table">
+                    <h2 class="mb-4 text-xl font-semibold text-text-primary">20. DataTable</h2>
+                    <p class="mb-4 text-sm text-text-secondary">
+                        Config-driven wrapper around PV DataTable. Demonstrates
+                        all six column types, selection with bulk actions,
+                        row-action kebab with conditional <code>visible(row)</code>,
+                        all four states (data / loading / error / empty), density
+                        toggle, and both pagination modes.
+                    </p>
+
+                    <div class="mb-4 flex flex-wrap gap-2">
+                        <Button
+                            :label="dtLoading ? 'Stop loading' : 'Show loading'"
+                            icon="pi pi-spin pi-spinner"
+                            severity="secondary"
+                            size="small"
+                            @click="dtToggleLoading"
+                        />
+                        <Button
+                            label="Trigger error"
+                            icon="pi pi-exclamation-triangle"
+                            severity="danger"
+                            size="small"
+                            @click="dtTriggerError"
+                        />
+                        <Button
+                            label="Clear data"
+                            icon="pi pi-times"
+                            severity="secondary"
+                            size="small"
+                            @click="dtClearData"
+                        />
+                        <Button
+                            label="Restore"
+                            icon="pi pi-refresh"
+                            severity="secondary"
+                            size="small"
+                            @click="dtRestoreData"
+                        />
+                        <Button
+                            :label="`Density: ${dtDensity}`"
+                            icon="pi pi-th-large"
+                            severity="secondary"
+                            size="small"
+                            @click="dtToggleDensity"
+                        />
+                        <Button
+                            :label="`Mode: ${dtMode}`"
+                            icon="pi pi-database"
+                            severity="secondary"
+                            size="small"
+                            @click="dtToggleMode"
+                        />
+                    </div>
+
+                    <p class="mb-4 text-xs text-text-tertiary">
+                        Switching mode remounts the table — selection and page reset.
+                    </p>
+
+                    <!-- The :key forces a remount when mode flips so we
+                         exercise the documented "mode is mount-time" contract. -->
+                    <div
+                        v-if="dtMode === 'client'"
+                        :key="`client-${dtMode}`"
+                        class="overflow-hidden rounded-md border border-border-default"
+                    >
+                        <DataTable
+                            v-model:selected="dtSelected"
+                            :data="dtData"
+                            :columns="dtColumns"
+                            :loading="dtLoading"
+                            :error="dtError"
+                            mode="client"
+                            :page-size="dtPageSize"
+                            :selectable="true"
+                            :density="dtDensity"
+                            :row-actions="dtRowActions"
+                            @retry="dtRestoreData"
+                        >
+                            <template #bulk-actions="{ selectedRows }">
+                                <Button
+                                    :label="`Bulk delete ${selectedRows.length}`"
+                                    severity="danger"
+                                    size="small"
+                                    icon="pi pi-trash"
+                                    @click="logEmit('bulk-delete', selectedRows.map((r: DemoEntry) => r.id))"
+                                />
+                            </template>
+
+                            <template #cell-tags="{ row }">
+                                <div class="flex gap-1">
+                                    <span
+                                        v-for="tag in (row as DemoEntry).tags"
+                                        :key="tag"
+                                        class="rounded-full bg-surface-sunken px-2 py-0.5 text-xs text-text-secondary"
+                                    >
+                                        {{ tag }}
+                                    </span>
+                                </div>
+                            </template>
+                        </DataTable>
+                    </div>
+
+                    <div
+                        v-else
+                        :key="`server-${dtMode}`"
+                        class="overflow-hidden rounded-md border border-border-default"
+                    >
+                        <DataTable
+                            v-model:selected="dtSelected"
+                            :data="dtServerView"
+                            :columns="dtColumns"
+                            :loading="dtLoading"
+                            :error="dtError"
+                            mode="server"
+                            :total="dtServerTotal"
+                            :page="dtPage"
+                            :page-size="dtPageSize"
+                            :sort="dtSort"
+                            :selectable="true"
+                            :density="dtDensity"
+                            :row-actions="dtRowActions"
+                            @update:page="(p: number) => { dtPage = p; logEmit('update:page', p); }"
+                            @update:page-size="(s: number) => { dtPageSize = s; logEmit('update:pageSize', s); }"
+                            @update:sort="(s: DataTableSort | null) => { dtSort = s; logEmit('update:sort', s); }"
+                            @retry="dtRestoreData"
+                        >
+                            <template #bulk-actions="{ selectedRows }">
+                                <Button
+                                    :label="`Bulk delete ${selectedRows.length}`"
+                                    severity="danger"
+                                    size="small"
+                                    icon="pi pi-trash"
+                                    @click="logEmit('bulk-delete', selectedRows.map((r: DemoEntry) => r.id))"
+                                />
+                            </template>
+
+                            <template #cell-tags="{ row }">
+                                <div class="flex gap-1">
+                                    <span
+                                        v-for="tag in (row as DemoEntry).tags"
+                                        :key="tag"
+                                        class="rounded-full bg-surface-sunken px-2 py-0.5 text-xs text-text-secondary"
+                                    >
+                                        {{ tag }}
+                                    </span>
+                                </div>
+                            </template>
+                        </DataTable>
+                    </div>
+
+                    <CardSection title="Emit log (server mode)" class="mt-4">
+                        <div
+                            v-if="dtEmitLog.length === 0"
+                            class="text-sm text-text-tertiary"
+                        >
+                            No emits yet. Sort, paginate, or fire a row action.
+                        </div>
+                        <pre
+                            v-else
+                            class="overflow-x-auto rounded-md bg-surface-sunken p-3 text-xs text-text-secondary"
+                        >{{ dtEmitLog.join('\n') }}</pre>
+                    </CardSection>
                 </section>
             </div>
         </div>

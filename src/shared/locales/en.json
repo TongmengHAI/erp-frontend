@@ -53,5 +53,18 @@
             "collapse": "Collapse sidebar",
             "expand": "Expand sidebar"
         }
+    },
+    "dataTable": {
+        "empty": {
+            "title": "No records yet",
+            "description": "Once data is added it will appear here."
+        },
+        "error": {
+            "title": "Couldn't load this list",
+            "description": "Please try again or contact support."
+        },
+        "selectedCount": "{n} selected",
+        "rowActions": "Row actions",
+        "rowsPerPage": "Rows per page"
     }
 }

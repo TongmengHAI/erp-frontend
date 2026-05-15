@@ -68,3 +68,24 @@ Object.defineProperty(globalThis, 'sessionStorage', {
     configurable: true,
     value: new MemoryStorage(),
 });
+
+// jsdom does not implement window.matchMedia. PrimeVue's Select (used inside
+// DataTable's rows-per-page dropdown) calls it during onMounted to bind an
+// orientation listener. The shim returns an inert MediaQueryList shape so
+// callers can register listeners without errors firing in jsdom.
+if (typeof window !== 'undefined' && typeof window.matchMedia !== 'function') {
+    Object.defineProperty(window, 'matchMedia', {
+        configurable: true,
+        value: (query: string): MediaQueryList =>
+            ({
+                matches: false,
+                media: query,
+                onchange: null,
+                addListener: () => {},
+                removeListener: () => {},
+                addEventListener: () => {},
+                removeEventListener: () => {},
+                dispatchEvent: () => false,
+            }) as unknown as MediaQueryList,
+    });
+}
