@@ -10,10 +10,19 @@ import { installGuards } from '@/router/guards';
 //   - Static label:  meta: { breadcrumb: 'Dashboard' }
 //   - Dynamic label: meta: { breadcrumb: (route) => `Entry ${route.params.id}` }
 // Breadcrumbs auto-skip route records that omit the meta key (typical for
-// the layout parent itself). Add the meta on each leaf or intermediate
-// route that should appear in the trail. Trails with fewer than 2 items
-// render nothing — Dashboard alone won't show a single-item crumb.
+// the layout parent itself). Trails with fewer than 2 items render nothing.
+//
+// Module-placeholder convention (temporary, until each domain ships):
+// Routes under the shell with `meta.moduleLabel` render
+// ModuleComingSoonPage.vue. When a module ships its real Phase content,
+// the slice swaps the `component` and drops `moduleLabel` from the route
+// definition. The route name, path, and breadcrumb meta stay the same —
+// no callsite changes anywhere else. shared-stubs/ disappears entirely
+// once the last module ships.
 // ─────────────────────────────────────────────────────────────────────────────
+
+const moduleComingSoon = (): Promise<typeof import('@/modules/shared-stubs/pages/ModuleComingSoonPage.vue')> =>
+    import('@/modules/shared-stubs/pages/ModuleComingSoonPage.vue');
 
 const routes: RouteRecordRaw[] = [
     // Authenticated shell — every page mounted as a child here renders
@@ -30,18 +39,48 @@ const routes: RouteRecordRaw[] = [
                 component: () => import('@/modules/dashboard/pages/DashboardPlaceholderPage.vue'),
                 meta: { breadcrumb: 'Dashboard' },
             },
-            // Phase modules (HRM, Accounting, Inventory, Procurement, Sales)
-            // land here as additional children. Each will own its own
-            // routes.ts and export a children fragment to splice in.
+            // ── Module placeholders ──────────────────────────────────────
+            // Each Phase slice swaps the `component` and drops the
+            // `moduleLabel` meta when the real module lands. Route name,
+            // path, and breadcrumb stay stable across the swap.
+            {
+                path: 'hrm',
+                name: 'hrm',
+                component: moduleComingSoon,
+                meta: { breadcrumb: 'HRM', moduleLabel: 'HRM' },
+            },
+            {
+                path: 'accounting',
+                name: 'accounting',
+                component: moduleComingSoon,
+                meta: { breadcrumb: 'Accounting', moduleLabel: 'Accounting' },
+            },
+            {
+                path: 'inventory',
+                name: 'inventory',
+                component: moduleComingSoon,
+                meta: { breadcrumb: 'Inventory', moduleLabel: 'Inventory' },
+            },
+            {
+                path: 'procurement',
+                name: 'procurement',
+                component: moduleComingSoon,
+                meta: { breadcrumb: 'Procurement', moduleLabel: 'Procurement' },
+            },
+            {
+                path: 'sales',
+                name: 'sales',
+                component: moduleComingSoon,
+                meta: { breadcrumb: 'Sales', moduleLabel: 'Sales' },
+            },
         ],
     },
     // Public routes — no shell. /login and /tenant-suspended.
     ...authRoutes,
 ];
 
-// Dev-only routes. Both branches below are guarded by `import.meta.env.DEV`,
-// which is statically evaluable — Vite tree-shakes them out of the production
-// bundle. The playground chunks never ship to prod.
+// Dev-only routes. Guarded by `import.meta.env.DEV` so Vite tree-shakes them
+// out of production. The playground chunks never ship to prod.
 if (import.meta.env.DEV) {
     routes.push({
         path: '/__dev/tokens',
@@ -57,30 +96,12 @@ if (import.meta.env.DEV) {
         meta: { requiresAuth: false },
     });
 
-    // Stub named routes for sidebar modules that haven't shipped yet.
-    // F2c's AppSidebar links to each via `{ name: 'hrm' }` etc.; without
-    // a registered route Vue Router warns "no match for named route" on
-    // every playground load.
-    //
-    // Each stub redirects to the dashboard — clicking an unshipped
-    // module is a calm no-op rather than an error or a placeholder page.
-    // As each domain ships, its real route replaces the stub (delete
-    // the entry here, register the real one as a child of the shell).
-    const stubModuleNames = [
-        'hrm',
-        'accounting',
-        'inventory',
-        'procurement',
-        'sales',
-    ];
-    stubModuleNames.forEach((name) => {
-        routes.push({
-            path: `/__dev/${name}-stub`,
-            name,
-            redirect: { name: DASHBOARD_ROUTES.DASHBOARD },
-            meta: { requiresAuth: false },
-        });
-    });
+    // No module-name stub routes here anymore — the production routes
+    // above own the `hrm`, `accounting`, etc. names. Clicking a module
+    // link from the dev playground will navigate into the real shell
+    // route, which requires auth. Dev users are typically authenticated
+    // locally; if not, the route guard sends them to /login (correct
+    // behavior, not a regression).
 }
 
 const router = createRouter({

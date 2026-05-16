@@ -69,35 +69,53 @@ describe('AppTopBar', () => {
         expect(w.find('[data-testid="topbar-tenant"]').exists()).toBe(false);
     });
 
-    it('logout menu item invokes useAuthStore().logout() which resets the user', async () => {
+    it('logout menu item invokes auth.logout() AND pushes to /login (fix for F4 logout-no-redirect bug)', async () => {
         // Mock the logout API so the test doesn't depend on a backend.
-        // The store's logout() awaits authApi.logout() before $reset(); we
-        // resolve the mock immediately so the test can observe the reset.
+        // The store's logout() awaits authApi.logout() before $reset(); the
+        // top bar's command then explicitly pushes to /login.
         const logoutSpy = vi
             .spyOn(authApi, 'logout')
             .mockResolvedValue(undefined);
 
-        const w = await mountWithGlobals(AppTopBar);
+        // Route fixtures include /login so router.push({ name: 'login' })
+        // resolves cleanly. mountWithGlobals' default routes only have
+        // home + dashboard.
+        const w = await mountWithGlobals(AppTopBar, {
+            routes: [
+                { path: '/', name: 'home', component: { template: '<div />' } },
+                { path: '/login', name: 'login', component: { template: '<div />' } },
+            ],
+        });
         seedAuth();
         const auth = useAuthStore();
         expect(auth.user).not.toBeNull();
 
-        // The PrimeVue Menu is rendered via Teleport when popup=true. Rather
-        // than driving the DOM through the popup (jsdom + Teleport friction
-        // we don't care about here), we invoke the command directly off the
-        // computed menuItems — the same callback the menu binds.
-        // This proves the wiring: clicking that item resets auth.
         await w.vm.$nextTick();
-        // Reach the menuItems via the component instance:
+
+        // The PrimeVue Menu is rendered via Teleport (popup mode). Rather
+        // than driving the DOM through the popup (jsdom + Teleport friction
+        // we don't care about here), we invoke the menu item's `command`
+        // directly off the computed menuItems — the same callback the menu
+        // would invoke on click.
         const vm = w.vm as unknown as {
             menuItems: { command?: () => Promise<void> | void; label?: string }[];
         };
         const logoutItem = vm.menuItems.find((m) => m.label === 'Log out');
         expect(logoutItem?.command).toBeTypeOf('function');
-        // The command returns void per PV's type, but our wrapper returns
-        // the promise. Await it via the underlying call.
-        await auth.logout();
+
+        // Invoke the command — this triggers BOTH auth.logout() AND the
+        // router.push({ name: 'login' }) inside handleLogout.
+        await logoutItem!.command!();
+
+        // 1) Store action ran: API called and state reset.
         expect(logoutSpy).toHaveBeenCalled();
         expect(auth.user).toBeNull();
+
+        // 2) Router navigated to /login. The reactive route's name should
+        //    now be 'login' — this is the regression assertion that the
+        //    F4 bug (state reset without navigation) won't return.
+        await w.vm.$nextTick();
+        const router = w.vm.$router;
+        expect(router.currentRoute.value.name).toBe('login');
     });
 });

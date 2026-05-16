@@ -107,5 +107,10 @@
                 "description": "Where your current accounting period stands — open, soft-closed, or hard-closed — and what's blocking the next close."
             }
         }
+    },
+    "comingSoonPage": {
+        "subtitle": "This module is in development.",
+        "cardTitle": "In development",
+        "cardDescription": "{module} workflows aren't available yet. The navigation entry is in place — content arrives as the module ships."
     }
 }

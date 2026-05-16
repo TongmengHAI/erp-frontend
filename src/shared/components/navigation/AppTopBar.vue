@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { useRouter } from 'vue-router';
 import Menu from 'primevue/menu';
 import type { MenuItem } from 'primevue/menuitem';
 
+import { AUTH_ROUTES } from '@/modules/auth/routes';
 import UserAvatar from '@/shared/components/data-display/UserAvatar.vue';
 import { useAuthStore } from '@/shared/stores/useAuthStore';
 import { useTenantStore } from '@/shared/stores/useTenantStore';
@@ -23,11 +25,27 @@ import { useTenantStore } from '@/shared/stores/useTenantStore';
 const { t } = useI18n();
 const auth = useAuthStore();
 const tenant = useTenantStore();
+const router = useRouter();
 
 const menu = ref<InstanceType<typeof Menu> | null>(null);
 
 function toggleMenu(event: Event): void {
     menu.value?.toggle(event);
+}
+
+// Logout: the store action resets local state (and on success rolls the
+// server session). Route guards only run on NAVIGATION — state changes
+// don't trigger them. So after $reset we explicitly push to /login;
+// without the push the page stays on the current route in a logged-out
+// state until the user clicks something else. The push triggers the
+// guard, which would have redirected anyway.
+//
+// We don't put the router.push inside useAuthStore.logout() — stores
+// manage state, not navigation. TenantSuspendedPage.vue follows the
+// same pattern: await auth.logout() at the callsite, then push.
+async function handleLogout(): Promise<void> {
+    await auth.logout();
+    await router.push({ name: AUTH_ROUTES.LOGIN });
 }
 
 // TODO(future): restore Profile + Settings menu items when their real pages
@@ -41,7 +59,7 @@ const menuItems = computed<MenuItem[]>(() => [
     {
         label: t('navigation.topbar.menu.logout'),
         icon: 'pi pi-sign-out',
-        command: () => auth.logout(),
+        command: handleLogout,
     },
 ]);
 

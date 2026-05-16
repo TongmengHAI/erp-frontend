@@ -22,7 +22,27 @@ async function start(): Promise<void> {
     const app = createApp(App);
     const pinia = createPinia();
 
+    // ORDER MATTERS — bootstrap BEFORE app.use(router).
+    //
+    // Vue Router 4's install() (invoked by app.use(router)) starts the
+    // initial navigation synchronously: `router.push(history.location)`.
+    // That navigation's beforeEach guards queue as microtasks. If we then
+    // `await bootstrapAuth()`, the guard microtask races against fetchMe's
+    // network response — whichever resolves first wins. On any timing
+    // jitter (network, GC, lazy chunk loads), the guard fires with empty
+    // auth state and redirects to /login. Bootstrap completes shortly
+    // after but the redirect already committed.
+    //
+    // Installing Pinia first (so useAuthStore works), then awaiting
+    // bootstrap, then installing the router, makes the race impossible:
+    // initial navigation can only start once router is installed, and by
+    // that time bootstrap has already populated state. The guard sees
+    // accurate state on its very first evaluation.
+    //
+    // The defensive `await bootstrapAuth()` in guards.ts:installGuards is
+    // the second half of this invariant — see comment there.
     app.use(pinia);
+    await bootstrapAuth();
     app.use(router);
     app.use(i18n);
     app.use(VueQueryPlugin);
@@ -39,13 +59,6 @@ async function start(): Promise<void> {
             },
         },
     });
-
-    // Resolve initial auth state before mounting. Avoids the flash-of-
-    // unauthenticated where the home route renders briefly before the route
-    // guard sees the session cookie and bounces. fetchMe internally handles
-    // the 401-no-session case; non-401 failures are swallowed so a network
-    // hiccup doesn't block the SPA from booting.
-    await bootstrapAuth();
 
     app.mount('#app');
 }

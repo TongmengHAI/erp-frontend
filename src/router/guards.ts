@@ -1,12 +1,14 @@
 import type { RouteLocationNormalized, Router } from 'vue-router';
 
 import { AUTH_ROUTES } from '@/modules/auth/routes';
+import { bootstrapAuth } from '@/shared/composables/useAuthBootstrap';
 import { useAuthStore } from '@/shared/stores/useAuthStore';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Route guards.
 //
 // Precedence (highest to lowest):
+//   0. !auth.initialized                       →  await bootstrapAuth()
 //   1. tenantInactive + !allowTenantInactive  →  /tenant-suspended
 //   2. requiresAuth + !isAuthenticated        →  /login?redirect=<to.fullPath>
 //   3. requiresGuest + isAuthenticated        →  ?redirect or /
@@ -26,8 +28,24 @@ function isAuthRequired(to: RouteLocationNormalized): boolean {
 }
 
 export function installGuards(router: Router): void {
-    router.beforeEach((to) => {
+    router.beforeEach(async (to) => {
         const auth = useAuthStore();
+
+        // Correctness invariant: the guard MUST NOT evaluate auth state
+        // before bootstrap has resolved. main.ts orders `bootstrapAuth()`
+        // before `app.use(router)` so the initial navigation guard sees
+        // populated state — but a route guard that depends on uninitialized
+        // auth state is a latent bug regardless of init order. This check
+        // makes the guard self-protect, in flow with both the initial
+        // navigation and any future imperative `router.push()` that could
+        // run before bootstrap completes.
+        //
+        // bootstrapAuth() is idempotent: returns the cached/in-flight
+        // promise on subsequent calls. Once initialized, the await
+        // collapses to a no-op.
+        if (!auth.initialized) {
+            await bootstrapAuth();
+        }
 
         // Tenant-inactive interception.
         if (auth.tenantInactive && to.meta.allowTenantInactive !== true) {

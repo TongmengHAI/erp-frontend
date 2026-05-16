@@ -1,5 +1,5 @@
 import { createPinia, setActivePinia } from 'pinia';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
     createMemoryHistory,
     createRouter,
@@ -7,7 +7,9 @@ import {
     type RouteRecordRaw,
 } from 'vue-router';
 
+import * as authApi from '@/modules/auth/api/auth';
 import { installGuards } from '@/router/guards';
+import { __testing as bootstrapTesting } from '@/shared/composables/useAuthBootstrap';
 import { useAuthStore } from '@/shared/stores/useAuthStore';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -53,7 +55,19 @@ describe('route guards', () => {
 
     beforeEach(async () => {
         setActivePinia(createPinia());
+        // Reset bootstrapAuth's module-scoped cache so each test starts
+        // from a clean "not yet bootstrapped" state. Tests that exercise
+        // the defensive bootstrap path mock authApi.me; tests that exercise
+        // the existing precedence rules pre-set initialized=true.
+        bootstrapTesting.reset();
         router = buildRouter();
+
+        // Default: mark auth as already initialized so the defensive
+        // bootstrap check in the guard is a no-op. Tests that need to
+        // exercise the bootstrap path override this AFTER buildRouter()
+        // but BEFORE pushing.
+        useAuthStore().initialized = true;
+
         // Start the router at a public route so individual tests can push
         // anywhere without colliding with an initial guard-driven redirect.
         // (Memory history starts at START_LOCATION; isReady() needs a push.)
@@ -62,7 +76,7 @@ describe('route guards', () => {
     });
 
     afterEach(() => {
-        // No teardown necessary — fresh pinia per test.
+        vi.restoreAllMocks();
     });
 
     it('unauthenticated user navigating to a protected route is redirected to /login with ?redirect', async () => {
@@ -136,6 +150,10 @@ describe('route guards', () => {
             { path: '/__dev/anything', name: 'dev-anything', component: STUB, meta: { requiresAuth: false } },
         ];
         setActivePinia(createPinia());
+        bootstrapTesting.reset();
+        // Pre-init auth so the guard's defensive bootstrap check is a no-op
+        // — this test exercises meta-inheritance, not bootstrap.
+        useAuthStore().initialized = true;
         const nestedRouter = createRouter({
             history: createMemoryHistory(),
             routes: NESTED_ROUTES,
@@ -156,5 +174,76 @@ describe('route guards', () => {
         await nestedRouter.push('/reports');
         expect(nestedRouter.currentRoute.value.name).toBe('login');
         expect(nestedRouter.currentRoute.value.query.redirect).toBe('/reports');
+    });
+
+    it('regression: defensive guard awaits bootstrap before evaluating auth state', async () => {
+        // ─────────────────────────────────────────────────────────────────────
+        // REGRESSION GUARD — surfaced during the F4 visual review.
+        //
+        // Original bug: Vue Router 4's app.use(router) starts initial
+        // navigation synchronously. The beforeEach guard's microtask raced
+        // against main.ts's await bootstrapAuth(). On any timing jitter
+        // (network, lazy chunk loads), the guard fired with empty auth
+        // state and redirected to /login, even though the session cookie
+        // was valid and /me would have returned 200.
+        //
+        // The fix has two halves:
+        //   1. main.ts: await bootstrapAuth() BEFORE app.use(router) so the
+        //      initial nav can only start once state is populated.
+        //   2. guards.ts: defensive `if (!auth.initialized) await bootstrap()`
+        //      so any guard evaluation — initial OR imperative — waits for
+        //      bootstrap. This is the correctness invariant: a guard that
+        //      evaluates auth before bootstrap completes has a latent bug
+        //      regardless of init order.
+        //
+        // This test exercises half 2: start with auth.initialized=false,
+        // mock /auth/me to return a valid user, push to a protected route,
+        // assert the guard ran AFTER bootstrap populated state — navigation
+        // succeeds rather than redirecting to /login.
+        // ─────────────────────────────────────────────────────────────────────
+        setActivePinia(createPinia());
+        bootstrapTesting.reset();
+
+        // Mock /auth/me to return a valid user. Resolve immediately so the
+        // bootstrap promise resolves on next microtask.
+        const meSpy = vi.spyOn(authApi, 'me').mockResolvedValue({
+            data: {
+                user: {
+                    id: 1,
+                    name: 'Test User',
+                    email: 't@x',
+                    email_verified_at: null,
+                },
+                tenant: {
+                    id: 1,
+                    slug: 'x',
+                    name: 'X',
+                    country_code: 'KH',
+                    default_currency: 'USD',
+                    functional_currency: 'USD',
+                    timezone: 'Asia/Phnom_Penh',
+                },
+                roles: [],
+                permissions: [],
+            },
+        });
+
+        const auth = useAuthStore();
+        expect(auth.initialized).toBe(false);
+        expect(auth.user).toBeNull();
+
+        const freshRouter = buildRouter();
+        await freshRouter.push({ name: 'dev-anything' });
+        await freshRouter.isReady();
+
+        // Push to a protected route while auth is uninitialized. The guard
+        // must await bootstrap; once it resolves, the populated state is
+        // visible and navigation proceeds.
+        await freshRouter.push('/');
+
+        expect(meSpy).toHaveBeenCalledTimes(1);
+        expect(auth.initialized).toBe(true);
+        expect(auth.user?.id).toBe(1);
+        expect(freshRouter.currentRoute.value.path).toBe('/');
     });
 });
