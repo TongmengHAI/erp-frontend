@@ -117,4 +117,44 @@ describe('route guards', () => {
         await router.push({ name: 'dev-anything' });
         expect(router.currentRoute.value.name).toBe('dev-anything');
     });
+
+    it('nested children inherit requiresAuth from a shell-layout parent', async () => {
+        // Mirrors the production router shape: a layout parent with
+        // requiresAuth=true and unannotated children. The guard must see
+        // the merged meta on the matched child and redirect to /login.
+        const NESTED_ROUTES: RouteRecordRaw[] = [
+            {
+                path: '/',
+                component: STUB,
+                meta: { requiresAuth: true },
+                children: [
+                    { path: '', name: 'dashboard', component: STUB },
+                    { path: 'reports', name: 'reports', component: STUB },
+                ],
+            },
+            { path: '/login', name: 'login', component: STUB, meta: { requiresAuth: false } },
+            { path: '/__dev/anything', name: 'dev-anything', component: STUB, meta: { requiresAuth: false } },
+        ];
+        setActivePinia(createPinia());
+        const nestedRouter = createRouter({
+            history: createMemoryHistory(),
+            routes: NESTED_ROUTES,
+        });
+        installGuards(nestedRouter);
+        await nestedRouter.push({ name: 'dev-anything' });
+        await nestedRouter.isReady();
+
+        // Unauthenticated → push to dashboard (child of /). Guard should
+        // read the inherited requiresAuth=true and redirect to /login
+        // with ?redirect=/.
+        await nestedRouter.push('/');
+        expect(nestedRouter.currentRoute.value.name).toBe('login');
+        expect(nestedRouter.currentRoute.value.query.redirect).toBe('/');
+
+        // Same expectation for a deeper nested child path.
+        await nestedRouter.push({ name: 'dev-anything' });
+        await nestedRouter.push('/reports');
+        expect(nestedRouter.currentRoute.value.name).toBe('login');
+        expect(nestedRouter.currentRoute.value.query.redirect).toBe('/reports');
+    });
 });

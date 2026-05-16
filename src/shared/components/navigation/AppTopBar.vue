@@ -30,10 +30,14 @@ function toggleMenu(event: Event): void {
     menu.value?.toggle(event);
 }
 
+// TODO(future): restore Profile + Settings menu items when their real pages
+// ship (Settings slice; user profile page). Click-that-does-nothing is a UX
+// failure — surface the items only when they have working destinations.
+//
+//     { label: t('navigation.topbar.menu.profile'), icon: 'pi pi-user', ... },
+//     { label: t('navigation.topbar.menu.settings'), icon: 'pi pi-cog', ... },
+//     { separator: true },
 const menuItems = computed<MenuItem[]>(() => [
-    { label: t('navigation.topbar.menu.profile'), icon: 'pi pi-user' },
-    { label: t('navigation.topbar.menu.settings'), icon: 'pi pi-cog' },
-    { separator: true },
     {
         label: t('navigation.topbar.menu.logout'),
         icon: 'pi pi-sign-out',

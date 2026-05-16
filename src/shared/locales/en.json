@@ -88,5 +88,24 @@
             "description": "Your organization's access has been suspended. Please contact your administrator or sign out to switch accounts.",
             "logout": "Log out"
         }
+    },
+    "dashboard": {
+        "greeting": "Welcome back, {name}.",
+        "subtitle": "Your operational overview. As entries, approvals, and period activity accumulate, the highlights will appear here.",
+        "comingSoon": "Coming soon",
+        "cards": {
+            "recentActivity": {
+                "title": "Recent activity",
+                "description": "Recent journal entries, postings, and changes across your modules."
+            },
+            "pendingApprovals": {
+                "title": "Pending approvals",
+                "description": "Items waiting for your sign-off — journal entries to post, requisitions to approve, leave requests to review."
+            },
+            "periodStatus": {
+                "title": "Period status",
+                "description": "Where your current accounting period stands — open, soft-closed, or hard-closed — and what's blocking the next close."
+            }
+        }
     }
 }

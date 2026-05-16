@@ -1,20 +1,41 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router';
 
 import { authRoutes } from '@/modules/auth/routes';
+import { DASHBOARD_ROUTES } from '@/modules/dashboard/routes';
 import { installGuards } from '@/router/guards';
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Breadcrumb convention (consumed by F2c's Breadcrumbs component via
+// route.matched[*].meta.breadcrumb):
+//   - Static label:  meta: { breadcrumb: 'Dashboard' }
+//   - Dynamic label: meta: { breadcrumb: (route) => `Entry ${route.params.id}` }
+// Breadcrumbs auto-skip route records that omit the meta key (typical for
+// the layout parent itself). Add the meta on each leaf or intermediate
+// route that should appear in the trail. Trails with fewer than 2 items
+// render nothing — Dashboard alone won't show a single-item crumb.
+// ─────────────────────────────────────────────────────────────────────────────
+
 const routes: RouteRecordRaw[] = [
+    // Authenticated shell — every page mounted as a child here renders
+    // inside the AppSidebar + AppTopBar + Breadcrumbs chrome.
+    // requiresAuth inherits to all children via Vue Router's meta merge.
     {
         path: '/',
-        name: 'home',
-        component: () => import('@/shared/views/HomeView.vue'),
-        meta: {
-            // Default behavior, made explicit: every "real" page is auth-
-            // gated. F4 replaces this stub home with the dashboard inside
-            // AppShell.
-            requiresAuth: true,
-        },
+        component: () => import('@/shared/components/layout/AppShellLayout.vue'),
+        meta: { requiresAuth: true },
+        children: [
+            {
+                path: '',
+                name: DASHBOARD_ROUTES.DASHBOARD,
+                component: () => import('@/modules/dashboard/pages/DashboardPlaceholderPage.vue'),
+                meta: { breadcrumb: 'Dashboard' },
+            },
+            // Phase modules (HRM, Accounting, Inventory, Procurement, Sales)
+            // land here as additional children. Each will own its own
+            // routes.ts and export a children fragment to splice in.
+        ],
     },
+    // Public routes — no shell. /login and /tenant-suspended.
     ...authRoutes,
 ];
 
@@ -36,28 +57,27 @@ if (import.meta.env.DEV) {
         meta: { requiresAuth: false },
     });
 
-    // Stub named routes for components/links that target module destinations
-    // before the real routes register. PermissionDeniedPage / NotFoundPage
-    // link to { name: 'dashboard' }; F2c's AppSidebar links to each module's
-    // routeName. Without these stubs every playground load logs "no match
-    // for named route" warnings, and console noise costs us when real
-    // warnings appear in later slices.
+    // Stub named routes for sidebar modules that haven't shipped yet.
+    // F2c's AppSidebar links to each via `{ name: 'hrm' }` etc.; without
+    // a registered route Vue Router warns "no match for named route" on
+    // every playground load.
     //
-    // F4 registers the real dashboard route; Phase M registers the real
-    // module roots. Both deletions reduce this block to nothing.
-    const stubRouteNames = [
-        'dashboard',
+    // Each stub redirects to the dashboard — clicking an unshipped
+    // module is a calm no-op rather than an error or a placeholder page.
+    // As each domain ships, its real route replaces the stub (delete
+    // the entry here, register the real one as a child of the shell).
+    const stubModuleNames = [
         'hrm',
         'accounting',
         'inventory',
         'procurement',
         'sales',
     ];
-    stubRouteNames.forEach((name) => {
+    stubModuleNames.forEach((name) => {
         routes.push({
             path: `/__dev/${name}-stub`,
             name,
-            redirect: { name: 'dev-components' },
+            redirect: { name: DASHBOARD_ROUTES.DASHBOARD },
             meta: { requiresAuth: false },
         });
     });
