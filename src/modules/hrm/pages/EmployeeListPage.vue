@@ -115,10 +115,15 @@ function statusSeverity(status: EmployeeStatus): StatusSeverity {
 // - Status: a localized StatusBadge label (the built-in 'status' type would
 //   surface the raw enum string, which is wrong for display).
 // Hire date renders via the built-in 'date' type with the short format.
+// full_name and job_title are free-text columns where a long entry
+// could push table layout during the demo. Both render as custom cells
+// with `truncate` + `max-w-[28ch]` (CSS truncation, native browser
+// ellipsis). The full row stays clickable via `row-click`, and the
+// detail page shows the untruncated value, so no information loss.
 const columns = computed<DataTableColumn<EmployeeBrief>[]>(() => [
     { field: 'employee_code', label: 'hrm.employee.list.columns.code', type: 'custom', width: '140px' },
     { field: 'full_name', label: 'hrm.employee.list.columns.name', type: 'custom' },
-    { field: 'job_title', label: 'hrm.employee.list.columns.jobTitle', type: 'text' },
+    { field: 'job_title', label: 'hrm.employee.list.columns.jobTitle', type: 'custom' },
     { field: 'status', label: 'hrm.employee.list.columns.status', type: 'custom', align: 'center', width: '140px' },
     {
         field: 'hire_date',
@@ -236,10 +241,14 @@ const showWelcomeEmpty = computed<boolean>(
     () => !isLoading.value && !isError.value && total.value === 0 && !hasFilters.value,
 );
 
+// Filtered-empty messaging is genuinely distinct from welcome-empty:
+// employees DO exist, just none match the active filter. The welcome
+// copy ("Add your first team member…") would mislead the user into
+// thinking the directory was wiped. Distinct title + actionable hint.
 const tableEmptyOverride = computed(() => ({
     icon: 'pi pi-search',
-    title: t('hrm.employee.list.empty.title'),
-    description: t('hrm.employee.list.empty.description'),
+    title: t('hrm.employee.list.filteredEmpty.title'),
+    description: t('hrm.employee.list.filteredEmpty.description'),
 }));
 </script>
 
@@ -339,16 +348,34 @@ const tableEmptyOverride = computed(() => ({
                 <!-- Full name as a parallel link affordance. Two-link cells
                      are fine when both encode the same target (detail
                      navigation) — accessibility lints don't flag them
-                     because each button has a distinct accessible name. -->
+                     because each button has a distinct accessible name.
+                     `truncate` + `max-w-[28ch]` caps display width;
+                     `title` exposes the full name on hover for users
+                     who land on a row with a long entry. -->
                 <template #cell-full_name="{ row }">
                     <button
                         type="button"
-                        class="text-text-primary font-medium hover:underline focus:outline-none focus:underline"
+                        class="block max-w-[28ch] truncate text-left text-text-primary font-medium hover:underline focus:outline-none focus:underline"
+                        :title="row.full_name"
                         :data-testid="`employee-list-name-${row.id}`"
                         @click.stop="navigateToDetail(row.id)"
                     >
                         {{ row.full_name }}
                     </button>
+                </template>
+
+                <!-- Job title — free-text column with the same truncation
+                     guard. Null renders as blank, not "—" (the detail
+                     page handles the "no value" affordance; lists stay
+                     compact). -->
+                <template #cell-job_title="{ row }">
+                    <span
+                        v-if="row.job_title"
+                        class="block max-w-[28ch] truncate"
+                        :title="row.job_title"
+                    >
+                        {{ row.job_title }}
+                    </span>
                 </template>
 
                 <!-- Localized status badge (the column type='custom' so we

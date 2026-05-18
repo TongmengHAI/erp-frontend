@@ -143,6 +143,10 @@
                     "title": "No employees yet",
                     "description": "Add your first team member to start building the directory.",
                     "action": "Create first employee"
+                },
+                "filteredEmpty": {
+                    "title": "No matching employees",
+                    "description": "Try clearing the search or status filter."
                 }
             },
             "detail": {
@@ -180,9 +184,9 @@
                     "codeHelp": "Unique within this company (e.g. E-1001).",
                     "fullName": "Full name",
                     "email": "Email",
-                    "emailHelp": "Optional. Used for notifications when set.",
+                    "emailHelp": "Optional.",
                     "jobTitle": "Job title",
-                    "jobTitleHelp": "Optional. Free text — link to a structured Position later.",
+                    "jobTitleHelp": "Optional.",
                     "hireDate": "Hire date",
                     "status": "Status"
                 },
@@ -198,7 +202,7 @@
             },
             "delete": {
                 "confirmTitle": "Delete employee?",
-                "confirmMessage": "Delete {name}? This can't be undone from the UI.",
+                "confirmMessage": "Delete {name}? This can't be undone.",
                 "confirmAction": "Delete",
                 "toast": {
                     "success": "Employee deleted.",
