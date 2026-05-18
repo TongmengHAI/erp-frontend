@@ -20,6 +20,10 @@ export const HRM_ROUTES = {
     EMPLOYEE_NEW: 'hrm.employee.new',
     EMPLOYEE_DETAIL: 'hrm.employee.detail',
     EMPLOYEE_EDIT: 'hrm.employee.edit',
+    DEPARTMENT_LIST: 'hrm.department.list',
+    DEPARTMENT_NEW: 'hrm.department.new',
+    DEPARTMENT_DETAIL: 'hrm.department.detail',
+    DEPARTMENT_EDIT: 'hrm.department.edit',
 } as const;
 
 /**
@@ -76,6 +80,48 @@ export const hrmRoutes: RouteRecordRaw[] = [
         meta: {
             breadcrumb: 'Edit employee',
             permission: 'hrm.employee.update',
+        },
+        props: (route) => ({ id: Number(route.params.id) }),
+    },
+    // ── Departments ─────────────────────────────────────────────────────
+    // Same routing shape as Employees — four routes per resource: list,
+    // new, detail, edit. The (\\d+) regex on detail/edit prevents
+    // /departments/new being shadow-matched as id="new".
+    {
+        path: 'departments',
+        name: HRM_ROUTES.DEPARTMENT_LIST,
+        component: () => import('./pages/DepartmentListPage.vue'),
+        meta: {
+            breadcrumb: 'Departments',
+            permission: 'hrm.department.view',
+        },
+    },
+    {
+        path: 'departments/new',
+        name: HRM_ROUTES.DEPARTMENT_NEW,
+        component: () => import('./pages/DepartmentFormPage.vue'),
+        meta: {
+            breadcrumb: 'New department',
+            permission: 'hrm.department.create',
+        },
+    },
+    {
+        path: 'departments/:id(\\d+)',
+        name: HRM_ROUTES.DEPARTMENT_DETAIL,
+        component: () => import('./pages/DepartmentDetailPage.vue'),
+        meta: {
+            breadcrumb: 'Department',
+            permission: 'hrm.department.view',
+        },
+        props: (route) => ({ id: Number(route.params.id) }),
+    },
+    {
+        path: 'departments/:id(\\d+)/edit',
+        name: HRM_ROUTES.DEPARTMENT_EDIT,
+        component: () => import('./pages/DepartmentFormPage.vue'),
+        meta: {
+            breadcrumb: 'Edit department',
+            permission: 'hrm.department.update',
         },
         props: (route) => ({ id: Number(route.params.id) }),
     },

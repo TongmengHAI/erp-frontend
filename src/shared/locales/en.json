@@ -35,6 +35,8 @@
         "modules": {
             "dashboard": "Dashboard",
             "hrm": "HRM",
+            "employees": "Employees",
+            "departments": "Departments",
             "accounting": "Accounting",
             "inventory": "Inventory",
             "procurement": "Procurement",
@@ -222,6 +224,105 @@
                 "list": "Employees",
                 "new": "New employee",
                 "edit": "Edit employee"
+            }
+        },
+        "department": {
+            "list": {
+                "title": "Departments",
+                "subtitle": "Organize the teams within your company.",
+                "newAction": "New department",
+                "search": {
+                    "placeholder": "Search by name or code…",
+                    "label": "Search"
+                },
+                "filters": {
+                    "status": "Status",
+                    "anyStatus": "Any status"
+                },
+                "actions": {
+                    "view": "View",
+                    "edit": "Edit",
+                    "delete": "Delete"
+                },
+                "columns": {
+                    "code": "Code",
+                    "name": "Name",
+                    "status": "Status"
+                },
+                "empty": {
+                    "title": "No departments yet",
+                    "description": "Add your first department to start organizing the team.",
+                    "action": "Create first department"
+                },
+                "filteredEmpty": {
+                    "title": "No matching departments",
+                    "description": "Try clearing the search or status filter."
+                }
+            },
+            "detail": {
+                "edit": "Edit",
+                "delete": "Delete",
+                "fields": {
+                    "code": "Department code",
+                    "name": "Name",
+                    "description": "Description",
+                    "status": "Status"
+                },
+                "noDescription": "—",
+                "sections": {
+                    "details": "Details"
+                }
+            },
+            "form": {
+                "create": {
+                    "title": "New department",
+                    "submit": "Create department",
+                    "submitting": "Creating…"
+                },
+                "edit": {
+                    "title": "Edit department",
+                    "submit": "Save changes",
+                    "submitting": "Saving…"
+                },
+                "fields": {
+                    "code": "Department code",
+                    "codeHelp": "Unique within this company (e.g. D-OPS).",
+                    "name": "Name",
+                    "description": "Description",
+                    "descriptionHelp": "Optional. Short descriptor — up to 500 characters.",
+                    "status": "Status"
+                },
+                "errors": {
+                    "unknown": "Something went wrong. Please try again.",
+                    "forbidden": "You don't have permission to perform this action."
+                }
+            },
+            "status": {
+                "active": "Active",
+                "archived": "Archived"
+            },
+            "delete": {
+                "confirmTitle": "Delete department?",
+                "confirmMessage": "Delete {name}? This can't be undone.",
+                "confirmAction": "Delete",
+                "toast": {
+                    "success": "Department deleted.",
+                    "error": "Couldn't delete this department. Please try again."
+                }
+            },
+            "toast": {
+                "created": "Department created.",
+                "updated": "Changes saved."
+            },
+            "notFound": {
+                "title": "Department not found",
+                "description": "This department doesn't exist or has been removed.",
+                "action": "Back to departments"
+            },
+            "breadcrumb": {
+                "list": "Departments",
+                "new": "New department",
+                "edit": "Edit department"
             }
         }
     }

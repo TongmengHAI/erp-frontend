@@ -19,13 +19,22 @@ export const SIDEBAR_MODULES: readonly SidebarModule[] = Object.freeze([
         routeName: 'dashboard',
     },
     {
-        // HRM ships its first real page in E1 (employee list). The sidebar
-        // routes directly to the list rather than through the /hrm redirect
-        // — that's cosmetic (the route is the active one either way), but
-        // it makes the active-item highlight precise.
-        label: 'navigation.modules.hrm',
+        // The HRM module ships two flat sibling entries: Employees and
+        // Departments. The original "HRM" label was a placeholder from when
+        // Employees was the only HRM module; with two siblings, the more
+        // honest IA is to flatten and let the user pick the resource
+        // directly. The route name and permission gate are unchanged —
+        // only the displayed label moved from navigation.modules.hrm to
+        // navigation.modules.employees.
+        label: 'navigation.modules.employees',
         icon: 'pi pi-users',
         routeName: 'hrm.employee.list',
+        permissionPrefix: 'hrm',
+    },
+    {
+        label: 'navigation.modules.departments',
+        icon: 'pi pi-sitemap',
+        routeName: 'hrm.department.list',
         permissionPrefix: 'hrm',
     },
     {
