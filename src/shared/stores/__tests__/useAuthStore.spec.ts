@@ -29,6 +29,19 @@ const ME_OK: AuthMeResponse = {
             functional_currency: 'USD',
             timezone: 'Asia/Phnom_Penh',
         },
+        current_company: {
+            id: 3,
+            slug: 'acme-trading',
+            name: 'Acme Trading Co.',
+            country_code: 'KH',
+            default_currency: 'USD',
+            functional_currency: 'USD',
+            timezone: 'Asia/Phnom_Penh',
+            status: 'active',
+        },
+        companies: [
+            { id: 3, slug: 'acme-trading', name: 'Acme Trading Co.', status: 'active' },
+        ],
         roles: ['accountant'],
         permissions: [
             'accounting.journal_entry.view',

@@ -25,8 +25,14 @@ export const EMPLOYEE_STATUSES: readonly EmployeeStatus[] = Object.freeze([
  * Compact Employee shape — used in list (index) responses. Drops
  * `email`/`created_at`/`updated_at` for payload efficiency. Renders in
  * the list page table.
+ *
+ * Extends `Record<string, unknown>` so the shared DataTable component's
+ * generic constraint (`T extends Record<string, unknown>`) is satisfied
+ * — same precedent as ComponentsPlaygroundPage's DemoEntry. The
+ * intersection is structural only; consumers still get strict field
+ * access on the named keys.
  */
-export interface EmployeeBrief {
+export interface EmployeeBrief extends Record<string, unknown> {
     id: number;
     employee_code: string;
     full_name: string;

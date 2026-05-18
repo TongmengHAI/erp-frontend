@@ -33,6 +33,41 @@ export interface AuthTenant {
     timezone: string;
 }
 
+/**
+ * Company status enum mirroring backend `CompanyStatus`. Only active
+ * companies appear in `companies[]`; archived companies are filtered
+ * server-side. `current_company.status` is always 'active' too (the
+ * resolution chain only pins active companies).
+ */
+export type AuthCompanyStatus = 'active' | 'archived';
+
+/**
+ * Full Company shape — returned as `data.current_company` in /auth/me.
+ * Mirrors AuthTenant's shape plus a status. The SPA uses these fields
+ * for chrome (currency-formatting defaults, timezone-aware date display).
+ */
+export interface AuthCompany {
+    id: number;
+    slug: string;
+    name: string;
+    country_code: string;
+    default_currency: string;
+    functional_currency: string;
+    timezone: string;
+    status: AuthCompanyStatus;
+}
+
+/**
+ * Compact Company shape — entries in `data.companies[]`. Used by the
+ * company picker UI (deferred) when the current_company is null.
+ */
+export interface AuthCompanyBrief {
+    id: number;
+    slug: string;
+    name: string;
+    status: AuthCompanyStatus;
+}
+
 export interface LoginRequest {
     email: string;
     password: string;
@@ -49,6 +84,20 @@ export interface AuthMeResponse {
     data: {
         user: AuthUser;
         tenant: AuthTenant;
+        /**
+         * The resolved company for this request. May be null when the route
+         * is `company:optional` AND no company resolves (e.g. multi-company
+         * tenant where the user hasn't picked yet). For company-required
+         * routes, this is never null in practice — the backend returns 401
+         * `error_code=company_required` before reaching here.
+         */
+        current_company: AuthCompany | null;
+        /**
+         * All active companies in the user's tenant. Drives the company
+         * picker UI (deferred) when `current_company` is null. Always
+         * present; empty array means no active companies exist.
+         */
+        companies: AuthCompanyBrief[];
         /**
          * Role names assigned in the current tenant. Display-only. NEVER
          * branch UI on role names — only on permissions.

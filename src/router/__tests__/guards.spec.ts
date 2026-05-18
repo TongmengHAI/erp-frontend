@@ -223,6 +223,8 @@ describe('route guards', () => {
                     functional_currency: 'USD',
                     timezone: 'Asia/Phnom_Penh',
                 },
+                current_company: null,
+                companies: [],
                 roles: [],
                 permissions: [],
             },
