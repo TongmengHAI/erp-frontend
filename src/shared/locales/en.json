@@ -119,6 +119,11 @@
                 "title": "Employees",
                 "subtitle": "Manage the people in your company.",
                 "newAction": "New employee",
+                "actions": {
+                    "view": "View",
+                    "edit": "Edit",
+                    "delete": "Delete"
+                },
                 "search": {
                     "placeholder": "Search by name or code…",
                     "label": "Search"

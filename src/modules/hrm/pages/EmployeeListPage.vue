@@ -136,11 +136,14 @@ const canDelete = computed<boolean>(() => auth.can('hrm.employee.delete'));
 // Visibility predicates live on individual actions (see DataTable's
 // RowAction.visible). Build the kebab menu reactively so role changes
 // during a session reflow it without a remount.
+//
+// Labels are i18n keys — DataTable wraps them in `t()` before rendering
+// (mirrors the column-header behavior). Pass keys, not literals.
 const rowActions = computed<RowAction<EmployeeBrief>[]>(() => {
     const actions: RowAction<EmployeeBrief>[] = [
         {
             key: 'view',
-            label: 'hrm.employee.detail.edit',
+            label: 'hrm.employee.list.actions.view',
             icon: 'pi pi-eye',
             onClick: (row) => navigateToDetail(row.id),
         },
@@ -148,7 +151,7 @@ const rowActions = computed<RowAction<EmployeeBrief>[]>(() => {
     if (canEdit.value) {
         actions.push({
             key: 'edit',
-            label: 'hrm.employee.detail.edit',
+            label: 'hrm.employee.list.actions.edit',
             icon: 'pi pi-pencil',
             onClick: (row) => navigateToEdit(row.id),
         });
@@ -156,7 +159,7 @@ const rowActions = computed<RowAction<EmployeeBrief>[]>(() => {
     if (canDelete.value) {
         actions.push({
             key: 'delete',
-            label: 'hrm.employee.detail.delete',
+            label: 'hrm.employee.list.actions.delete',
             icon: 'pi pi-trash',
             severity: 'danger',
             onClick: (row) => onDelete(row),

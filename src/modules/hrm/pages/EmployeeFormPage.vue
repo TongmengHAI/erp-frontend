@@ -6,6 +6,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { useForm } from 'vee-validate';
 import { toTypedSchema } from '@vee-validate/zod';
 import Button from 'primevue/button';
+import DatePicker from 'primevue/datepicker';
 import InputText from 'primevue/inputtext';
 import Select from 'primevue/select';
 import { useToast } from 'primevue/usetoast';
@@ -31,6 +32,10 @@ import {
     EMPLOYEE_STATUSES,
     type EmployeeStatus,
 } from '@/modules/hrm/types/employee';
+import {
+    dateToYYYYMMDD,
+    stringToDate,
+} from '@/modules/hrm/utils/dateConversion';
 import type { BreadcrumbItem } from '@/shared/types/navigation';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -48,10 +53,11 @@ import type { BreadcrumbItem } from '@/shared/types/navigation';
 // VeeValidate setErrors map. Live-verified against a duplicate employee_code
 // submit during Day 5 smoke.
 //
-// hire_date is a YYYY-MM-DD string throughout — native <input type="date">
-// emits the right shape natively and dodges FormField's `string | undefined`
-// generic constraint. PrimeVue Calendar would need a slot widening; native
-// input is the right depth-not-breadth call for this slice.
+// hire_date crosses two type boundaries: the backend wants YYYY-MM-DD
+// strings; PrimeVue DatePicker emits Date objects. FormField's slot is
+// typed `string | undefined`, so the conversion happens at the call site
+// — string in via stringToDate(), string out via dateToYYYYMMDD(). The
+// utility module covers the local-vs-UTC parsing trap; see its docblock.
 // ─────────────────────────────────────────────────────────────────────────────
 
 interface Props {
@@ -100,7 +106,7 @@ const defaultInitial: EmployeeFormValues = {
     status: 'active',
 };
 
-const { handleSubmit, setErrors, setValues, isSubmitting, meta } =
+const { handleSubmit, setErrors, setValues, isSubmitting } =
     useForm<EmployeeFormValues>({
         validationSchema: toTypedSchema(employeeFormSchema),
         initialValues: defaultInitial,
@@ -272,11 +278,13 @@ const submitLabel = computed<string>(() => {
         : t('hrm.employee.form.create.submit');
 });
 
-// In edit mode the form is invalid by default until the watch fires, so we
-// only disable on validation state once the user has interacted.
-const submitDisabled = computed<boolean>(
-    () => !meta.value.valid && meta.value.touched,
-);
+// Submit button stays clickable even when fields are blank — VeeValidate's
+// handleSubmit guards correctness, and disabling-on-invalid is the anti-
+// pattern that surfaced as Day 6 Bug 1: a user trying to submit got no
+// feedback (button grayed out silently). With the gate off, clicking
+// triggers handleSubmit, which runs the schema and surfaces inline errors
+// next to each failing field. The button is still inert during in-flight
+// requests (FormActions's `loading` prop handles that).
 </script>
 
 <template>
@@ -424,15 +432,34 @@ const submitDisabled = computed<boolean>(
                             :label="t('hrm.employee.form.fields.hireDate')"
                             required
                         >
-                            <!-- Native date input: emits YYYY-MM-DD strings,
-                                 satisfies FormField's string slot type, and
-                                 hits the Zod regex directly. PrimeVue
-                                 Calendar would force a slot widening. -->
-                            <input
-                                v-bind="field"
-                                type="date"
-                                class="w-full rounded-md border border-border-default bg-surface px-3 py-2 text-text-primary focus:border-brand focus:outline-none focus-visible:ring-2 focus-visible:ring-border-focus"
+                            <!-- DatePicker speaks Date objects; the form
+                                 state speaks YYYY-MM-DD strings. The
+                                 manual wiring below bridges both directions
+                                 (v-bind="field" can't reach DatePicker
+                                 because field.modelValue is typed as
+                                 string and DatePicker emits Date). Reading
+                                 in: stringToDate(field.modelValue) hydrates
+                                 the picker from the form state. Writing
+                                 out: dateToYYYYMMDD(d) commits the user's
+                                 pick back to the form state. onBlur is
+                                 forwarded so VeeValidate's blur-side
+                                 validation still fires. -->
+                            <DatePicker
+                                :model-value="stringToDate(field.modelValue)"
+                                :name="field.name"
+                                date-format="yy-mm-dd"
+                                show-icon
+                                show-button-bar
+                                class="w-full"
+                                input-class="w-full"
                                 data-testid="employee-form-hire-date"
+                                @update:model-value="
+                                    (d) =>
+                                        field['onUpdate:modelValue'](
+                                            dateToYYYYMMDD(d as Date | null),
+                                        )
+                                "
+                                @blur="field.onBlur"
                             />
                         </FormField>
 
@@ -456,7 +483,6 @@ const submitDisabled = computed<boolean>(
                     <FormActions
                         :submit-label="submitLabel"
                         :loading="isSubmitting"
-                        :disabled="submitDisabled"
                         @submit="onSubmit"
                         @cancel="onCancel"
                     />

@@ -192,7 +192,13 @@ const rowActionsMenuItems = computed<MenuItem[]>(() => {
     return props.rowActions
         .filter((a) => !a.visible || a.visible(row))
         .map((a) => ({
-            label: a.label,
+            // Translate the label — matches the column-header behavior at
+            // the bottom of this template (`:header="t(col.label)"`). The
+            // RowAction.label JSDoc has always said "i18n key acceptable";
+            // this is the implementation catching up. Passing a literal
+            // English label still works — t() of an unknown key returns
+            // the key itself.
+            label: t(a.label),
             icon: a.icon,
             class: a.severity === 'danger' ? 'data-table__action--danger' : '',
             command: () => a.onClick(row),

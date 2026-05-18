@@ -57,7 +57,11 @@ export interface DataTableColumn<T = Record<string, unknown>> {
 export interface RowAction<T = Record<string, unknown>> {
     /** Stable id for v-for keying and DOM data-testid. */
     key: string;
-    /** Menu item label; i18n key acceptable. */
+    /**
+     * Menu item label. DataTable wraps in `t()` before rendering — pass an
+     * i18n key. A literal English string still works because `t()` of an
+     * unknown key returns the key itself.
+     */
     label: string;
     /** PrimeIcons class for the menu item leading icon. */
     icon?: string;
