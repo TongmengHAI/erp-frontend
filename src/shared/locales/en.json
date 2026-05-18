@@ -112,5 +112,108 @@
         "subtitle": "This module is in development.",
         "cardTitle": "In development",
         "cardDescription": "{module} workflows aren't available yet. The navigation entry is in place — content arrives as the module ships."
+    },
+    "hrm": {
+        "employee": {
+            "list": {
+                "title": "Employees",
+                "subtitle": "Manage the people in your company.",
+                "newAction": "New employee",
+                "search": {
+                    "placeholder": "Search by name or code…",
+                    "label": "Search"
+                },
+                "filters": {
+                    "status": "Status",
+                    "anyStatus": "Any status"
+                },
+                "columns": {
+                    "code": "Code",
+                    "name": "Name",
+                    "jobTitle": "Job title",
+                    "status": "Status",
+                    "hireDate": "Hire date"
+                },
+                "empty": {
+                    "title": "No employees yet",
+                    "description": "Add your first team member to start building the directory.",
+                    "action": "Create first employee"
+                }
+            },
+            "detail": {
+                "edit": "Edit",
+                "delete": "Delete",
+                "fields": {
+                    "code": "Employee code",
+                    "fullName": "Full name",
+                    "email": "Email",
+                    "jobTitle": "Job title",
+                    "hireDate": "Hire date",
+                    "status": "Status",
+                    "createdAt": "Created",
+                    "updatedAt": "Last updated"
+                },
+                "noEmail": "—",
+                "noJobTitle": "—",
+                "sections": {
+                    "details": "Details"
+                }
+            },
+            "form": {
+                "create": {
+                    "title": "New employee",
+                    "submit": "Create employee",
+                    "submitting": "Creating…"
+                },
+                "edit": {
+                    "title": "Edit employee",
+                    "submit": "Save changes",
+                    "submitting": "Saving…"
+                },
+                "fields": {
+                    "code": "Employee code",
+                    "codeHelp": "Unique within this company (e.g. E-1001).",
+                    "fullName": "Full name",
+                    "email": "Email",
+                    "emailHelp": "Optional. Used for notifications when set.",
+                    "jobTitle": "Job title",
+                    "jobTitleHelp": "Optional. Free text — link to a structured Position later.",
+                    "hireDate": "Hire date",
+                    "status": "Status"
+                },
+                "errors": {
+                    "unknown": "Something went wrong. Please try again.",
+                    "forbidden": "You don't have permission to perform this action."
+                }
+            },
+            "status": {
+                "active": "Active",
+                "on_leave": "On leave",
+                "terminated": "Terminated"
+            },
+            "delete": {
+                "confirmTitle": "Delete employee?",
+                "confirmMessage": "Delete {name}? This can't be undone from the UI.",
+                "confirmAction": "Delete",
+                "toast": {
+                    "success": "Employee deleted.",
+                    "error": "Couldn't delete this employee. Please try again."
+                }
+            },
+            "toast": {
+                "created": "Employee created.",
+                "updated": "Changes saved."
+            },
+            "notFound": {
+                "title": "Employee not found",
+                "description": "This employee doesn't exist or has been removed.",
+                "action": "Back to employees"
+            },
+            "breadcrumb": {
+                "list": "Employees",
+                "new": "New employee",
+                "edit": "Edit employee"
+            }
+        }
     }
 }

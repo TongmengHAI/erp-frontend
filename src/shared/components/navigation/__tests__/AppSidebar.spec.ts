@@ -14,7 +14,10 @@ const STUB = { template: '<div />' };
 const NAV_ROUTES: RouteRecordRaw[] = [
     { path: '/', name: 'home', component: STUB },
     { path: '/dashboard', name: 'dashboard', component: STUB },
-    { path: '/hrm', name: 'hrm', component: STUB },
+    // HRM module ships its first real page (employee list) in E1; the
+    // sidebar's HRM item routes there directly instead of the old
+    // 'hrm' coming-soon placeholder.
+    { path: '/hrm/employees', name: 'hrm.employee.list', component: STUB },
     { path: '/accounting', name: 'accounting', component: STUB },
     { path: '/inventory', name: 'inventory', component: STUB },
     { path: '/procurement', name: 'procurement', component: STUB },
@@ -67,7 +70,7 @@ describe('AppSidebar', () => {
         const names = links.map((l) => l.attributes('data-route-name'));
         expect(names).toEqual([
             'dashboard',
-            'hrm',
+            'hrm.employee.list',
             'accounting',
             'inventory',
             'procurement',
@@ -142,7 +145,7 @@ describe('AppSidebar', () => {
         const accountingLink = w.find('a[data-route-name="accounting"]');
         expect(accountingLink.classes()).toContain('sidebar-item--active');
         // Non-active link should not have the highlight.
-        const hrmLink = w.find('a[data-route-name="hrm"]');
+        const hrmLink = w.find('a[data-route-name="hrm.employee.list"]');
         expect(hrmLink.classes()).not.toContain('sidebar-item--active');
     });
 });

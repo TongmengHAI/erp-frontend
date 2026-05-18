@@ -2,6 +2,7 @@ import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
 
 import { authRoutes } from '@/modules/auth/routes';
 import { DASHBOARD_ROUTES } from '@/modules/dashboard/routes';
+import { hrmRoutes, HRM_ROUTES } from '@/modules/hrm/routes';
 import { installGuards } from '@/router/guards';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -39,16 +40,21 @@ const routes: RouteRecordRaw[] = [
                 component: () => import('@/modules/dashboard/pages/DashboardPlaceholderPage.vue'),
                 meta: { breadcrumb: 'Dashboard' },
             },
+            // ── HRM ──────────────────────────────────────────────────────
+            // E1 slice: the real HRM module. /hrm itself redirects to the
+            // employee list; the four employee pages are nested children
+            // (list / new / detail / edit) declared in
+            // modules/hrm/routes.ts.
+            {
+                path: 'hrm',
+                redirect: { name: HRM_ROUTES.EMPLOYEE_LIST },
+                meta: { breadcrumb: 'HRM' },
+                children: hrmRoutes,
+            },
             // ── Module placeholders ──────────────────────────────────────
             // Each Phase slice swaps the `component` and drops the
             // `moduleLabel` meta when the real module lands. Route name,
             // path, and breadcrumb stay stable across the swap.
-            {
-                path: 'hrm',
-                name: 'hrm',
-                component: moduleComingSoon,
-                meta: { breadcrumb: 'HRM', moduleLabel: 'HRM' },
-            },
             {
                 path: 'accounting',
                 name: 'accounting',
