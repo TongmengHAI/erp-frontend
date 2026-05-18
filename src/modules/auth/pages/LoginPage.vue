@@ -6,7 +6,7 @@ import Password from 'primevue/password';
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
-import { useField, useForm } from 'vee-validate';
+import { useForm } from 'vee-validate';
 import { toTypedSchema } from '@vee-validate/zod';
 import { z } from 'zod';
 
@@ -44,14 +44,6 @@ const { handleSubmit, setErrors, isSubmitting } = useForm({
     validationSchema: loginSchema,
     initialValues: { email: '', password: '' },
 });
-
-// VeeValidate doesn't auto-bind plain inputs in v4 — we register each
-// field's value ref via useField() and v-model it onto the input. The
-// FormField wrapper (F2b) still owns label + error rendering via its own
-// useField call for errorMessage. Two useField calls per field is the
-// canonical pattern; the imperative API is by-design ref-stable.
-const { value: email } = useField<string>('email');
-const { value: password } = useField<string>('password');
 
 const formError = ref<string | null>(null);
 
@@ -128,10 +120,14 @@ const onSubmit = handleSubmit(async (values) => {
             </div>
 
             <form class="flex flex-col gap-4" novalidate @submit.prevent="onSubmit">
-                <FormField name="email" :label="t('auth.login.fields.email')" required>
+                <FormField
+                    v-slot="{ field }"
+                    name="email"
+                    :label="t('auth.login.fields.email')"
+                    required
+                >
                     <InputText
-                        v-model="email"
-                        name="email"
+                        v-bind="field"
                         type="email"
                         autocomplete="username"
                         class="w-full"
@@ -139,10 +135,14 @@ const onSubmit = handleSubmit(async (values) => {
                     />
                 </FormField>
 
-                <FormField name="password" :label="t('auth.login.fields.password')" required>
+                <FormField
+                    v-slot="{ field }"
+                    name="password"
+                    :label="t('auth.login.fields.password')"
+                    required
+                >
                     <Password
-                        v-model="password"
-                        name="password"
+                        v-bind="field"
                         :feedback="false"
                         toggle-mask
                         autocomplete="current-password"

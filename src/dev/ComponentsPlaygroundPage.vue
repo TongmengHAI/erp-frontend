@@ -142,12 +142,18 @@ const { handleSubmit, setFieldValue, setFieldError } = useForm({
 
 const formSubmitting = ref(false);
 const formSubmitCount = ref(0);
+// Last-captured submit values, exposed in the playground so the demo
+// EXERCISES value-capture rather than just incrementing a counter.
+// The F2b form demo originally only counted submits, which let a real
+// value-binding bug ship silently — closed by F5's FormField refactor.
+const lastSubmittedValues = ref<Record<string, unknown> | null>(null);
 
-const onSubmit = handleSubmit(async () => {
+const onSubmit = handleSubmit(async (values) => {
     formSubmitting.value = true;
     await new Promise((r) => setTimeout(r, 800));
     formSubmitting.value = false;
     formSubmitCount.value += 1;
+    lastSubmittedValues.value = values;
 });
 
 function onCancel() {
@@ -898,19 +904,37 @@ const dtServerView = computed<DemoEntry[]>(() => {
                     </p>
                     <CardSection>
                         <form class="flex flex-col gap-4" @submit.prevent="onSubmit">
-                            <FormField name="employeeName" label="Employee name" required>
-                                <InputText name="employeeName" :model-value="undefined" class="w-full" placeholder="Jane Bookkeeper" />
+                            <FormField
+                                v-slot="{ field }"
+                                name="employeeName"
+                                label="Employee name"
+                                required
+                            >
+                                <InputText
+                                    v-bind="field"
+                                    class="w-full"
+                                    placeholder="Jane Bookkeeper"
+                                />
                             </FormField>
                             <FormField
+                                v-slot="{ field }"
                                 name="salary"
                                 label="Salary"
                                 required
                                 help="BCMath string at scale 2–4, e.g. 50000.00"
                             >
-                                <InputText name="salary" class="w-full" placeholder="50000.00" />
+                                <InputText
+                                    v-bind="field"
+                                    class="w-full"
+                                    placeholder="50000.00"
+                                />
                             </FormField>
-                            <FormField name="hireDate" label="Hire date" required>
-                                <InputText name="hireDate" class="w-full" placeholder="2026-05-12" />
+                            <FormField v-slot="{ field }" name="hireDate" label="Hire date" required>
+                                <InputText
+                                    v-bind="field"
+                                    class="w-full"
+                                    placeholder="2026-05-12"
+                                />
                             </FormField>
                             <div class="flex items-center gap-2">
                                 <Button
@@ -927,6 +951,21 @@ const dtServerView = computed<DemoEntry[]>(() => {
                                 @cancel="onCancel"
                             />
                         </form>
+                    </CardSection>
+
+                    <!-- Captured-values debug pane. Without this, the F2b
+                         counter-only demo couldn't have surfaced the
+                         value-binding bug F5 closed. The pre-block proves
+                         that submitting the form CAPTURES typed values
+                         through FormField's scoped `field` slot. -->
+                    <CardSection title="Last submitted values" class="mt-4">
+                        <pre
+                            v-if="lastSubmittedValues"
+                            class="overflow-x-auto rounded-md bg-surface-sunken p-3 text-xs text-text-secondary"
+                        >{{ JSON.stringify(lastSubmittedValues, null, 2) }}</pre>
+                        <p v-else class="text-sm text-text-tertiary">
+                            Submit the form to see the captured values.
+                        </p>
                     </CardSection>
                 </section>
 
