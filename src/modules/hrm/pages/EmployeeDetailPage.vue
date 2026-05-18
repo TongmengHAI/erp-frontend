@@ -4,6 +4,7 @@ import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import Button from 'primevue/button';
+import { useToast } from 'primevue/usetoast';
 
 import PageLayout from '@/shared/components/layout/PageLayout.vue';
 import PageHeader from '@/shared/components/layout/PageHeader.vue';
@@ -14,10 +15,14 @@ import StatusBadge, {
     type StatusSeverity,
 } from '@/shared/components/data-display/StatusBadge.vue';
 import DateDisplay from '@/shared/components/data-display/DateDisplay.vue';
-import { useEmployeeQuery } from '@/modules/hrm/composables/useEmployees';
+import {
+    useDeleteEmployee,
+    useEmployeeQuery,
+} from '@/modules/hrm/composables/useEmployees';
 import { HRM_ROUTES } from '@/modules/hrm/routes';
 import type { EmployeeStatus } from '@/modules/hrm/types/employee';
 import { useAuthStore } from '@/shared/stores/useAuthStore';
+import { useAppConfirm } from '@/shared/composables/useAppConfirm';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // EmployeeDetailPage — single-employee view, route param drives the query.
@@ -42,10 +47,13 @@ const props = defineProps<Props>();
 const { t } = useI18n();
 const router = useRouter();
 const auth = useAuthStore();
+const toast = useToast();
+const { confirmDelete } = useAppConfirm();
 
 const { data, isLoading, isError, error, refetch } = useEmployeeQuery(
     () => props.id,
 );
+const deleteMutation = useDeleteEmployee();
 
 const employee = computed(() => data.value?.data ?? null);
 
@@ -68,6 +76,7 @@ const isNotFound = computed<boolean>(() => {
 const isGenericError = computed<boolean>(() => isError.value && !isNotFound.value);
 
 const canEdit = computed<boolean>(() => auth.can('hrm.employee.update'));
+const canDelete = computed<boolean>(() => auth.can('hrm.employee.delete'));
 
 function statusSeverity(status: EmployeeStatus): StatusSeverity {
     switch (status) {
@@ -100,6 +109,38 @@ function navigateToEdit(): void {
     void router.push({
         name: HRM_ROUTES.EMPLOYEE_EDIT,
         params: { id: employee.value.id },
+    });
+}
+
+/**
+ * Delete flow: confirm → mutate → toast → route back to list.
+ * Mutation errors surface as a danger toast and leave the user on the
+ * detail page. The composable invalidates the employee queryKey on
+ * success so the list re-fetches automatically.
+ */
+function onDelete(): void {
+    if (!employee.value) return;
+    const current = employee.value;
+    confirmDelete({
+        message: t('hrm.employee.delete.confirmMessage', { name: current.full_name }),
+        acceptLabel: t('hrm.employee.delete.confirmAction'),
+        onAccept: async () => {
+            try {
+                await deleteMutation.mutateAsync(current.id);
+                toast.add({
+                    severity: 'success',
+                    summary: t('hrm.employee.delete.toast.success'),
+                    life: 3000,
+                });
+                void router.push({ name: HRM_ROUTES.EMPLOYEE_LIST });
+            } catch {
+                toast.add({
+                    severity: 'error',
+                    summary: t('hrm.employee.delete.toast.error'),
+                    life: 4000,
+                });
+            }
+        },
     });
 }
 </script>
@@ -172,6 +213,15 @@ function navigateToEdit(): void {
                         severity="secondary"
                         data-testid="employee-detail-edit-button"
                         @click="navigateToEdit"
+                    />
+                    <Button
+                        v-if="canDelete"
+                        :label="t('hrm.employee.detail.delete')"
+                        icon="pi pi-trash"
+                        severity="danger"
+                        :loading="deleteMutation.isPending.value"
+                        data-testid="employee-detail-delete-button"
+                        @click="onDelete"
                     />
                 </template>
             </PageHeader>

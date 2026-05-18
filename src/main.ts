@@ -8,6 +8,7 @@ import { createPinia } from 'pinia';
 import { VueQueryPlugin } from '@tanstack/vue-query';
 import PrimeVue from 'primevue/config';
 import ConfirmationService from 'primevue/confirmationservice';
+import ToastService from 'primevue/toastservice';
 
 import App from './App.vue';
 import router from './router';
@@ -47,6 +48,7 @@ async function start(): Promise<void> {
     app.use(i18n);
     app.use(VueQueryPlugin);
     app.use(ConfirmationService);
+    app.use(ToastService);
     app.use(PrimeVue, {
         theme: {
             preset: ErpPreset,

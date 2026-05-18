@@ -5,6 +5,7 @@ import { useRouter } from 'vue-router';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import Select from 'primevue/select';
+import { useToast } from 'primevue/usetoast';
 
 import PageLayout from '@/shared/components/layout/PageLayout.vue';
 import PageHeader from '@/shared/components/layout/PageHeader.vue';
@@ -18,7 +19,10 @@ import type {
     DataTableColumn,
     RowAction,
 } from '@/shared/components/data-table/types';
-import { useEmployeesQuery } from '@/modules/hrm/composables/useEmployees';
+import {
+    useDeleteEmployee,
+    useEmployeesQuery,
+} from '@/modules/hrm/composables/useEmployees';
 import { HRM_ROUTES } from '@/modules/hrm/routes';
 import type {
     EmployeeBrief,
@@ -27,6 +31,7 @@ import type {
 } from '@/modules/hrm/types/employee';
 import { EMPLOYEE_STATUSES } from '@/modules/hrm/types/employee';
 import { useAuthStore } from '@/shared/stores/useAuthStore';
+import { useAppConfirm } from '@/shared/composables/useAppConfirm';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // EmployeeListPage — paginated employee list with search + status filter.
@@ -52,6 +57,9 @@ import { useAuthStore } from '@/shared/stores/useAuthStore';
 const { t } = useI18n();
 const router = useRouter();
 const auth = useAuthStore();
+const toast = useToast();
+const { confirmDelete } = useAppConfirm();
+const deleteMutation = useDeleteEmployee();
 
 // ─── Filter state ───────────────────────────────────────────────────────────
 const searchInput = ref('');
@@ -121,18 +129,41 @@ const columns = computed<DataTableColumn<EmployeeBrief>[]>(() => [
     },
 ]);
 
-// ─── Row actions (Day 4: View only) ─────────────────────────────────────────
-// Edit + Delete arrive Day 5 alongside the form page. Until then there's
-// only one action, which the row click also triggers — the menu remains
-// for discoverability and as the wiring target for the Day 5 additions.
-const rowActions = computed<RowAction<EmployeeBrief>[]>(() => [
-    {
-        key: 'view',
-        label: 'common.confirm.confirm',
-        icon: 'pi pi-eye',
-        onClick: (row) => navigateToDetail(row.id),
-    },
-]);
+// ─── Permission-gated row actions ───────────────────────────────────────────
+const canEdit = computed<boolean>(() => auth.can('hrm.employee.update'));
+const canDelete = computed<boolean>(() => auth.can('hrm.employee.delete'));
+
+// Visibility predicates live on individual actions (see DataTable's
+// RowAction.visible). Build the kebab menu reactively so role changes
+// during a session reflow it without a remount.
+const rowActions = computed<RowAction<EmployeeBrief>[]>(() => {
+    const actions: RowAction<EmployeeBrief>[] = [
+        {
+            key: 'view',
+            label: 'hrm.employee.detail.edit',
+            icon: 'pi pi-eye',
+            onClick: (row) => navigateToDetail(row.id),
+        },
+    ];
+    if (canEdit.value) {
+        actions.push({
+            key: 'edit',
+            label: 'hrm.employee.detail.edit',
+            icon: 'pi pi-pencil',
+            onClick: (row) => navigateToEdit(row.id),
+        });
+    }
+    if (canDelete.value) {
+        actions.push({
+            key: 'delete',
+            label: 'hrm.employee.detail.delete',
+            icon: 'pi pi-trash',
+            severity: 'danger',
+            onClick: (row) => onDelete(row),
+        });
+    }
+    return actions;
+});
 
 function navigateToDetail(id: number): void {
     void router.push({ name: HRM_ROUTES.EMPLOYEE_DETAIL, params: { id } });
@@ -140,6 +171,33 @@ function navigateToDetail(id: number): void {
 
 function navigateToNew(): void {
     void router.push({ name: HRM_ROUTES.EMPLOYEE_NEW });
+}
+
+function navigateToEdit(id: number): void {
+    void router.push({ name: HRM_ROUTES.EMPLOYEE_EDIT, params: { id } });
+}
+
+function onDelete(row: EmployeeBrief): void {
+    confirmDelete({
+        message: t('hrm.employee.delete.confirmMessage', { name: row.full_name }),
+        acceptLabel: t('hrm.employee.delete.confirmAction'),
+        onAccept: async () => {
+            try {
+                await deleteMutation.mutateAsync(row.id);
+                toast.add({
+                    severity: 'success',
+                    summary: t('hrm.employee.delete.toast.success'),
+                    life: 3000,
+                });
+            } catch {
+                toast.add({
+                    severity: 'error',
+                    summary: t('hrm.employee.delete.toast.error'),
+                    life: 4000,
+                });
+            }
+        },
+    });
 }
 
 function statusLabel(status: EmployeeStatus): string {
