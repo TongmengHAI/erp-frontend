@@ -2,7 +2,7 @@
 import axios from 'axios';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { useRouter } from 'vue-router';
+import { RouterLink, useRouter } from 'vue-router';
 import Button from 'primevue/button';
 import { useToast } from 'primevue/usetoast';
 
@@ -249,6 +249,39 @@ function onDelete(): void {
                         </dd>
                     </div>
                 </dl>
+            </CardSection>
+
+            <!-- Employees section. Count comes pre-computed from the
+                 server (DepartmentResource's employees_count, populated
+                 via withCount). The "View employees" link navigates to
+                 the Employee list filtered by this department's id —
+                 reuses the same ?department_id= filter the chip on that
+                 page reads, single source of truth for the filtered
+                 view. No embedded employee list; thin twin, one
+                 affordance per concern. -->
+            <CardSection
+                :title="t('hrm.department.detail.sections.employees')"
+                class="mt-4"
+            >
+                <div class="flex items-center justify-between gap-4">
+                    <p class="text-base text-text-secondary" data-testid="department-detail-employees-count">
+                        {{ t('hrm.department.detail.employeesCount', department.employees_count, {
+                            named: { n: department.employees_count },
+                        }) }}
+                    </p>
+                    <RouterLink
+                        v-if="department.employees_count > 0"
+                        :to="{
+                            name: HRM_ROUTES.EMPLOYEE_LIST,
+                            query: { department_id: department.id },
+                        }"
+                        class="inline-flex items-center gap-1 text-brand hover:underline focus:outline-none focus:underline"
+                        data-testid="department-detail-view-employees"
+                    >
+                        {{ t('hrm.department.detail.viewEmployees') }}
+                        <i class="pi pi-arrow-right text-xs" aria-hidden="true"></i>
+                    </RouterLink>
+                </div>
             </CardSection>
         </template>
     </PageLayout>

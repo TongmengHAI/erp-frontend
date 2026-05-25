@@ -43,6 +43,11 @@ export interface Department {
     name: string;
     description: string | null;
     status: DepartmentStatus;
+    /** Derived count of employees currently in this department within
+     *  the same (tenant, company). Pre-computed on the show endpoint via
+     *  withCount('employees'); the list (Brief) shape does NOT include
+     *  this — detail-page chrome only. */
+    employees_count: number;
     /** ISO 8601 timestamp. */
     created_at: string;
     /** ISO 8601 timestamp. */

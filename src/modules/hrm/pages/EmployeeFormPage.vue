@@ -3,7 +3,7 @@ import axios from 'axios';
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
-import { useForm } from 'vee-validate';
+import { useField, useForm } from 'vee-validate';
 import { toTypedSchema } from '@vee-validate/zod';
 import Button from 'primevue/button';
 import DatePicker from 'primevue/datepicker';
@@ -22,6 +22,7 @@ import {
     useEmployeeQuery,
     useUpdateEmployee,
 } from '@/modules/hrm/composables/useEmployees';
+import { useDepartmentsQuery } from '@/modules/hrm/composables/useDepartments';
 import {
     employeeFormSchema,
     type EmployeeFormValues,
@@ -102,6 +103,7 @@ const defaultInitial: EmployeeFormValues = {
     full_name: '',
     email: '',
     job_title: '',
+    department_id: null,
     hire_date: '',
     status: 'active',
 };
@@ -126,12 +128,57 @@ watch(
             full_name: employee.full_name,
             email: employee.email ?? '',
             job_title: employee.job_title ?? '',
+            // Flatten the nested department snapshot back to a plain id
+            // for the picker's v-model. null both when unassigned AND when
+            // the assigned department was soft-deleted (the backend
+            // returns department: null in both cases).
+            department_id: employee.department?.id ?? null,
             hire_date: employee.hire_date,
             status: employee.status,
         });
     },
     { immediate: true },
 );
+
+// ─── Department picker data + binding ──────────────────────────────────────
+// per_page: 100 matches the backend's `max:100` cap on the index endpoint.
+// Beyond 100 active departments, the picker silently shows the first 100 —
+// at that scale the form needs a typeahead instead, which is a follow-up.
+// status: 'active' excludes archived departments from the assignable set.
+const departmentsQuery = useDepartmentsQuery(() => ({
+    status: 'active' as const,
+    per_page: 100,
+}));
+
+// useField bypass for the department_id picker — FormField's scoped slot
+// is typed `string | undefined`, but the picker emits `number | null`.
+// Rather than widening FormField (which would fight every existing PV
+// InputText consumer), we use FormField in standalone-chrome mode (plain
+// default slot, no v-slot) and bind the Select directly to this useField
+// call. The form's useForm() context still owns the value (setValues in
+// the watch above hydrates this same field state), and the FormField
+// wrapper still renders the label + error message via its internal
+// useField call on the same name.
+const {
+    value: departmentIdValue,
+    handleChange: handleDepartmentIdChange,
+    handleBlur: handleDepartmentIdBlur,
+} = useField<number | null>('department_id');
+
+interface DepartmentOption {
+    value: number | null;
+    label: string;
+}
+const departmentOptions = computed<DepartmentOption[]>(() => [
+    // "— None —" first so clearing is one click. value: null is what the
+    // backend wants on the wire; the picker's v-model is null when this
+    // option is selected.
+    { value: null, label: t('hrm.employee.form.fields.noDepartment') },
+    ...(departmentsQuery.data.value?.data ?? []).map((d) => ({
+        value: d.id,
+        label: d.name,
+    })),
+]);
 
 // ─── Mutations + submit ─────────────────────────────────────────────────────
 const createMutation = useCreateEmployee();
@@ -151,13 +198,15 @@ const statusOptions = computed<StatusOption[]>(() =>
 
 /** Empty-string → null for nullable optional fields. The backend's
  *  StoreEmployeeRequest treats null/missing as "no value"; bare '' would
- *  fail the email validator. */
+ *  fail the email validator. department_id is already a number or null
+ *  from the picker — no string conversion needed. */
 function normalizePayload(values: EmployeeFormValues) {
     return {
         employee_code: values.employee_code,
         full_name: values.full_name,
         email: values.email === '' ? null : values.email,
         job_title: values.job_title === '' ? null : values.job_title,
+        department_id: values.department_id ?? null,
         hire_date: values.hire_date,
         status: values.status as EmployeeStatus,
     };
@@ -423,6 +472,35 @@ const submitLabel = computed<string>(() => {
                                 class="w-full"
                                 autocomplete="organization-title"
                                 data-testid="employee-form-job-title"
+                            />
+                        </FormField>
+
+                        <FormField
+                            name="department_id"
+                            :label="t('hrm.employee.form.fields.department')"
+                        >
+                            <!-- Standalone-chrome mode (no v-slot): the
+                                 picker emits number | null, which doesn't
+                                 fit FormField's string-typed scoped slot.
+                                 The script-side useField('department_id')
+                                 above is bound directly to PV Select's
+                                 v-model. FormField still renders the label
+                                 + error chrome via its internal useField on
+                                 the same name. -->
+                            <Select
+                                :model-value="departmentIdValue"
+                                name="department_id"
+                                :options="departmentOptions"
+                                option-label="label"
+                                option-value="value"
+                                :loading="departmentsQuery.isLoading.value"
+                                :disabled="departmentsQuery.isLoading.value"
+                                class="w-full"
+                                data-testid="employee-form-department"
+                                @update:model-value="
+                                    (v) => handleDepartmentIdChange(v as number | null)
+                                "
+                                @blur="() => handleDepartmentIdBlur()"
                             />
                         </FormField>
 

@@ -43,6 +43,13 @@ export const employeeFormSchema = z.object({
         .union([z.literal(''), z.string().trim().max(255)])
         .optional()
         .nullable(),
+    // Department FK — nullable integer, optional. The picker's "— None —"
+    // option emits null; assigning a department emits the id. No
+    // client-side existence check (the picker only shows valid
+    // same-company departments); foreign-context ids only reach the
+    // backend if the cached picker data is stale, in which case the
+    // 422 → setErrors path surfaces the error inline.
+    department_id: z.number().int().positive().nullable().optional(),
     hire_date: z
         .string({ required_error: 'Hire date is required.' })
         .min(1, 'Hire date is required.')

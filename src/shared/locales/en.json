@@ -137,10 +137,13 @@
                 "columns": {
                     "code": "Code",
                     "name": "Name",
+                    "department": "Department",
                     "jobTitle": "Job title",
                     "status": "Status",
                     "hireDate": "Hire date"
                 },
+                "departmentFilterChip": "Filtered to: {name}",
+                "clearDepartmentFilter": "Clear department filter",
                 "empty": {
                     "title": "No employees yet",
                     "description": "Add your first team member to start building the directory.",
@@ -159,6 +162,7 @@
                     "fullName": "Full name",
                     "email": "Email",
                     "jobTitle": "Job title",
+                    "department": "Department",
                     "hireDate": "Hire date",
                     "status": "Status",
                     "createdAt": "Created",
@@ -166,6 +170,7 @@
                 },
                 "noEmail": "—",
                 "noJobTitle": "—",
+                "noDepartment": "—",
                 "sections": {
                     "details": "Details"
                 }
@@ -189,6 +194,8 @@
                     "emailHelp": "Optional.",
                     "jobTitle": "Job title",
                     "jobTitleHelp": "Optional.",
+                    "department": "Department",
+                    "noDepartment": "— None —",
                     "hireDate": "Hire date",
                     "status": "Status"
                 },
@@ -270,8 +277,11 @@
                 },
                 "noDescription": "—",
                 "sections": {
-                    "details": "Details"
-                }
+                    "details": "Details",
+                    "employees": "Employees"
+                },
+                "employeesCount": "no employees | {n} employee | {n} employees",
+                "viewEmployees": "View employees"
             },
             "form": {
                 "create": {

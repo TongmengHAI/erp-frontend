@@ -2,7 +2,7 @@
 import axios from 'axios';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { useRouter } from 'vue-router';
+import { RouterLink, useRouter } from 'vue-router';
 import Button from 'primevue/button';
 import { useToast } from 'primevue/usetoast';
 
@@ -282,6 +282,39 @@ function onDelete(): void {
                             <span v-if="employee.job_title">{{ employee.job_title }}</span>
                             <span v-else class="text-text-tertiary">
                                 {{ t('hrm.employee.detail.noJobTitle') }}
+                            </span>
+                        </dd>
+                    </div>
+
+                    <div>
+                        <dt class="text-sm font-medium text-text-secondary">
+                            {{ t('hrm.employee.detail.fields.department') }}
+                        </dt>
+                        <dd
+                            class="mt-1 text-base"
+                            data-testid="employee-detail-department"
+                        >
+                            <!-- Department name links to the Department detail
+                                 page — natural cross-module drill-down. The
+                                 RouterLink uses the named route so any future
+                                 URL change to /hrm/departments/:id ripples
+                                 through automatically. Null renders as "—"
+                                 (also covers the soft-deleted-department
+                                 case — backend returns department: null
+                                 when the parent row is trashed). -->
+                            <RouterLink
+                                v-if="employee.department"
+                                :to="{
+                                    name: HRM_ROUTES.DEPARTMENT_DETAIL,
+                                    params: { id: employee.department.id },
+                                }"
+                                class="text-brand hover:underline focus:outline-none focus:underline"
+                                :data-testid="`employee-detail-department-link-${employee.department.id}`"
+                            >
+                                {{ employee.department.name }}
+                            </RouterLink>
+                            <span v-else class="text-text-tertiary">
+                                {{ t('hrm.employee.detail.noDepartment') }}
                             </span>
                         </dd>
                     </div>

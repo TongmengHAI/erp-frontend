@@ -24,10 +24,15 @@ describe('employees API', () => {
             .spyOn(apiClient, 'get')
             .mockResolvedValue({ data: { data: [], meta: {}, links: {} } });
 
-        await employeesApi.listEmployees({ status: 'active', page: 2, per_page: 50 });
+        await employeesApi.listEmployees({
+            status: 'active',
+            department_id: 7,
+            page: 2,
+            per_page: 50,
+        });
 
         expect(get).toHaveBeenCalledWith('/hrm/employees', {
-            params: { status: 'active', page: 2, per_page: 50 },
+            params: { status: 'active', department_id: 7, page: 2, per_page: 50 },
         });
     });
 

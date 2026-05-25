@@ -36,10 +36,26 @@ export interface EmployeeBrief extends Record<string, unknown> {
     id: number;
     employee_code: string;
     full_name: string;
+    /** Flat department name (not the full nested object) — list shape is
+     *  compact. Null when the employee has no current department, OR when
+     *  the assigned department was soft-deleted. */
+    department_name: string | null;
     job_title: string | null;
     /** ISO 8601 date (YYYY-MM-DD). */
     hire_date: string;
     status: EmployeeStatus;
+}
+
+/**
+ * Nested department snapshot embedded in the full Employee resource.
+ * Three fields only — enough for the detail page to render a clickable
+ * link, no department metadata (description, timestamps, status) bleeds
+ * into every employee payload.
+ */
+export interface EmployeeDepartment {
+    id: number;
+    code: string;
+    name: string;
 }
 
 /**
@@ -52,6 +68,9 @@ export interface Employee {
     full_name: string;
     email: string | null;
     job_title: string | null;
+    /** Nested department snapshot, or null when unassigned / soft-deleted.
+     *  See EmployeeDepartment for the shape. */
+    department: EmployeeDepartment | null;
     /** ISO 8601 date (YYYY-MM-DD). */
     hire_date: string;
     status: EmployeeStatus;
@@ -69,6 +88,10 @@ export interface Employee {
 export interface EmployeeListParams {
     search?: string;
     status?: EmployeeStatus;
+    /** Filter to a specific department. Cross-tenant or cross-company ids
+     *  silently return empty results — no 422, no leak. Used by the
+     *  Department detail page's "View employees" link. */
+    department_id?: number;
     /** 1–100, default 25 on the backend. */
     per_page?: number;
     /** 1-indexed, default 1. Standard Laravel pagination. */
@@ -112,6 +135,12 @@ export interface CreateEmployeeRequest {
     full_name: string;
     email?: string | null;
     job_title?: string | null;
+    /** FK → departments.id, or null for "no department". MUST be a
+     *  department in the same (tenant, company) — the backend enforces
+     *  this via scoped Rule::exists; a foreign-context id returns 422
+     *  with `errors.department_id`. The form's setErrors path maps it
+     *  to the picker inline. */
+    department_id?: number | null;
     /** ISO 8601 date (YYYY-MM-DD). */
     hire_date: string;
     status: EmployeeStatus;

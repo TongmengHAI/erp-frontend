@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import Select from 'primevue/select';
@@ -23,6 +23,7 @@ import {
     useDeleteEmployee,
     useEmployeesQuery,
 } from '@/modules/hrm/composables/useEmployees';
+import { useDepartmentQuery } from '@/modules/hrm/composables/useDepartments';
 import { HRM_ROUTES } from '@/modules/hrm/routes';
 import type {
     EmployeeBrief,
@@ -55,6 +56,7 @@ import { useAppConfirm } from '@/shared/composables/useAppConfirm';
 // ─────────────────────────────────────────────────────────────────────────────
 
 const { t } = useI18n();
+const route = useRoute();
 const router = useRouter();
 const auth = useAuthStore();
 const toast = useToast();
@@ -66,6 +68,44 @@ const searchInput = ref('');
 const statusFilter = ref<EmployeeStatus | null>(null);
 const page = ref(1);
 const perPage = ref(25);
+
+// Department filter — URL-driven, no UI control on this page. The
+// Department detail page's "View employees" link arrives here with
+// ?department_id=N; clearing happens via the in-page filter chip's [×]
+// button (which clears the query param via router.replace). When the
+// param is absent (or invalid), the filter is null and the list shows
+// all departments.
+const departmentIdFilter = computed<number | null>(() => {
+    const raw = route.query.department_id;
+    if (typeof raw !== 'string') return null;
+    const n = Number(raw);
+    return Number.isFinite(n) && n > 0 ? n : null;
+});
+
+// Look up the filtered department's name for the chip label. Falls back
+// to displaying the id if the lookup fails (deleted department, wrong
+// tenant) — the chip stays functional either way.
+const filteredDepartmentQuery = useDepartmentQuery(
+    () => departmentIdFilter.value ?? 0,
+);
+const filteredDepartmentName = computed<string | null>(
+    () => filteredDepartmentQuery.data.value?.data?.name ?? null,
+);
+
+function clearDepartmentFilter(): void {
+    // router.replace (not push) — the chip-clear shouldn't add a back-button
+    // entry; navigating away and back should land on the unfiltered state.
+    const newQuery = { ...route.query };
+    delete newQuery.department_id;
+    void router.replace({ query: newQuery });
+}
+
+// Reset to page 1 when the department filter changes via URL. Critical
+// for back/forward navigation through filtered-vs-unfiltered states —
+// otherwise switching filters can leave you on page 3 of zero results.
+watch(departmentIdFilter, () => {
+    page.value = 1;
+});
 
 // Reset page to 1 whenever filters change — otherwise filtering down to
 // 2 results while on page 3 leaves the user staring at an empty page.
@@ -92,6 +132,7 @@ const queryParams = computed<EmployeeListParams>(() => {
     const trimmed = searchInput.value.trim();
     if (trimmed !== '') params.search = trimmed;
     if (statusFilter.value !== null) params.status = statusFilter.value;
+    if (departmentIdFilter.value !== null) params.department_id = departmentIdFilter.value;
     return params;
 });
 
@@ -120,9 +161,13 @@ function statusSeverity(status: EmployeeStatus): StatusSeverity {
 // with `truncate` + `max-w-[28ch]` (CSS truncation, native browser
 // ellipsis). The full row stays clickable via `row-click`, and the
 // detail page shows the untruncated value, so no information loss.
+// Department column lives between Name and Job Title — reading order
+// "who → which team → which role" is the natural left-to-right scan.
+// Custom cell renders `—` for null and truncates long names.
 const columns = computed<DataTableColumn<EmployeeBrief>[]>(() => [
     { field: 'employee_code', label: 'hrm.employee.list.columns.code', type: 'custom', width: '140px' },
     { field: 'full_name', label: 'hrm.employee.list.columns.name', type: 'custom' },
+    { field: 'department_name', label: 'hrm.employee.list.columns.department', type: 'custom' },
     { field: 'job_title', label: 'hrm.employee.list.columns.jobTitle', type: 'custom' },
     { field: 'status', label: 'hrm.employee.list.columns.status', type: 'custom', align: 'center', width: '140px' },
     {
@@ -291,6 +336,39 @@ const tableEmptyOverride = computed(() => ({
             />
         </FilterBar>
 
+        <!-- Department filter chip — only renders when arriving with
+             ?department_id= in the URL (the Department detail page's
+             "View employees" link). The chip removes the
+             "where did my employees go?" moment by labelling the
+             active filter explicitly. The [×] clears the URL param
+             (router.replace, no back-button entry). Fallback label
+             when the department name hasn't loaded yet: the raw id. -->
+        <div
+            v-if="departmentIdFilter !== null"
+            class="mb-4 flex items-center gap-2"
+            data-testid="employee-list-department-filter-chip"
+        >
+            <span
+                class="inline-flex items-center gap-2 rounded-full border border-brand bg-brand-bg-subtle px-3 py-1 text-sm text-text-primary"
+            >
+                <i class="pi pi-filter text-xs text-brand" aria-hidden="true"></i>
+                <span>
+                    {{ t('hrm.employee.list.departmentFilterChip', {
+                        name: filteredDepartmentName ?? `#${departmentIdFilter}`,
+                    }) }}
+                </span>
+                <button
+                    type="button"
+                    class="ml-1 rounded-full p-0.5 text-text-secondary hover:bg-surface hover:text-text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-border-focus"
+                    :aria-label="t('hrm.employee.list.clearDepartmentFilter')"
+                    data-testid="employee-list-department-filter-clear"
+                    @click="clearDepartmentFilter"
+                >
+                    <i class="pi pi-times text-xs" aria-hidden="true"></i>
+                </button>
+            </span>
+        </div>
+
         <!-- First-employee EmptyState swaps in for the DataTable entirely
              when the company has zero employees AND no filter is active.
              Otherwise the DataTable handles its own empty/loading/error. -->
@@ -362,6 +440,23 @@ const tableEmptyOverride = computed(() => ({
                     >
                         {{ row.full_name }}
                     </button>
+                </template>
+
+                <!-- Department — free-text-ish column (the name comes from
+                     a related row). Renders "—" for null so the column
+                     isn't empty (unlike job_title which renders blank);
+                     departments are first-class enough that the absence
+                     should read as "no department" intentionally, not as
+                     "missing data." Same truncation guard. -->
+                <template #cell-department_name="{ row }">
+                    <span
+                        v-if="row.department_name"
+                        class="block max-w-[20ch] truncate"
+                        :title="row.department_name"
+                    >
+                        {{ row.department_name }}
+                    </span>
+                    <span v-else class="text-text-tertiary">—</span>
                 </template>
 
                 <!-- Job title — free-text column with the same truncation

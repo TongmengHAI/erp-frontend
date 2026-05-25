@@ -57,10 +57,17 @@ const props = withDefaults(defineProps<Props>(), {
 /**
  * `field` modelValue is typed `string | undefined` — matches PV InputText
  * / Password / Textarea (all of which expect `Nullable<string>`) and every
- * current consumer. When non-string inputs land (InputNumber for financial
- * amounts, Calendar for dates), this widens to a discriminated union and
- * the slot signature follows. Generic-on-script-setup + defineSlots
- * combine poorly under vue-tsc, so we use a concrete type rather than `T`.
+ * current scoped-slot consumer. When non-string inputs land (InputNumber
+ * for financial amounts, Calendar for dates), this widens to a
+ * discriminated union and the slot signature follows. Generic-on-script-
+ * setup + defineSlots combine poorly under vue-tsc, so we use a concrete
+ * type rather than `T`.
+ *
+ * For value types outside this union (number picker, Date), consumers use
+ * the standalone-chrome mode (plain default slot, no v-slot) and call
+ * `useField(name)` themselves to bind the input — the slot retains the
+ * label + error rendering chrome. See Employee form's department_id
+ * picker for the canonical example.
  */
 type FieldModelValue = string | undefined;
 
