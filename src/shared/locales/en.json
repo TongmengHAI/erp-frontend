@@ -37,6 +37,7 @@
             "hrm": "HRM",
             "employees": "Employees",
             "departments": "Departments",
+            "leaveRequests": "Leave requests",
             "accounting": "Accounting",
             "inventory": "Inventory",
             "procurement": "Procurement",
@@ -333,6 +334,162 @@
                 "list": "Departments",
                 "new": "New department",
                 "edit": "Edit department"
+            }
+        },
+        "leaveRequest": {
+            "list": {
+                "title": "Leave requests",
+                "subtitle": "Track requested time off and decide on pending requests.",
+                "newAction": "New leave request",
+                "actions": {
+                    "view": "View",
+                    "edit": "Edit",
+                    "delete": "Delete",
+                    "approve": "Approve",
+                    "reject": "Reject"
+                },
+                "filters": {
+                    "status": "Status",
+                    "anyStatus": "Any status",
+                    "leaveType": "Leave type",
+                    "anyType": "Any type"
+                },
+                "columns": {
+                    "employee": "Employee",
+                    "type": "Type",
+                    "dates": "Dates",
+                    "status": "Status",
+                    "decidedBy": "Decided by"
+                },
+                "datesRange": "{from} → {to}",
+                "decidedByLine": "{name}",
+                "decidedByEmpty": "—",
+                "deletedEmployeePlaceholder": "(deleted employee)",
+                "empty": {
+                    "title": "No leave requests yet",
+                    "description": "Once an employee submits a request, it will appear here.",
+                    "action": "Create first request"
+                },
+                "filteredEmpty": {
+                    "title": "No matching requests",
+                    "description": "Try clearing the status or type filter."
+                }
+            },
+            "detail": {
+                "edit": "Edit",
+                "delete": "Delete",
+                "approve": "Approve",
+                "reject": "Reject",
+                "sections": {
+                    "details": "Details",
+                    "decision": "Decision"
+                },
+                "fields": {
+                    "employee": "Employee",
+                    "type": "Leave type",
+                    "startDate": "Start date",
+                    "endDate": "End date",
+                    "reason": "Reason",
+                    "status": "Status",
+                    "createdAt": "Submitted",
+                    "decidedAt": "Decided on",
+                    "decidedBy": "Decided by",
+                    "decisionNote": "Manager note"
+                },
+                "noReason": "—",
+                "noNote": "—",
+                "noEmployee": "(deleted employee)",
+                "deletedApprover": "(deleted user)",
+                "decidedSummary": {
+                    "approved": "Approved by {name} on {date}.",
+                    "approvedNoActor": "Approved on {date}.",
+                    "rejected": "Rejected by {name} on {date}.",
+                    "rejectedNoActor": "Rejected on {date}."
+                },
+                "missingDecisionPermission": "You can view this request but cannot decide on it. Ask a manager to approve or reject."
+            },
+            "decide": {
+                "approveTitle": "Approve this request?",
+                "rejectTitle": "Reject this request?",
+                "approveMessage": "Approving {employee}'s {type} leave from {from} to {to}.",
+                "rejectMessage": "Rejecting {employee}'s {type} leave from {from} to {to}.",
+                "noteLabel": "Note (optional)",
+                "notePlaceholder": "Add a note for the requester. Optional but useful for rejections.",
+                "noteHelp": "Up to 500 characters. Visible to the requester.",
+                "approveConfirm": "Approve",
+                "rejectConfirm": "Reject",
+                "cancel": "Cancel",
+                "toast": {
+                    "approvedSuccess": "Request approved.",
+                    "rejectedSuccess": "Request rejected.",
+                    "approvedError": "Couldn't approve this request. Please try again.",
+                    "rejectedError": "Couldn't reject this request. Please try again.",
+                    "alreadyDecidedTitle": "This request was already decided",
+                    "alreadyDecidedDetail": "Someone else decided it before your click landed. The page has refreshed."
+                }
+            },
+            "form": {
+                "create": {
+                    "title": "New leave request",
+                    "submit": "Submit request",
+                    "submitting": "Submitting…"
+                },
+                "edit": {
+                    "title": "Edit leave request",
+                    "submit": "Save changes",
+                    "submitting": "Saving…",
+                    "decidedBlockTitle": "This request is decided",
+                    "decidedBlockMessage": "This request was already {status}. Decided requests are read-only — return to the detail view to inspect, or delete to recreate.",
+                    "decidedBlockBack": "Back to request"
+                },
+                "fields": {
+                    "employee": "Employee",
+                    "noEmployee": "— Select —",
+                    "type": "Leave type",
+                    "startDate": "Start date",
+                    "endDate": "End date",
+                    "reason": "Reason",
+                    "reasonHelp": "Optional. Up to 500 characters."
+                },
+                "errors": {
+                    "unknown": "Something went wrong. Please try again.",
+                    "forbidden": "You don't have permission to perform this action.",
+                    "invalidTransition": "This request was already decided. Returning to the detail view."
+                }
+            },
+            "status": {
+                "pending": "Pending",
+                "approved": "Approved",
+                "rejected": "Rejected"
+            },
+            "type": {
+                "annual": "Annual",
+                "sick": "Sick",
+                "unpaid": "Unpaid",
+                "other": "Other"
+            },
+            "delete": {
+                "confirmTitle": "Delete leave request?",
+                "confirmMessage": "Delete this leave request? This can't be undone.",
+                "confirmAction": "Delete",
+                "toast": {
+                    "success": "Leave request deleted.",
+                    "error": "Couldn't delete this leave request. Please try again."
+                }
+            },
+            "toast": {
+                "created": "Leave request submitted.",
+                "updated": "Changes saved."
+            },
+            "notFound": {
+                "title": "Leave request not found",
+                "description": "This leave request doesn't exist or has been removed.",
+                "action": "Back to leave requests"
+            },
+            "breadcrumb": {
+                "list": "Leave requests",
+                "new": "New leave request",
+                "edit": "Edit leave request"
             }
         }
     }

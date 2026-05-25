@@ -38,6 +38,17 @@ export const SIDEBAR_MODULES: readonly SidebarModule[] = Object.freeze([
         permissionPrefix: 'hrm',
     },
     {
+        // Leave Requests — third HRM sibling (after Employees and
+        // Departments). Same flat-IA decision as the original HRM
+        // flattening: rather than a single "HRM" entry that expands,
+        // the user picks the resource directly. Keeps the workflow
+        // surface one click away from the sidebar.
+        label: 'navigation.modules.leaveRequests',
+        icon: 'pi pi-calendar',
+        routeName: 'hrm.leaveRequest.list',
+        permissionPrefix: 'hrm',
+    },
+    {
         label: 'navigation.modules.accounting',
         icon: 'pi pi-book',
         routeName: 'accounting',

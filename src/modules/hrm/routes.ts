@@ -24,6 +24,10 @@ export const HRM_ROUTES = {
     DEPARTMENT_NEW: 'hrm.department.new',
     DEPARTMENT_DETAIL: 'hrm.department.detail',
     DEPARTMENT_EDIT: 'hrm.department.edit',
+    LEAVE_REQUEST_LIST: 'hrm.leaveRequest.list',
+    LEAVE_REQUEST_NEW: 'hrm.leaveRequest.new',
+    LEAVE_REQUEST_DETAIL: 'hrm.leaveRequest.detail',
+    LEAVE_REQUEST_EDIT: 'hrm.leaveRequest.edit',
 } as const;
 
 /**
@@ -122,6 +126,51 @@ export const hrmRoutes: RouteRecordRaw[] = [
         meta: {
             breadcrumb: 'Edit department',
             permission: 'hrm.department.update',
+        },
+        props: (route) => ({ id: Number(route.params.id) }),
+    },
+    // ── Leave Requests ──────────────────────────────────────────────────
+    // Same shape as Employees/Departments. The detail page is the slice's
+    // centerpiece — state-machine driven (pending vs decided vs no-perm
+    // mode), with approve/reject actions surfaced only in pending mode.
+    // The edit route protects against direct-URL edits of decided rows
+    // inside the page (the backend's UpdateLeaveRequestAction also blocks
+    // — defense in depth, same pattern as the read-side scope on Employee).
+    {
+        path: 'leave-requests',
+        name: HRM_ROUTES.LEAVE_REQUEST_LIST,
+        component: () => import('./pages/LeaveRequestListPage.vue'),
+        meta: {
+            breadcrumb: 'Leave requests',
+            permission: 'hrm.leave_request.view',
+        },
+    },
+    {
+        path: 'leave-requests/new',
+        name: HRM_ROUTES.LEAVE_REQUEST_NEW,
+        component: () => import('./pages/LeaveRequestFormPage.vue'),
+        meta: {
+            breadcrumb: 'New leave request',
+            permission: 'hrm.leave_request.create',
+        },
+    },
+    {
+        path: 'leave-requests/:id(\\d+)',
+        name: HRM_ROUTES.LEAVE_REQUEST_DETAIL,
+        component: () => import('./pages/LeaveRequestDetailPage.vue'),
+        meta: {
+            breadcrumb: 'Leave request',
+            permission: 'hrm.leave_request.view',
+        },
+        props: (route) => ({ id: Number(route.params.id) }),
+    },
+    {
+        path: 'leave-requests/:id(\\d+)/edit',
+        name: HRM_ROUTES.LEAVE_REQUEST_EDIT,
+        component: () => import('./pages/LeaveRequestFormPage.vue'),
+        meta: {
+            breadcrumb: 'Edit leave request',
+            permission: 'hrm.leave_request.update',
         },
         props: (route) => ({ id: Number(route.params.id) }),
     },
