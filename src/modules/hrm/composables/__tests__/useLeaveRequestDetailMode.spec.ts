@@ -35,6 +35,7 @@ function fixture(overrides: Partial<LeaveRequest> = {}): LeaveRequest {
         start_date: '2026-06-15',
         end_date: '2026-06-19',
         day_part: 'full_day',
+        days_count: 5,
         reason: 'Family event.',
         status: 'pending',
         approval: null,

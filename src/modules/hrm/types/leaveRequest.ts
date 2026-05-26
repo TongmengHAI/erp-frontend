@@ -140,6 +140,10 @@ export interface LeaveRequestBrief extends Record<string, unknown> {
      *  "Fri, May 22 (Morning)" for half-day, "Fri, May 22 → Fri, May 26"
      *  for full-day ranges, "Fri, May 22" for full-day single dates. */
     day_part: DayPart;
+    /** Calendar-day count, derived server-side from start_date, end_date,
+     *  and day_part by LeaveDaysCalculator. Always > 0; half-day requests
+     *  carry 0.5. The Leave Balances slice aggregates this via SUM. */
+    days_count: number;
     status: LeaveRequestStatus;
     /** Null on pending rows. */
     approved_at: string | null;
@@ -164,6 +168,10 @@ export interface LeaveRequest {
     end_date: string;
     /** Day-part granularity. See LeaveRequestBrief.day_part docblock. */
     day_part: DayPart;
+    /** Calendar-day count — same field as LeaveRequestBrief.days_count.
+     *  Surfaced on the detail page next to the dates, and aggregated by
+     *  the Leave Balances slice. */
+    days_count: number;
     reason: string | null;
     status: LeaveRequestStatus;
     /** Present only on decided rows; null while pending. */

@@ -496,6 +496,25 @@ async function onDecide(note: string | null): Promise<void> {
                         </dd>
                     </div>
 
+                    <!-- Days requested — calendar-day count derived
+                         server-side from dates + day_part. Surfaced
+                         here so a curious user can see at a glance
+                         that a half-day morning request consumed 0.5
+                         (without that label, "0.5" reads as a
+                         placeholder error). The Leave Balances slice
+                         will aggregate this same value. -->
+                    <div>
+                        <dt class="text-sm font-medium text-text-secondary">
+                            {{ t('hrm.leaveRequest.detail.fields.daysCount') }}
+                        </dt>
+                        <dd
+                            class="mt-1 text-base text-text-primary tabular-nums"
+                            data-testid="leave-request-detail-days-count"
+                        >
+                            {{ t('hrm.leaveRequest.detail.daysCountValue', { n: leaveRequest.days_count }) }}
+                        </dd>
+                    </div>
+
                     <div>
                         <dt class="text-sm font-medium text-text-secondary">
                             {{ t('hrm.leaveRequest.detail.fields.status') }}

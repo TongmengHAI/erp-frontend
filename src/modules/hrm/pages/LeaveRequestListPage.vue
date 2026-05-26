@@ -133,6 +133,11 @@ const columns = computed<DataTableColumn<LeaveRequestBrief>[]>(() => [
     { field: 'employee_name', label: 'hrm.leaveRequest.list.columns.employee', type: 'custom' },
     { field: 'leave_type', label: 'hrm.leaveRequest.list.columns.type', type: 'custom', width: '120px' },
     { field: 'start_date', label: 'hrm.leaveRequest.list.columns.dates', type: 'custom', width: '220px' },
+    // Days column lands right after the date range it summarises. Header
+    // copy is "Days" (singular column header); each cell renders as a
+    // bare number with tabular-nums + right-align — the column header
+    // gives it context, no need to repeat "Days: 3" in every cell.
+    { field: 'days_count', label: 'hrm.leaveRequest.list.columns.days', type: 'custom', align: 'right', width: '80px' },
     { field: 'status', label: 'hrm.leaveRequest.list.columns.status', type: 'custom', align: 'center', width: '140px' },
     { field: 'approver_name', label: 'hrm.leaveRequest.list.columns.decidedBy', type: 'custom' },
 ]);
@@ -354,6 +359,19 @@ const tableEmptyOverride = computed(() => ({
                             day_part: row.day_part,
                         }, t) }}
                     </span>
+                </template>
+
+                <!-- Days — calendar-day count, derived server-side from
+                     dates + day_part. Right-aligned + tabular-nums so a
+                     column of "0.5 / 3.0 / 14.0" stacks cleanly. Title
+                     attribute carries the labelled form for screen
+                     readers + hover. -->
+                <template #cell-days_count="{ row }">
+                    <span
+                        class="text-sm tabular-nums"
+                        :title="t('hrm.leaveRequest.list.daysTitle', { n: row.days_count })"
+                        :data-testid="`leave-request-list-days-${row.id}`"
+                    >{{ row.days_count }}</span>
                 </template>
 
                 <template #cell-status="{ row }">

@@ -373,10 +373,12 @@
                     "employee": "Employee",
                     "type": "Type",
                     "dates": "Dates",
+                    "days": "Days",
                     "status": "Status",
                     "decidedBy": "Decided by"
                 },
                 "datesRange": "{from} → {to}",
+                "daysTitle": "{n} calendar days",
                 "decidedByLine": "{name}",
                 "decidedByEmpty": "—",
                 "deletedEmployeePlaceholder": "(deleted employee)",
@@ -403,6 +405,7 @@
                     "employee": "Employee",
                     "type": "Leave type",
                     "dates": "Dates",
+                    "daysCount": "Days requested",
                     "startDate": "Start date",
                     "endDate": "End date",
                     "dayPart": "Day part",
@@ -413,6 +416,7 @@
                     "decidedBy": "Decided by",
                     "decisionNote": "Manager note"
                 },
+                "daysCountValue": "{n} calendar days",
                 "noReason": "—",
                 "noNote": "—",
                 "noEmployee": "(deleted employee)",
