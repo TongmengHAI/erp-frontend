@@ -40,7 +40,10 @@ export interface EmployeeBrief extends Record<string, unknown> {
      *  compact. Null when the employee has no current department, OR when
      *  the assigned department was soft-deleted. */
     department_name: string | null;
-    job_title: string | null;
+    /** Flat position title — replaces the old free-text job_title field
+     *  (dropped in the Positions slice cutover). Same soft-delete
+     *  nullability discipline as department_name. */
+    position_title: string | null;
     /** ISO 8601 date (YYYY-MM-DD). */
     hire_date: string;
     status: EmployeeStatus;
@@ -59,6 +62,17 @@ export interface EmployeeDepartment {
 }
 
 /**
+ * Nested position snapshot — same projection pattern as
+ * EmployeeDepartment. Replaces the old free-text job_title field
+ * (dropped in the Positions slice cutover).
+ */
+export interface EmployeePosition {
+    id: number;
+    code: string;
+    title: string;
+}
+
+/**
  * Full Employee shape — returned by show / store / update endpoints.
  * Drives the detail page and the form's edit-mode initial values.
  */
@@ -67,10 +81,13 @@ export interface Employee {
     employee_code: string;
     full_name: string;
     email: string | null;
-    job_title: string | null;
     /** Nested department snapshot, or null when unassigned / soft-deleted.
      *  See EmployeeDepartment for the shape. */
     department: EmployeeDepartment | null;
+    /** Nested position snapshot, or null when unassigned / soft-deleted.
+     *  Replaces the old free-text job_title field. See EmployeePosition
+     *  for the shape. */
+    position: EmployeePosition | null;
     /** ISO 8601 date (YYYY-MM-DD). */
     hire_date: string;
     status: EmployeeStatus;
@@ -92,6 +109,10 @@ export interface EmployeeListParams {
      *  silently return empty results — no 422, no leak. Used by the
      *  Department detail page's "View employees" link. */
     department_id?: number;
+    /** Filter to employees holding a specific position. Same silent-empty
+     *  semantics as department_id. Used by the Position detail page's
+     *  "View employees" link (lands in Session 3). */
+    position_id?: number;
     /** 1–100, default 25 on the backend. */
     per_page?: number;
     /** 1-indexed, default 1. Standard Laravel pagination. */
@@ -134,13 +155,17 @@ export interface CreateEmployeeRequest {
     employee_code: string;
     full_name: string;
     email?: string | null;
-    job_title?: string | null;
     /** FK → departments.id, or null for "no department". MUST be a
      *  department in the same (tenant, company) — the backend enforces
      *  this via scoped Rule::exists; a foreign-context id returns 422
      *  with `errors.department_id`. The form's setErrors path maps it
      *  to the picker inline. */
     department_id?: number | null;
+    /** FK → positions.id, or null for "no current position". Same
+     *  load-bearing scoped-exists guarantee as department_id — a
+     *  foreign-context id returns 422 with `errors.position_id`.
+     *  Replaces the old free-text job_title field. */
+    position_id?: number | null;
     /** ISO 8601 date (YYYY-MM-DD). */
     hire_date: string;
     status: EmployeeStatus;

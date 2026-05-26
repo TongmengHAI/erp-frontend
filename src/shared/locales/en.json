@@ -39,6 +39,7 @@
             "departments": "Departments",
             "leaveRequests": "Leave requests",
             "attendance": "Attendance",
+            "positions": "Positions",
             "accounting": "Accounting",
             "inventory": "Inventory",
             "procurement": "Procurement",
@@ -140,12 +141,14 @@
                     "code": "Code",
                     "name": "Name",
                     "department": "Department",
-                    "jobTitle": "Job title",
+                    "position": "Position",
                     "status": "Status",
                     "hireDate": "Hire date"
                 },
                 "departmentFilterChip": "Filtered to: {name}",
                 "clearDepartmentFilter": "Clear department filter",
+                "positionFilterChip": "Filtered to: {name}",
+                "clearPositionFilter": "Clear position filter",
                 "empty": {
                     "title": "No employees yet",
                     "description": "Add your first team member to start building the directory.",
@@ -163,7 +166,7 @@
                     "code": "Employee code",
                     "fullName": "Full name",
                     "email": "Email",
-                    "jobTitle": "Job title",
+                    "position": "Position",
                     "department": "Department",
                     "hireDate": "Hire date",
                     "status": "Status",
@@ -171,7 +174,7 @@
                     "updatedAt": "Last updated"
                 },
                 "noEmail": "—",
-                "noJobTitle": "—",
+                "noPosition": "—",
                 "noDepartment": "—",
                 "sections": {
                     "details": "Details"
@@ -194,8 +197,9 @@
                     "fullName": "Full name",
                     "email": "Email",
                     "emailHelp": "Optional.",
-                    "jobTitle": "Job title",
-                    "jobTitleHelp": "Optional.",
+                    "position": "Position",
+                    "positionHelp": "Optional. Pick a role from the Positions list.",
+                    "noPosition": "— None —",
                     "department": "Department",
                     "noDepartment": "— None —",
                     "hireDate": "Hire date",
@@ -619,6 +623,108 @@
                 "list": "Attendance",
                 "new": "New record",
                 "edit": "Edit record"
+            }
+        },
+        "position": {
+            "list": {
+                "title": "Positions",
+                "subtitle": "Manage the roles people hold within your company.",
+                "newAction": "New position",
+                "search": {
+                    "placeholder": "Search by title or code…",
+                    "label": "Search"
+                },
+                "filters": {
+                    "status": "Status",
+                    "anyStatus": "Any status"
+                },
+                "actions": {
+                    "view": "View",
+                    "edit": "Edit",
+                    "delete": "Delete"
+                },
+                "columns": {
+                    "code": "Code",
+                    "title": "Title",
+                    "status": "Status"
+                },
+                "empty": {
+                    "title": "No positions yet",
+                    "description": "Add your first position to start organizing roles.",
+                    "action": "Create first position"
+                },
+                "filteredEmpty": {
+                    "title": "No matching positions",
+                    "description": "Try clearing the search or status filter."
+                }
+            },
+            "detail": {
+                "edit": "Edit",
+                "delete": "Delete",
+                "fields": {
+                    "code": "Position code",
+                    "title": "Title",
+                    "description": "Description",
+                    "status": "Status"
+                },
+                "noDescription": "—",
+                "sections": {
+                    "details": "Details",
+                    "employees": "Employees"
+                },
+                "employeesCount": "no employees | {n} employee | {n} employees",
+                "viewEmployees": "View employees"
+            },
+            "form": {
+                "create": {
+                    "title": "New position",
+                    "submit": "Create position",
+                    "submitting": "Creating…"
+                },
+                "edit": {
+                    "title": "Edit position",
+                    "submit": "Save changes",
+                    "submitting": "Saving…"
+                },
+                "fields": {
+                    "code": "Position code",
+                    "codeHelp": "Unique within this company (e.g. P-OPS-MGR).",
+                    "title": "Title",
+                    "description": "Description",
+                    "descriptionHelp": "Optional. Short descriptor — up to 500 characters.",
+                    "status": "Status"
+                },
+                "errors": {
+                    "unknown": "Something went wrong. Please try again.",
+                    "forbidden": "You don't have permission to perform this action."
+                }
+            },
+            "status": {
+                "active": "Active",
+                "archived": "Archived"
+            },
+            "delete": {
+                "confirmTitle": "Delete position?",
+                "confirmMessage": "Delete {title}? This can't be undone.",
+                "confirmAction": "Delete",
+                "toast": {
+                    "success": "Position deleted.",
+                    "error": "Couldn't delete this position. Please try again."
+                }
+            },
+            "toast": {
+                "created": "Position created.",
+                "updated": "Changes saved."
+            },
+            "notFound": {
+                "title": "Position not found",
+                "description": "This position doesn't exist or has been removed.",
+                "action": "Back to positions"
+            },
+            "breadcrumb": {
+                "list": "Positions",
+                "new": "New position",
+                "edit": "Edit position"
             }
         }
     }

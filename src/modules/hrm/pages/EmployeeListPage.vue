@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { useRoute, useRouter } from 'vue-router';
+import { useRouter } from 'vue-router';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import Select from 'primevue/select';
@@ -15,6 +15,7 @@ import DataTable from '@/shared/components/data-table/DataTable.vue';
 import StatusBadge, {
     type StatusSeverity,
 } from '@/shared/components/data-display/StatusBadge.vue';
+import FilterChip from '@/shared/components/data-display/FilterChip.vue';
 import type {
     DataTableColumn,
     RowAction,
@@ -33,6 +34,7 @@ import type {
 import { EMPLOYEE_STATUSES } from '@/modules/hrm/types/employee';
 import { useAuthStore } from '@/shared/stores/useAuthStore';
 import { useAppConfirm } from '@/shared/composables/useAppConfirm';
+import { useUrlNumericFilter } from '@/shared/composables/useUrlNumericFilter';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // EmployeeListPage — paginated employee list with search + status filter.
@@ -56,7 +58,6 @@ import { useAppConfirm } from '@/shared/composables/useAppConfirm';
 // ─────────────────────────────────────────────────────────────────────────────
 
 const { t } = useI18n();
-const route = useRoute();
 const router = useRouter();
 const auth = useAuthStore();
 const toast = useToast();
@@ -71,16 +72,12 @@ const perPage = ref(25);
 
 // Department filter — URL-driven, no UI control on this page. The
 // Department detail page's "View employees" link arrives here with
-// ?department_id=N; clearing happens via the in-page filter chip's [×]
-// button (which clears the query param via router.replace). When the
-// param is absent (or invalid), the filter is null and the list shows
-// all departments.
-const departmentIdFilter = computed<number | null>(() => {
-    const raw = route.query.department_id;
-    if (typeof raw !== 'string') return null;
-    const n = Number(raw);
-    return Number.isFinite(n) && n > 0 ? n : null;
-});
+// ?department_id=N; clearing happens via the in-page FilterChip's [×]
+// button. URL state + clear() come from the shared useUrlNumericFilter
+// composable; visual chip from the shared FilterChip component. Same
+// pattern applies to future filters (position_id lands in Session 3).
+const { value: departmentIdFilter, clear: clearDepartmentFilter } =
+    useUrlNumericFilter('department_id');
 
 // Look up the filtered department's name for the chip label. Falls back
 // to displaying the id if the lookup fails (deleted department, wrong
@@ -91,14 +88,6 @@ const filteredDepartmentQuery = useDepartmentQuery(
 const filteredDepartmentName = computed<string | null>(
     () => filteredDepartmentQuery.data.value?.data?.name ?? null,
 );
-
-function clearDepartmentFilter(): void {
-    // router.replace (not push) — the chip-clear shouldn't add a back-button
-    // entry; navigating away and back should land on the unfiltered state.
-    const newQuery = { ...route.query };
-    delete newQuery.department_id;
-    void router.replace({ query: newQuery });
-}
 
 // Reset to page 1 when the department filter changes via URL. Critical
 // for back/forward navigation through filtered-vs-unfiltered states —
@@ -168,7 +157,9 @@ const columns = computed<DataTableColumn<EmployeeBrief>[]>(() => [
     { field: 'employee_code', label: 'hrm.employee.list.columns.code', type: 'custom', width: '140px' },
     { field: 'full_name', label: 'hrm.employee.list.columns.name', type: 'custom' },
     { field: 'department_name', label: 'hrm.employee.list.columns.department', type: 'custom' },
-    { field: 'job_title', label: 'hrm.employee.list.columns.jobTitle', type: 'custom' },
+    // The Position column that replaces the old job_title column lands
+    // in Session 3 alongside the position chip + filter wiring.
+    { field: 'position_title', label: 'hrm.employee.list.columns.position', type: 'custom' },
     { field: 'status', label: 'hrm.employee.list.columns.status', type: 'custom', align: 'center', width: '140px' },
     {
         field: 'hire_date',
@@ -338,36 +329,19 @@ const tableEmptyOverride = computed(() => ({
 
         <!-- Department filter chip — only renders when arriving with
              ?department_id= in the URL (the Department detail page's
-             "View employees" link). The chip removes the
-             "where did my employees go?" moment by labelling the
-             active filter explicitly. The [×] clears the URL param
-             (router.replace, no back-button entry). Fallback label
-             when the department name hasn't loaded yet: the raw id. -->
-        <div
+             "View employees" link). Uses the shared FilterChip component
+             + useUrlNumericFilter composable. Same pattern will be used
+             for the position_id chip in Session 3. -->
+        <FilterChip
             v-if="departmentIdFilter !== null"
-            class="mb-4 flex items-center gap-2"
+            class="mb-4"
+            :label="t('hrm.employee.list.departmentFilterChip', {
+                name: filteredDepartmentName ?? `#${departmentIdFilter}`,
+            })"
+            :clear-aria-label="t('hrm.employee.list.clearDepartmentFilter')"
             data-testid="employee-list-department-filter-chip"
-        >
-            <span
-                class="inline-flex items-center gap-2 rounded-full border border-brand bg-brand-bg-subtle px-3 py-1 text-sm text-text-primary"
-            >
-                <i class="pi pi-filter text-xs text-brand" aria-hidden="true"></i>
-                <span>
-                    {{ t('hrm.employee.list.departmentFilterChip', {
-                        name: filteredDepartmentName ?? `#${departmentIdFilter}`,
-                    }) }}
-                </span>
-                <button
-                    type="button"
-                    class="ml-1 rounded-full p-0.5 text-text-secondary hover:bg-surface hover:text-text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-border-focus"
-                    :aria-label="t('hrm.employee.list.clearDepartmentFilter')"
-                    data-testid="employee-list-department-filter-clear"
-                    @click="clearDepartmentFilter"
-                >
-                    <i class="pi pi-times text-xs" aria-hidden="true"></i>
-                </button>
-            </span>
-        </div>
+            @clear="clearDepartmentFilter"
+        />
 
         <!-- First-employee EmptyState swaps in for the DataTable entirely
              when the company has zero employees AND no filter is active.
@@ -459,17 +433,19 @@ const tableEmptyOverride = computed(() => ({
                     <span v-else class="text-text-tertiary">—</span>
                 </template>
 
-                <!-- Job title — free-text column with the same truncation
-                     guard. Null renders as blank, not "—" (the detail
-                     page handles the "no value" affordance; lists stay
-                     compact). -->
-                <template #cell-job_title="{ row }">
+                <!-- Position — same truncation guard as the old job_title
+                     cell. Null renders blank (consistent with the column's
+                     established "no value = empty" convention; detail page
+                     surfaces the "—" affordance). The cell becomes a
+                     clickable Position link in Session 3 alongside the
+                     filter-chip wiring. -->
+                <template #cell-position_title="{ row }">
                     <span
-                        v-if="row.job_title"
+                        v-if="row.position_title"
                         class="block max-w-[28ch] truncate"
-                        :title="row.job_title"
+                        :title="row.position_title"
                     >
-                        {{ row.job_title }}
+                        {{ row.position_title }}
                     </span>
                 </template>
 

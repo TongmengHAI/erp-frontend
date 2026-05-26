@@ -271,20 +271,11 @@ function onDelete(): void {
                         </dd>
                     </div>
 
-                    <div>
-                        <dt class="text-sm font-medium text-text-secondary">
-                            {{ t('hrm.employee.detail.fields.jobTitle') }}
-                        </dt>
-                        <dd
-                            class="mt-1 text-base text-text-primary"
-                            data-testid="employee-detail-job-title"
-                        >
-                            <span v-if="employee.job_title">{{ employee.job_title }}</span>
-                            <span v-else class="text-text-tertiary">
-                                {{ t('hrm.employee.detail.noJobTitle') }}
-                            </span>
-                        </dd>
-                    </div>
+                    <!-- The Position row that replaces the old job_title
+                         display lands in Session 3 alongside a RouterLink
+                         to PositionDetailPage. Session 2's job is the
+                         foundation cutover: types + schema + i18n keys
+                         already updated; visual surface follows. -->
 
                     <div>
                         <dt class="text-sm font-medium text-text-secondary">

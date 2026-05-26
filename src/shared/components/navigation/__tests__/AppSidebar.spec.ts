@@ -14,16 +14,17 @@ const STUB = { template: '<div />' };
 const NAV_ROUTES: RouteRecordRaw[] = [
     { path: '/', name: 'home', component: STUB },
     { path: '/dashboard', name: 'dashboard', component: STUB },
-    // The HRM module now ships four flat sibling entries: Employees,
-    // Departments, Leave requests, and Attendance. All four gate on
-    // permissionPrefix 'hrm' so any hrm.* permission unlocks all four
-    // nav items — that's deliberate (a user who can view employees
-    // almost always can also view departments / leave requests /
-    // attendance).
+    // The HRM module now ships five flat sibling entries: Employees,
+    // Departments, Leave requests, Attendance, Positions. All five
+    // gate on permissionPrefix 'hrm' so any hrm.* permission unlocks
+    // them. 10 sidebar entries total is the threshold where the
+    // Odoo-style nav refactor becomes overwhelmingly justified —
+    // registered for after Leave Balances ships.
     { path: '/hrm/employees', name: 'hrm.employee.list', component: STUB },
     { path: '/hrm/departments', name: 'hrm.department.list', component: STUB },
     { path: '/hrm/leave-requests', name: 'hrm.leaveRequest.list', component: STUB },
     { path: '/hrm/attendance', name: 'hrm.attendance.list', component: STUB },
+    { path: '/hrm/positions', name: 'hrm.position.list', component: STUB },
     { path: '/accounting', name: 'accounting', component: STUB },
     { path: '/inventory', name: 'inventory', component: STUB },
     { path: '/procurement', name: 'procurement', component: STUB },
@@ -66,13 +67,13 @@ function seedSomePermissions(perms: string[]): void {
 }
 
 describe('AppSidebar', () => {
-    it('renders all 9 modules when the user has every permission', async () => {
+    it('renders all 10 modules when the user has every permission', async () => {
         const w = await mountWithGlobals(AppSidebar, { routes: NAV_ROUTES });
         seedAllPermissions();
         await w.vm.$nextTick();
 
         const links = w.findAll('a[data-route-name]');
-        expect(links).toHaveLength(9);
+        expect(links).toHaveLength(10);
         const names = links.map((l) => l.attributes('data-route-name'));
         expect(names).toEqual([
             'dashboard',
@@ -80,6 +81,7 @@ describe('AppSidebar', () => {
             'hrm.department.list',
             'hrm.leaveRequest.list',
             'hrm.attendance.list',
+            'hrm.position.list',
             'accounting',
             'inventory',
             'procurement',

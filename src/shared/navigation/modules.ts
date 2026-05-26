@@ -60,6 +60,17 @@ export const SIDEBAR_MODULES: readonly SidebarModule[] = Object.freeze([
         permissionPrefix: 'hrm',
     },
     {
+        // Positions — fifth HRM sibling. With 10 sidebar entries total
+        // (Dashboard + 5 HRM + 4 placeholder modules) this is the
+        // threshold where the Odoo-style nav refactor becomes
+        // overwhelmingly justified — flagged for after Leave Balances
+        // ships. Not action this slice; just registered.
+        label: 'navigation.modules.positions',
+        icon: 'pi pi-briefcase',
+        routeName: 'hrm.position.list',
+        permissionPrefix: 'hrm',
+    },
+    {
         label: 'navigation.modules.accounting',
         icon: 'pi pi-book',
         routeName: 'accounting',

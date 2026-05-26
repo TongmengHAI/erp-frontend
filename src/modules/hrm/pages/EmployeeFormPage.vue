@@ -102,8 +102,10 @@ const defaultInitial: EmployeeFormValues = {
     employee_code: '',
     full_name: '',
     email: '',
-    job_title: '',
     department_id: null,
+    // position_id default + the Position Select that consumes it land
+    // in Session 3 along with the rest of the visual cutover.
+    position_id: null,
     hire_date: '',
     status: 'active',
 };
@@ -127,12 +129,11 @@ watch(
             employee_code: employee.employee_code,
             full_name: employee.full_name,
             email: employee.email ?? '',
-            job_title: employee.job_title ?? '',
-            // Flatten the nested department snapshot back to a plain id
-            // for the picker's v-model. null both when unassigned AND when
-            // the assigned department was soft-deleted (the backend
-            // returns department: null in both cases).
+            // Flatten the nested snapshots back to plain ids for the
+            // pickers' v-model. null when unassigned OR when the parent
+            // row was soft-deleted (backend returns null in both cases).
             department_id: employee.department?.id ?? null,
+            position_id: employee.position?.id ?? null,
             hire_date: employee.hire_date,
             status: employee.status,
         });
@@ -205,8 +206,8 @@ function normalizePayload(values: EmployeeFormValues) {
         employee_code: values.employee_code,
         full_name: values.full_name,
         email: values.email === '' ? null : values.email,
-        job_title: values.job_title === '' ? null : values.job_title,
         department_id: values.department_id ?? null,
+        position_id: values.position_id ?? null,
         hire_date: values.hire_date,
         status: values.status as EmployeeStatus,
     };
@@ -461,19 +462,10 @@ const submitLabel = computed<string>(() => {
                             />
                         </FormField>
 
-                        <FormField
-                            v-slot="{ field }"
-                            name="job_title"
-                            :label="t('hrm.employee.form.fields.jobTitle')"
-                            :help="t('hrm.employee.form.fields.jobTitleHelp')"
-                        >
-                            <InputText
-                                v-bind="field"
-                                class="w-full"
-                                autocomplete="organization-title"
-                                data-testid="employee-form-job-title"
-                            />
-                        </FormField>
+                        <!-- The Position picker that replaces the old
+                             job_title text input lands in Session 3
+                             alongside a usePositionsQuery dropdown,
+                             mirror of the Department picker pattern. -->
 
                         <FormField
                             name="department_id"

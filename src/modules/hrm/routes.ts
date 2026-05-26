@@ -32,6 +32,10 @@ export const HRM_ROUTES = {
     ATTENDANCE_NEW: 'hrm.attendance.new',
     ATTENDANCE_DETAIL: 'hrm.attendance.detail',
     ATTENDANCE_EDIT: 'hrm.attendance.edit',
+    POSITION_LIST: 'hrm.position.list',
+    POSITION_NEW: 'hrm.position.new',
+    POSITION_DETAIL: 'hrm.position.detail',
+    POSITION_EDIT: 'hrm.position.edit',
 } as const;
 
 /**
@@ -219,6 +223,49 @@ export const hrmRoutes: RouteRecordRaw[] = [
         meta: {
             breadcrumb: 'Edit record',
             permission: 'hrm.attendance.update',
+        },
+        props: (route) => ({ id: Number(route.params.id) }),
+    },
+    // ── Positions ──────────────────────────────────────────────────────
+    // Same four-route shape as the other resources. Page components
+    // land in Session 3 — these route definitions point at lazy imports
+    // for files that don't exist yet. Same approach as the Attendance
+    // routes when they were added.
+    {
+        path: 'positions',
+        name: HRM_ROUTES.POSITION_LIST,
+        component: () => import('./pages/PositionListPage.vue'),
+        meta: {
+            breadcrumb: 'Positions',
+            permission: 'hrm.position.view',
+        },
+    },
+    {
+        path: 'positions/new',
+        name: HRM_ROUTES.POSITION_NEW,
+        component: () => import('./pages/PositionFormPage.vue'),
+        meta: {
+            breadcrumb: 'New position',
+            permission: 'hrm.position.create',
+        },
+    },
+    {
+        path: 'positions/:id(\\d+)',
+        name: HRM_ROUTES.POSITION_DETAIL,
+        component: () => import('./pages/PositionDetailPage.vue'),
+        meta: {
+            breadcrumb: 'Position',
+            permission: 'hrm.position.view',
+        },
+        props: (route) => ({ id: Number(route.params.id) }),
+    },
+    {
+        path: 'positions/:id(\\d+)/edit',
+        name: HRM_ROUTES.POSITION_EDIT,
+        component: () => import('./pages/PositionFormPage.vue'),
+        meta: {
+            breadcrumb: 'Edit position',
+            permission: 'hrm.position.update',
         },
         props: (route) => ({ id: Number(route.params.id) }),
     },
