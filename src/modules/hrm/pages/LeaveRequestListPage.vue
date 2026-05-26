@@ -14,7 +14,7 @@ import DataTable from '@/shared/components/data-table/DataTable.vue';
 import StatusBadge, {
     type StatusSeverity,
 } from '@/shared/components/data-display/StatusBadge.vue';
-import DateDisplay from '@/shared/components/data-display/DateDisplay.vue';
+import { formatLeaveRequestDateLabel } from '@/modules/hrm/composables/useLeaveRequestDateLabel';
 import type {
     DataTableColumn,
     RowAction,
@@ -341,14 +341,18 @@ const tableEmptyOverride = computed(() => ({
                     <span class="text-sm">{{ typeLabel(row.leave_type) }}</span>
                 </template>
 
-                <!-- Dates — rendered as "Jun 15 → Jun 19" so the manager
-                     scans the range without clicking through. tabular-nums
-                     keeps the arrow aligned across rows of different widths. -->
+                <!-- Dates — driven by the shared date-label formatter so
+                     half-day requests render "Fri, May 22 (Morning)" and
+                     full-day requests render either "Fri, May 22" (single)
+                     or "Fri, May 22 → Fri, May 26" (range). Same logic the
+                     detail page uses; one source of truth for the format. -->
                 <template #cell-start_date="{ row }">
-                    <span class="inline-flex items-center gap-1 text-sm tabular-nums">
-                        <DateDisplay :date="row.start_date" format="short" />
-                        <i class="pi pi-arrow-right text-xs text-text-tertiary" aria-hidden="true"></i>
-                        <DateDisplay :date="row.end_date" format="short" />
+                    <span class="text-sm tabular-nums">
+                        {{ formatLeaveRequestDateLabel({
+                            start_date: row.start_date,
+                            end_date: row.end_date,
+                            day_part: row.day_part,
+                        }, t) }}
                     </span>
                 </template>
 

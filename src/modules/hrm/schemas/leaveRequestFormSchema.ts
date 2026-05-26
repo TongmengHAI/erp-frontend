@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { LEAVE_TYPES } from '@/modules/hrm/types/leaveRequest';
+import { DAY_PARTS, LEAVE_TYPES } from '@/modules/hrm/types/leaveRequest';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Zod schema for the Leave Request create/edit form.
@@ -40,6 +40,10 @@ export const leaveRequestFormSchema = z
             .string({ required_error: 'End date is required.' })
             .min(1, 'End date is required.')
             .regex(/^\d{4}-\d{2}-\d{2}$/, 'End date must be a valid date.'),
+        day_part: z.enum(DAY_PARTS as readonly [string, ...string[]], {
+            required_error: 'Day part is required.',
+            invalid_type_error: 'Day part is required.',
+        }),
         reason: z
             .union([z.literal(''), z.string().trim().max(500, 'Reason must be 500 characters or fewer.')])
             .optional()
@@ -53,6 +57,20 @@ export const leaveRequestFormSchema = z
         (vals) => vals.end_date >= vals.start_date,
         {
             message: 'End date must be on or after the start date.',
+            path: ['end_date'],
+        },
+    )
+    .refine(
+        // Half-day single-date invariant — mirror of the backend
+        // FormRequest closure rule. Surfaces on end_date so the user
+        // sees the inline error next to the field they (might) edit.
+        // For the half-day FormPage variant this rule never actually
+        // fires because end_date is auto-synced to start_date — the
+        // schema check is defense in depth in case a future page
+        // bypasses the snap-before-hide logic.
+        (vals) => vals.day_part === 'full_day' || vals.start_date === vals.end_date,
+        {
+            message: 'A half-day request must start and end on the same date.',
             path: ['end_date'],
         },
     );

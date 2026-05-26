@@ -30,7 +30,9 @@ import {
 import { HRM_ROUTES } from '@/modules/hrm/routes';
 import type { ApiErrorBody } from '@/modules/auth/types';
 import {
+    DAY_PARTS,
     LEAVE_TYPES,
+    type DayPart,
     type LeaveRequestStatus,
     type LeaveType,
 } from '@/modules/hrm/types/leaveRequest';
@@ -111,6 +113,7 @@ const defaultInitial: LeaveRequestFormValues = {
     leave_type: 'annual',
     start_date: '',
     end_date: '',
+    day_part: 'full_day',
     reason: '',
 };
 
@@ -132,6 +135,7 @@ watch(
             leave_type: lr.leave_type,
             start_date: lr.start_date,
             end_date: lr.end_date,
+            day_part: lr.day_part,
             reason: lr.reason ?? '',
         });
     },
@@ -178,6 +182,63 @@ const leaveTypeOptions = computed<LeaveTypeOption[]>(() =>
     })),
 );
 
+// ─── Day part options ───────────────────────────────────────────────────────
+interface DayPartOption {
+    value: DayPart;
+    label: string;
+}
+const dayPartOptions = computed<DayPartOption[]>(() =>
+    DAY_PARTS.map((dp) => ({
+        value: dp,
+        label: t(`hrm.leaveRequest.dayPart.${dp}`),
+    })),
+);
+
+// useField bypass for day_part — same pattern as the employee picker
+// (the Select emits a string union, not a generic string).
+const {
+    value: dayPartValue,
+    handleChange: handleDayPartChange,
+    handleBlur: handleDayPartBlur,
+} = useField<DayPart>('day_part');
+
+// Half-day = single-date layout. When day_part is morning/afternoon,
+// the template hides End Date and relabels Start Date → "Date". When
+// the user toggles day_part FROM full_day TO half-day, we snap
+// end_date to start_date BEFORE the field disappears — preserves
+// value continuity if the user toggles back to full_day, and ensures
+// the form submission carries start==end so the backend's CHECK and
+// FormRequest both pass.
+//
+// The watch fires on day_part changes only. start_date / end_date
+// edits within full_day mode don't trigger sync; within half-day mode
+// the End Date field isn't rendered, so the user can't introduce
+// drift via the UI.
+const { value: startDateValue } = useField<string>('start_date');
+const { handleChange: handleEndDateChange } = useField<string>('end_date');
+
+const isHalfDay = computed<boolean>(() => dayPartValue.value !== 'full_day');
+
+watch(dayPartValue, (next, prev) => {
+    if (next !== 'full_day' && prev === 'full_day') {
+        // Snap-before-hide: copy start_date into end_date NOW so the
+        // form's submitted payload is consistent the moment the field
+        // disappears. If start_date is empty (create mode, user hasn't
+        // picked yet), we leave end_date empty too; the schema's
+        // required + regex check catches it on submit attempt.
+        handleEndDateChange(startDateValue.value ?? '');
+    }
+});
+
+// Bidirectional safety: when day_part is half-day, ANY change to
+// start_date must also update end_date. The half-day layout doesn't
+// render End Date, so this is the only path for them to stay in sync.
+watch(startDateValue, (next) => {
+    if (isHalfDay.value) {
+        handleEndDateChange(next ?? '');
+    }
+});
+
 // ─── Mutations + submit ─────────────────────────────────────────────────────
 const createMutation = useCreateLeaveRequest();
 const updateMutation = useUpdateLeaveRequest();
@@ -189,7 +250,8 @@ function normalizePayload(values: LeaveRequestFormValues) {
         leave_type: values.leave_type as LeaveType,
         start_date: values.start_date,
         end_date: values.end_date,
-        reason: values.reason === '' ? null : values.reason ?? null,
+        day_part: values.day_part as DayPart,
+        reason: values.reason === '' ? null : (values.reason ?? null),
     };
 }
 
@@ -497,55 +559,124 @@ function decidedStatusLabel(): string {
                             />
                         </FormField>
 
+                        <!-- Day Part — between Leave Type and the date
+                             layout. Drives the conditional rendering
+                             below. Standalone FormField (no v-slot)
+                             because the Select emits a literal-union
+                             type that doesn't fit FormField's string-
+                             typed slot. -->
                         <FormField
-                            v-slot="{ field }"
-                            name="start_date"
-                            :label="t('hrm.leaveRequest.form.fields.startDate')"
+                            name="day_part"
+                            :label="t('hrm.leaveRequest.form.fields.dayPart')"
                             required
                         >
-                            <DatePicker
-                                :model-value="stringToDate(field.modelValue)"
-                                :name="field.name"
-                                date-format="yy-mm-dd"
-                                show-icon
-                                show-button-bar
+                            <Select
+                                :model-value="dayPartValue"
+                                name="day_part"
+                                :options="dayPartOptions"
+                                option-label="label"
+                                option-value="value"
                                 class="w-full"
-                                input-class="w-full"
-                                data-testid="leave-request-form-start-date"
-                                @update:model-value="
-                                    (d) =>
-                                        field['onUpdate:modelValue'](
-                                            dateToYYYYMMDD(d as Date | null),
-                                        )
-                                "
-                                @blur="field.onBlur"
+                                data-testid="leave-request-form-day-part"
+                                @update:model-value="(v) => handleDayPartChange(v as DayPart)"
+                                @blur="() => handleDayPartBlur()"
                             />
+                            <p
+                                v-if="isHalfDay"
+                                class="mt-1 text-xs text-text-tertiary"
+                                data-testid="leave-request-form-half-day-hint"
+                            >
+                                {{ t('hrm.leaveRequest.form.fields.halfDayHint') }}
+                            </p>
                         </FormField>
 
-                        <FormField
-                            v-slot="{ field }"
-                            name="end_date"
-                            :label="t('hrm.leaveRequest.form.fields.endDate')"
-                            required
-                        >
-                            <DatePicker
-                                :model-value="stringToDate(field.modelValue)"
-                                :name="field.name"
-                                date-format="yy-mm-dd"
-                                show-icon
-                                show-button-bar
-                                class="w-full"
-                                input-class="w-full"
-                                data-testid="leave-request-form-end-date"
-                                @update:model-value="
-                                    (d) =>
-                                        field['onUpdate:modelValue'](
-                                            dateToYYYYMMDD(d as Date | null),
-                                        )
-                                "
-                                @blur="field.onBlur"
-                            />
-                        </FormField>
+                        <!-- Full-day layout: two date pickers (Start /
+                             End), unchanged from the original. -->
+                        <template v-if="!isHalfDay">
+                            <FormField
+                                v-slot="{ field }"
+                                name="start_date"
+                                :label="t('hrm.leaveRequest.form.fields.startDate')"
+                                required
+                            >
+                                <DatePicker
+                                    :model-value="stringToDate(field.modelValue)"
+                                    :name="field.name"
+                                    date-format="yy-mm-dd"
+                                    show-icon
+                                    show-button-bar
+                                    class="w-full"
+                                    input-class="w-full"
+                                    data-testid="leave-request-form-start-date"
+                                    @update:model-value="
+                                        (d) =>
+                                            field['onUpdate:modelValue'](
+                                                dateToYYYYMMDD(d as Date | null),
+                                            )
+                                    "
+                                    @blur="field.onBlur"
+                                />
+                            </FormField>
+
+                            <FormField
+                                v-slot="{ field }"
+                                name="end_date"
+                                :label="t('hrm.leaveRequest.form.fields.endDate')"
+                                required
+                            >
+                                <DatePicker
+                                    :model-value="stringToDate(field.modelValue)"
+                                    :name="field.name"
+                                    date-format="yy-mm-dd"
+                                    show-icon
+                                    show-button-bar
+                                    class="w-full"
+                                    input-class="w-full"
+                                    data-testid="leave-request-form-end-date"
+                                    @update:model-value="
+                                        (d) =>
+                                            field['onUpdate:modelValue'](
+                                                dateToYYYYMMDD(d as Date | null),
+                                            )
+                                    "
+                                    @blur="field.onBlur"
+                                />
+                            </FormField>
+                        </template>
+
+                        <!-- Half-day layout: a single "Date" picker.
+                             end_date is hidden — kept in sync with
+                             start_date via the watch in the script
+                             (snap-before-hide on toggle, auto-mirror
+                             on subsequent edits). Submitting carries
+                             start==end so the FormRequest closure +
+                             DB CHECK both pass. -->
+                        <template v-else>
+                            <FormField
+                                v-slot="{ field }"
+                                name="start_date"
+                                :label="t('hrm.leaveRequest.form.fields.date')"
+                                required
+                            >
+                                <DatePicker
+                                    :model-value="stringToDate(field.modelValue)"
+                                    :name="field.name"
+                                    date-format="yy-mm-dd"
+                                    show-icon
+                                    show-button-bar
+                                    class="w-full"
+                                    input-class="w-full"
+                                    data-testid="leave-request-form-date"
+                                    @update:model-value="
+                                        (d) =>
+                                            field['onUpdate:modelValue'](
+                                                dateToYYYYMMDD(d as Date | null),
+                                            )
+                                    "
+                                    @blur="field.onBlur"
+                                />
+                            </FormField>
+                        </template>
 
                         <div class="sm:col-span-2">
                             <FormField

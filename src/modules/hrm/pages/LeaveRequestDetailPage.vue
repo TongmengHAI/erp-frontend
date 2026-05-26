@@ -23,6 +23,7 @@ import {
     useRejectLeaveRequest,
 } from '@/modules/hrm/composables/useLeaveRequests';
 import { useLeaveRequestDetailMode } from '@/modules/hrm/composables/useLeaveRequestDetailMode';
+import { useLeaveRequestDateLabel } from '@/modules/hrm/composables/useLeaveRequestDateLabel';
 import { HRM_ROUTES } from '@/modules/hrm/routes';
 import type {
     LeaveRequestStatus,
@@ -107,6 +108,21 @@ const {
     canEdit,
     canDelete,
 });
+
+// ─── Dates label — single source of truth for the "Dates" row ─────────────
+// The composable handles all four variants (full_day single, full_day
+// range, morning, afternoon) so the template doesn't branch inline.
+const { label: datesLabel } = useLeaveRequestDateLabel(
+    () =>
+        leaveRequest.value
+            ? {
+                start_date: leaveRequest.value.start_date,
+                end_date: leaveRequest.value.end_date,
+                day_part: leaveRequest.value.day_part,
+            }
+            : null,
+    t,
+);
 
 // ─── Visual helpers ─────────────────────────────────────────────────────────
 function statusSeverity(status: LeaveRequestStatus): StatusSeverity {
@@ -459,27 +475,24 @@ async function onDecide(note: string | null): Promise<void> {
                         </dd>
                     </div>
 
+                    <!-- Single "Dates" row driven by useLeaveRequestDateLabel.
+                         Adapts to (start, end, day_part):
+                           full_day single  → "Fri, May 22"
+                           full_day range   → "Fri, May 22 → Fri, May 26"
+                           morning          → "Fri, May 22 (Morning)"
+                           afternoon        → "Fri, May 22 (Afternoon)"
+                         Replaces the previous separate Start/End rows so
+                         the half-day case isn't misrepresented as a
+                         one-day "range". -->
                     <div>
                         <dt class="text-sm font-medium text-text-secondary">
-                            {{ t('hrm.leaveRequest.detail.fields.startDate') }}
+                            {{ t('hrm.leaveRequest.detail.fields.dates') }}
                         </dt>
                         <dd
                             class="mt-1 text-base text-text-primary"
-                            data-testid="leave-request-detail-start-date"
+                            data-testid="leave-request-detail-dates"
                         >
-                            <DateDisplay :date="leaveRequest.start_date" format="long" />
-                        </dd>
-                    </div>
-
-                    <div>
-                        <dt class="text-sm font-medium text-text-secondary">
-                            {{ t('hrm.leaveRequest.detail.fields.endDate') }}
-                        </dt>
-                        <dd
-                            class="mt-1 text-base text-text-primary"
-                            data-testid="leave-request-detail-end-date"
-                        >
-                            <DateDisplay :date="leaveRequest.end_date" format="long" />
+                            {{ datesLabel }}
                         </dd>
                     </div>
 

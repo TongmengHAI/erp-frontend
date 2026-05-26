@@ -387,8 +387,10 @@
                 "fields": {
                     "employee": "Employee",
                     "type": "Leave type",
+                    "dates": "Dates",
                     "startDate": "Start date",
                     "endDate": "End date",
+                    "dayPart": "Day part",
                     "reason": "Reason",
                     "status": "Status",
                     "createdAt": "Submitted",
@@ -446,6 +448,9 @@
                     "employee": "Employee",
                     "noEmployee": "— Select —",
                     "type": "Leave type",
+                    "dayPart": "Day part",
+                    "halfDayHint": "Half-day requests are for a single date.",
+                    "date": "Date",
                     "startDate": "Start date",
                     "endDate": "End date",
                     "reason": "Reason",
@@ -467,6 +472,16 @@
                 "sick": "Sick",
                 "unpaid": "Unpaid",
                 "other": "Other"
+            },
+            "dayPart": {
+                "full_day": "Full day",
+                "morning": "Morning",
+                "afternoon": "Afternoon"
+            },
+            "dateLabel": {
+                "singleDay": "{date}",
+                "range": "{from} → {to}",
+                "halfDay": "{date} ({dayPart})"
             },
             "delete": {
                 "confirmTitle": "Delete leave request?",

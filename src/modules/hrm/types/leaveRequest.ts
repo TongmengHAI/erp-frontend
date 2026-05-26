@@ -53,6 +53,28 @@ export const LEAVE_TYPES: readonly LeaveType[] = Object.freeze([
 ]);
 
 /**
+ * Day-part granularity. Mirrors backend DayPart enum.
+ *
+ *   full_day  — request spans entire workdays (can be a single date OR
+ *               a multi-date range)
+ *   morning   — half-day, morning only. By construction start == end
+ *   afternoon — half-day, afternoon only. Same constraint
+ *
+ * The single-date invariant for morning/afternoon is enforced at three
+ * layers (Zod refinement here + FormRequest closure + DB composite
+ * CHECK). See backend/docs/api/v1/hrm.md "Day-part granularity".
+ *
+ * Hourly granularity is NOT modeled — separate future module.
+ */
+export type DayPart = 'full_day' | 'morning' | 'afternoon';
+
+export const DAY_PARTS: readonly DayPart[] = Object.freeze([
+    'full_day',
+    'morning',
+    'afternoon',
+]);
+
+/**
  * Nested employee snapshot embedded in the full LeaveRequest resource.
  * Three fields only — enough for the detail page to render employee
  * identification + a link, no employee metadata bleeds in.
@@ -111,8 +133,13 @@ export interface LeaveRequestBrief extends Record<string, unknown> {
     leave_type: LeaveType;
     /** ISO 8601 date (YYYY-MM-DD). */
     start_date: string;
-    /** ISO 8601 date (YYYY-MM-DD). */
+    /** ISO 8601 date (YYYY-MM-DD). For half-day requests (day_part
+     *  morning/afternoon), the backend guarantees end_date == start_date. */
     end_date: string;
+    /** Day-part granularity. Drives the Dates column's display variant —
+     *  "Fri, May 22 (Morning)" for half-day, "Fri, May 22 → Fri, May 26"
+     *  for full-day ranges, "Fri, May 22" for full-day single dates. */
+    day_part: DayPart;
     status: LeaveRequestStatus;
     /** Null on pending rows. */
     approved_at: string | null;
@@ -132,8 +159,11 @@ export interface LeaveRequest {
     leave_type: LeaveType;
     /** ISO 8601 date (YYYY-MM-DD). */
     start_date: string;
-    /** ISO 8601 date (YYYY-MM-DD). */
+    /** ISO 8601 date (YYYY-MM-DD). For half-day requests (day_part
+     *  morning/afternoon), the backend guarantees end_date == start_date. */
     end_date: string;
+    /** Day-part granularity. See LeaveRequestBrief.day_part docblock. */
+    day_part: DayPart;
     reason: string | null;
     status: LeaveRequestStatus;
     /** Present only on decided rows; null while pending. */
@@ -202,8 +232,13 @@ export interface CreateLeaveRequestRequest {
     leave_type: LeaveType;
     /** ISO 8601 date (YYYY-MM-DD). */
     start_date: string;
-    /** ISO 8601 date (YYYY-MM-DD). MUST be >= start_date (422 otherwise). */
+    /** ISO 8601 date (YYYY-MM-DD). MUST be >= start_date (422 otherwise).
+     *  For day_part morning/afternoon, MUST equal start_date (422 otherwise
+     *  via the FormRequest closure). */
     end_date: string;
+    /** Day-part granularity. Optional — backend defaults to full_day on
+     *  omission, matching the most common case. */
+    day_part?: DayPart;
     reason?: string | null;
 }
 
