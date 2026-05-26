@@ -25,6 +25,7 @@ import {
     useEmployeesQuery,
 } from '@/modules/hrm/composables/useEmployees';
 import { useDepartmentQuery } from '@/modules/hrm/composables/useDepartments';
+import { usePositionQuery } from '@/modules/hrm/composables/usePositions';
 import { HRM_ROUTES } from '@/modules/hrm/routes';
 import type {
     EmployeeBrief,
@@ -70,18 +71,19 @@ const statusFilter = ref<EmployeeStatus | null>(null);
 const page = ref(1);
 const perPage = ref(25);
 
-// Department filter — URL-driven, no UI control on this page. The
-// Department detail page's "View employees" link arrives here with
-// ?department_id=N; clearing happens via the in-page FilterChip's [×]
-// button. URL state + clear() come from the shared useUrlNumericFilter
-// composable; visual chip from the shared FilterChip component. Same
-// pattern applies to future filters (position_id lands in Session 3).
+// URL-driven filters — both department_id and position_id arrive via
+// deep-link from the respective detail page's "View employees" link.
+// Same useUrlNumericFilter composable + FilterChip component for both
+// — the generalization done in Session 2 means the two flows are
+// identical except for the i18n label and the URL key. Both filters
+// can coexist (independent AND filters via the API).
 const { value: departmentIdFilter, clear: clearDepartmentFilter } =
     useUrlNumericFilter('department_id');
+const { value: positionIdFilter, clear: clearPositionFilter } =
+    useUrlNumericFilter('position_id');
 
 // Look up the filtered department's name for the chip label. Falls back
-// to displaying the id if the lookup fails (deleted department, wrong
-// tenant) — the chip stays functional either way.
+// to displaying the id if the lookup fails (deleted, wrong tenant).
 const filteredDepartmentQuery = useDepartmentQuery(
     () => departmentIdFilter.value ?? 0,
 );
@@ -89,10 +91,19 @@ const filteredDepartmentName = computed<string | null>(
     () => filteredDepartmentQuery.data.value?.data?.name ?? null,
 );
 
-// Reset to page 1 when the department filter changes via URL. Critical
-// for back/forward navigation through filtered-vs-unfiltered states —
-// otherwise switching filters can leave you on page 3 of zero results.
-watch(departmentIdFilter, () => {
+// Same for the position filter chip label.
+const filteredPositionQuery = usePositionQuery(
+    () => positionIdFilter.value ?? 0,
+);
+const filteredPositionTitle = computed<string | null>(
+    () => filteredPositionQuery.data.value?.data?.title ?? null,
+);
+
+// Reset to page 1 when EITHER filter changes via URL. Critical for
+// back/forward navigation through filtered-vs-unfiltered states —
+// otherwise switching filters can leave the user on page 3 of zero
+// results.
+watch([departmentIdFilter, positionIdFilter], () => {
     page.value = 1;
 });
 
@@ -122,6 +133,7 @@ const queryParams = computed<EmployeeListParams>(() => {
     if (trimmed !== '') params.search = trimmed;
     if (statusFilter.value !== null) params.status = statusFilter.value;
     if (departmentIdFilter.value !== null) params.department_id = departmentIdFilter.value;
+    if (positionIdFilter.value !== null) params.position_id = positionIdFilter.value;
     return params;
 });
 
@@ -327,20 +339,30 @@ const tableEmptyOverride = computed(() => ({
             />
         </FilterBar>
 
-        <!-- Department filter chip — only renders when arriving with
-             ?department_id= in the URL (the Department detail page's
-             "View employees" link). Uses the shared FilterChip component
-             + useUrlNumericFilter composable. Same pattern will be used
-             for the position_id chip in Session 3. -->
+        <!-- Filter chips — same FilterChip + useUrlNumericFilter pattern
+             for both department_id and position_id URL filters. Each
+             chip renders independently; both can be active at once
+             (independent AND filters via the API). Clear() on one chip
+             only removes that param. -->
         <FilterChip
             v-if="departmentIdFilter !== null"
-            class="mb-4"
+            class="mb-2"
             :label="t('hrm.employee.list.departmentFilterChip', {
                 name: filteredDepartmentName ?? `#${departmentIdFilter}`,
             })"
             :clear-aria-label="t('hrm.employee.list.clearDepartmentFilter')"
             data-testid="employee-list-department-filter-chip"
             @clear="clearDepartmentFilter"
+        />
+        <FilterChip
+            v-if="positionIdFilter !== null"
+            class="mb-2"
+            :label="t('hrm.employee.list.positionFilterChip', {
+                name: filteredPositionTitle ?? `#${positionIdFilter}`,
+            })"
+            :clear-aria-label="t('hrm.employee.list.clearPositionFilter')"
+            data-testid="employee-list-position-filter-chip"
+            @clear="clearPositionFilter"
         />
 
         <!-- First-employee EmptyState swaps in for the DataTable entirely

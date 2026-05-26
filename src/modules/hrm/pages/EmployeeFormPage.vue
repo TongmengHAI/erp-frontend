@@ -23,6 +23,7 @@ import {
     useUpdateEmployee,
 } from '@/modules/hrm/composables/useEmployees';
 import { useDepartmentsQuery } from '@/modules/hrm/composables/useDepartments';
+import { usePositionsQuery } from '@/modules/hrm/composables/usePositions';
 import {
     employeeFormSchema,
     type EmployeeFormValues,
@@ -178,6 +179,36 @@ const departmentOptions = computed<DepartmentOption[]>(() => [
     ...(departmentsQuery.data.value?.data ?? []).map((d) => ({
         value: d.id,
         label: d.name,
+    })),
+]);
+
+// ─── Position picker data + binding ────────────────────────────────────────
+// Mirror of the Department picker above. Same per_page: 100 cap and
+// "status: 'active'" filter — archived positions don't appear as
+// assignable. Same standalone-chrome FormField pattern (the picker
+// emits number | null, doesn't fit the scoped-slot string typing).
+// The Position picker replaces the old free-text job_title input
+// (dropped in Session 2's type cutover).
+const positionsQuery = usePositionsQuery(() => ({
+    status: 'active' as const,
+    per_page: 100,
+}));
+
+const {
+    value: positionIdValue,
+    handleChange: handlePositionIdChange,
+    handleBlur: handlePositionIdBlur,
+} = useField<number | null>('position_id');
+
+interface PositionOption {
+    value: number | null;
+    label: string;
+}
+const positionOptions = computed<PositionOption[]>(() => [
+    { value: null, label: t('hrm.employee.form.fields.noPosition') },
+    ...(positionsQuery.data.value?.data ?? []).map((p) => ({
+        value: p.id,
+        label: p.title,
     })),
 ]);
 
@@ -462,10 +493,38 @@ const submitLabel = computed<string>(() => {
                             />
                         </FormField>
 
-                        <!-- The Position picker that replaces the old
-                             job_title text input lands in Session 3
-                             alongside a usePositionsQuery dropdown,
-                             mirror of the Department picker pattern. -->
+                        <!-- Position picker — replaces the old free-text
+                             job_title input. Same standalone-chrome
+                             FormField pattern as the Department picker
+                             below: picker emits number|null which
+                             doesn't fit FormField's string-typed scoped
+                             slot, so we bind PV Select directly to the
+                             useField('position_id') above. The
+                             positionsQuery filters status='active' so
+                             archived positions never appear as
+                             assignable. -->
+                        <FormField
+                            name="position_id"
+                            :label="t('hrm.employee.form.fields.position')"
+                            :help="t('hrm.employee.form.fields.positionHelp')"
+                        >
+                            <Select
+                                :model-value="positionIdValue"
+                                name="position_id"
+                                :options="positionOptions"
+                                option-label="label"
+                                option-value="value"
+                                :loading="positionsQuery.isLoading.value"
+                                :disabled="positionsQuery.isLoading.value"
+                                filter
+                                class="w-full"
+                                data-testid="employee-form-position"
+                                @update:model-value="
+                                    (v) => handlePositionIdChange(v as number | null)
+                                "
+                                @blur="() => handlePositionIdBlur()"
+                            />
+                        </FormField>
 
                         <FormField
                             name="department_id"

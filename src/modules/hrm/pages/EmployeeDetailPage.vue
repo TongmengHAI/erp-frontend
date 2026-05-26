@@ -271,11 +271,37 @@ function onDelete(): void {
                         </dd>
                     </div>
 
-                    <!-- The Position row that replaces the old job_title
-                         display lands in Session 3 alongside a RouterLink
-                         to PositionDetailPage. Session 2's job is the
-                         foundation cutover: types + schema + i18n keys
-                         already updated; visual surface follows. -->
+                    <!-- Position — replaces the old job_title display.
+                         Same cross-module-drill-down shape as the
+                         Department row below: RouterLink to
+                         PositionDetailPage when set, "—" placeholder
+                         when null (covers both unassigned and the
+                         soft-deleted-position case — backend returns
+                         position: null in both). -->
+                    <div>
+                        <dt class="text-sm font-medium text-text-secondary">
+                            {{ t('hrm.employee.detail.fields.position') }}
+                        </dt>
+                        <dd
+                            class="mt-1 text-base"
+                            data-testid="employee-detail-position"
+                        >
+                            <RouterLink
+                                v-if="employee.position"
+                                :to="{
+                                    name: HRM_ROUTES.POSITION_DETAIL,
+                                    params: { id: employee.position.id },
+                                }"
+                                class="text-brand hover:underline focus:outline-none focus:underline"
+                                :data-testid="`employee-detail-position-link-${employee.position.id}`"
+                            >
+                                {{ employee.position.title }}
+                            </RouterLink>
+                            <span v-else class="text-text-tertiary">
+                                {{ t('hrm.employee.detail.noPosition') }}
+                            </span>
+                        </dd>
+                    </div>
 
                     <div>
                         <dt class="text-sm font-medium text-text-secondary">
