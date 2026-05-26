@@ -49,6 +49,17 @@ export const SIDEBAR_MODULES: readonly SidebarModule[] = Object.freeze([
         permissionPrefix: 'hrm',
     },
     {
+        // Attendance — fourth HRM sibling. The clock icon
+        // (pi-calendar-clock) sits visually adjacent to the
+        // calendar icon used by Leave Requests, reinforcing that
+        // both are date-cadence resources viewed from a manager's
+        // perspective. permissionPrefix='hrm' (any hrm.*) unlocks.
+        label: 'navigation.modules.attendance',
+        icon: 'pi pi-clock',
+        routeName: 'hrm.attendance.list',
+        permissionPrefix: 'hrm',
+    },
+    {
         label: 'navigation.modules.accounting',
         icon: 'pi pi-book',
         routeName: 'accounting',

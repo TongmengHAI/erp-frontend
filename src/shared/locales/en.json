@@ -38,6 +38,7 @@
             "employees": "Employees",
             "departments": "Departments",
             "leaveRequests": "Leave requests",
+            "attendance": "Attendance",
             "accounting": "Accounting",
             "inventory": "Inventory",
             "procurement": "Procurement",
@@ -505,6 +506,119 @@
                 "list": "Leave requests",
                 "new": "New leave request",
                 "edit": "Edit leave request"
+            }
+        },
+        "attendance": {
+            "list": {
+                "title": "Attendance",
+                "subtitle": "Track daily attendance — present, absent, late, on leave, or half-day.",
+                "newAction": "New record",
+                "actions": {
+                    "view": "View",
+                    "edit": "Edit",
+                    "delete": "Delete"
+                },
+                "filters": {
+                    "status": "Status",
+                    "anyStatus": "Any status",
+                    "from": "From",
+                    "to": "To"
+                },
+                "columns": {
+                    "employee": "Employee",
+                    "date": "Date",
+                    "clockIn": "Clock in",
+                    "clockOut": "Clock out",
+                    "status": "Status"
+                },
+                "noClockTime": "—",
+                "deletedEmployeePlaceholder": "(deleted employee)",
+                "empty": {
+                    "title": "No attendance records yet",
+                    "description": "Once attendance is recorded for a date, it will appear here.",
+                    "action": "Record first attendance"
+                },
+                "filteredEmpty": {
+                    "title": "No matching records",
+                    "description": "Try clearing the status filter or widening the date range."
+                }
+            },
+            "detail": {
+                "edit": "Edit",
+                "delete": "Delete",
+                "sections": {
+                    "details": "Details"
+                },
+                "fields": {
+                    "employee": "Employee",
+                    "date": "Date",
+                    "clockIn": "Clock in",
+                    "clockOut": "Clock out",
+                    "status": "Status",
+                    "notes": "Notes",
+                    "createdAt": "Submitted",
+                    "updatedAt": "Last updated"
+                },
+                "noClockTime": "—",
+                "noNotes": "—",
+                "noEmployee": "(deleted employee)"
+            },
+            "form": {
+                "create": {
+                    "title": "New attendance record",
+                    "submit": "Create record",
+                    "submitting": "Creating…"
+                },
+                "edit": {
+                    "title": "Edit attendance record",
+                    "submit": "Save changes",
+                    "submitting": "Saving…"
+                },
+                "fields": {
+                    "employee": "Employee",
+                    "noEmployee": "— Select —",
+                    "date": "Date",
+                    "clockIn": "Clock in",
+                    "clockOut": "Clock out",
+                    "clockHelp": "Optional. Leave blank for absent or on-leave records.",
+                    "status": "Status",
+                    "notes": "Notes",
+                    "notesHelp": "Optional. Up to 500 characters."
+                },
+                "errors": {
+                    "unknown": "Something went wrong. Please try again.",
+                    "forbidden": "You don't have permission to perform this action."
+                }
+            },
+            "status": {
+                "present": "Present",
+                "absent": "Absent",
+                "late": "Late",
+                "on_leave": "On leave",
+                "half_day": "Half-day"
+            },
+            "delete": {
+                "confirmTitle": "Delete attendance record?",
+                "confirmMessage": "Delete this attendance record? This can't be undone.",
+                "confirmAction": "Delete",
+                "toast": {
+                    "success": "Attendance record deleted.",
+                    "error": "Couldn't delete this record. Please try again."
+                }
+            },
+            "toast": {
+                "created": "Attendance recorded.",
+                "updated": "Changes saved."
+            },
+            "notFound": {
+                "title": "Attendance record not found",
+                "description": "This record doesn't exist or has been removed.",
+                "action": "Back to attendance"
+            },
+            "breadcrumb": {
+                "list": "Attendance",
+                "new": "New record",
+                "edit": "Edit record"
             }
         }
     }

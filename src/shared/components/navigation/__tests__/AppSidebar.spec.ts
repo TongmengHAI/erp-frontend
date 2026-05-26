@@ -14,14 +14,16 @@ const STUB = { template: '<div />' };
 const NAV_ROUTES: RouteRecordRaw[] = [
     { path: '/', name: 'home', component: STUB },
     { path: '/dashboard', name: 'dashboard', component: STUB },
-    // The HRM module now ships three flat sibling entries: Employees,
-    // Departments, and Leave requests. All three gate on permissionPrefix
-    // 'hrm' so any hrm.* permission unlocks all three nav items — that's
-    // deliberate (a user who can view employees almost always can also
-    // view departments and leave requests).
+    // The HRM module now ships four flat sibling entries: Employees,
+    // Departments, Leave requests, and Attendance. All four gate on
+    // permissionPrefix 'hrm' so any hrm.* permission unlocks all four
+    // nav items — that's deliberate (a user who can view employees
+    // almost always can also view departments / leave requests /
+    // attendance).
     { path: '/hrm/employees', name: 'hrm.employee.list', component: STUB },
     { path: '/hrm/departments', name: 'hrm.department.list', component: STUB },
     { path: '/hrm/leave-requests', name: 'hrm.leaveRequest.list', component: STUB },
+    { path: '/hrm/attendance', name: 'hrm.attendance.list', component: STUB },
     { path: '/accounting', name: 'accounting', component: STUB },
     { path: '/inventory', name: 'inventory', component: STUB },
     { path: '/procurement', name: 'procurement', component: STUB },
@@ -64,19 +66,20 @@ function seedSomePermissions(perms: string[]): void {
 }
 
 describe('AppSidebar', () => {
-    it('renders all 8 modules when the user has every permission', async () => {
+    it('renders all 9 modules when the user has every permission', async () => {
         const w = await mountWithGlobals(AppSidebar, { routes: NAV_ROUTES });
         seedAllPermissions();
         await w.vm.$nextTick();
 
         const links = w.findAll('a[data-route-name]');
-        expect(links).toHaveLength(8);
+        expect(links).toHaveLength(9);
         const names = links.map((l) => l.attributes('data-route-name'));
         expect(names).toEqual([
             'dashboard',
             'hrm.employee.list',
             'hrm.department.list',
             'hrm.leaveRequest.list',
+            'hrm.attendance.list',
             'accounting',
             'inventory',
             'procurement',

@@ -28,6 +28,10 @@ export const HRM_ROUTES = {
     LEAVE_REQUEST_NEW: 'hrm.leaveRequest.new',
     LEAVE_REQUEST_DETAIL: 'hrm.leaveRequest.detail',
     LEAVE_REQUEST_EDIT: 'hrm.leaveRequest.edit',
+    ATTENDANCE_LIST: 'hrm.attendance.list',
+    ATTENDANCE_NEW: 'hrm.attendance.new',
+    ATTENDANCE_DETAIL: 'hrm.attendance.detail',
+    ATTENDANCE_EDIT: 'hrm.attendance.edit',
 } as const;
 
 /**
@@ -171,6 +175,50 @@ export const hrmRoutes: RouteRecordRaw[] = [
         meta: {
             breadcrumb: 'Edit leave request',
             permission: 'hrm.leave_request.update',
+        },
+        props: (route) => ({ id: Number(route.params.id) }),
+    },
+    // ── Attendance ──────────────────────────────────────────────────────
+    // Same four-route shape as the other resources. Page components
+    // land in Session 3 — these route definitions point at lazy imports
+    // for files that don't exist yet. The router only resolves the
+    // import on navigation, so this is harmless at boot but will 404
+    // at runtime if someone tries to navigate before Session 3 lands.
+    {
+        path: 'attendance',
+        name: HRM_ROUTES.ATTENDANCE_LIST,
+        component: () => import('./pages/AttendanceListPage.vue'),
+        meta: {
+            breadcrumb: 'Attendance',
+            permission: 'hrm.attendance.view',
+        },
+    },
+    {
+        path: 'attendance/new',
+        name: HRM_ROUTES.ATTENDANCE_NEW,
+        component: () => import('./pages/AttendanceFormPage.vue'),
+        meta: {
+            breadcrumb: 'New record',
+            permission: 'hrm.attendance.create',
+        },
+    },
+    {
+        path: 'attendance/:id(\\d+)',
+        name: HRM_ROUTES.ATTENDANCE_DETAIL,
+        component: () => import('./pages/AttendanceDetailPage.vue'),
+        meta: {
+            breadcrumb: 'Attendance record',
+            permission: 'hrm.attendance.view',
+        },
+        props: (route) => ({ id: Number(route.params.id) }),
+    },
+    {
+        path: 'attendance/:id(\\d+)/edit',
+        name: HRM_ROUTES.ATTENDANCE_EDIT,
+        component: () => import('./pages/AttendanceFormPage.vue'),
+        meta: {
+            breadcrumb: 'Edit record',
+            permission: 'hrm.attendance.update',
         },
         props: (route) => ({ id: Number(route.params.id) }),
     },
