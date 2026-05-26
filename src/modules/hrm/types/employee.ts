@@ -44,6 +44,13 @@ export interface EmployeeBrief extends Record<string, unknown> {
      *  (dropped in the Positions slice cutover). Same soft-delete
      *  nullability discipline as department_name. */
     position_title: string | null;
+    /** Flat branch name — third optional cross-module FK alongside
+     *  department_name and position_title. Same soft-delete nullability:
+     *  null when unassigned OR when the parent Branch row was soft-
+     *  deleted. The brief shape stays flat (no city/country here —
+     *  those only surface on the Employee detail row's nested branch
+     *  snapshot). */
+    branch_name: string | null;
     /** ISO 8601 date (YYYY-MM-DD). */
     hire_date: string;
     status: EmployeeStatus;
@@ -73,6 +80,23 @@ export interface EmployeePosition {
 }
 
 /**
+ * Nested branch snapshot — deliberately wider than EmployeeDepartment /
+ * EmployeePosition. Carries city + country_code in addition to the
+ * id/code/name identifiers, because the location is the differentiator
+ * for a branch (two "HQ" branches in different cities are useful to
+ * distinguish at a glance on the Employee detail row). This widening
+ * is scoped to the detail snapshot only — the brief shape
+ * (EmployeeBrief.branch_name) stays flat.
+ */
+export interface EmployeeBranch {
+    id: number;
+    code: string;
+    name: string;
+    city: string | null;
+    country_code: string | null;
+}
+
+/**
  * Full Employee shape — returned by show / store / update endpoints.
  * Drives the detail page and the form's edit-mode initial values.
  */
@@ -88,6 +112,10 @@ export interface Employee {
      *  Replaces the old free-text job_title field. See EmployeePosition
      *  for the shape. */
     position: EmployeePosition | null;
+    /** Nested branch snapshot, or null when unassigned / soft-deleted.
+     *  Wider than department/position snapshots — includes city +
+     *  country_code. See EmployeeBranch for the shape. */
+    branch: EmployeeBranch | null;
     /** ISO 8601 date (YYYY-MM-DD). */
     hire_date: string;
     status: EmployeeStatus;
@@ -113,6 +141,10 @@ export interface EmployeeListParams {
      *  semantics as department_id. Used by the Position detail page's
      *  "View employees" link (lands in Session 3). */
     position_id?: number;
+    /** Filter to employees assigned to a specific branch. Same silent-
+     *  empty semantics as department_id and position_id. Used by the
+     *  Branch detail page's "View employees" link. */
+    branch_id?: number;
     /** 1–100, default 25 on the backend. */
     per_page?: number;
     /** 1-indexed, default 1. Standard Laravel pagination. */
@@ -166,6 +198,11 @@ export interface CreateEmployeeRequest {
      *  foreign-context id returns 422 with `errors.position_id`.
      *  Replaces the old free-text job_title field. */
     position_id?: number | null;
+    /** FK → branches.id, or null for "no current branch". Same
+     *  load-bearing scoped-exists guarantee as department_id /
+     *  position_id — a foreign-context id returns 422 with
+     *  `errors.branch_id`. Optional and additive — no cutover. */
+    branch_id?: number | null;
     /** ISO 8601 date (YYYY-MM-DD). */
     hire_date: string;
     status: EmployeeStatus;

@@ -24,6 +24,7 @@ import {
 } from '@/modules/hrm/composables/useEmployees';
 import { useDepartmentsQuery } from '@/modules/hrm/composables/useDepartments';
 import { usePositionsQuery } from '@/modules/hrm/composables/usePositions';
+import { useBranchesQuery } from '@/modules/hrm/composables/useBranches';
 import {
     employeeFormSchema,
     type EmployeeFormValues,
@@ -104,8 +105,7 @@ const defaultInitial: EmployeeFormValues = {
     full_name: '',
     email: '',
     department_id: null,
-    // position_id default + the Position Select that consumes it land
-    // in Session 3 along with the rest of the visual cutover.
+    branch_id: null,
     position_id: null,
     hire_date: '',
     status: 'active',
@@ -134,6 +134,7 @@ watch(
             // pickers' v-model. null when unassigned OR when the parent
             // row was soft-deleted (backend returns null in both cases).
             department_id: employee.department?.id ?? null,
+            branch_id: employee.branch?.id ?? null,
             position_id: employee.position?.id ?? null,
             hire_date: employee.hire_date,
             status: employee.status,
@@ -212,6 +213,38 @@ const positionOptions = computed<PositionOption[]>(() => [
     })),
 ]);
 
+// ─── Branch picker data + binding ──────────────────────────────────────────
+// Same standalone-chrome FormField pattern as Department and Position —
+// the picker emits number | null which doesn't fit the string-typed
+// scoped slot. Same status: 'active' filter so archived branches don't
+// appear as assignable, same per_page: 100 cap as the other pickers.
+const branchesQuery = useBranchesQuery(() => ({
+    status: 'active' as const,
+    per_page: 100,
+}));
+
+const {
+    value: branchIdValue,
+    handleChange: handleBranchIdChange,
+    handleBlur: handleBranchIdBlur,
+} = useField<number | null>('branch_id');
+
+interface BranchOption {
+    value: number | null;
+    label: string;
+}
+const branchOptions = computed<BranchOption[]>(() => [
+    { value: null, label: t('hrm.employee.form.fields.noBranch') },
+    ...(branchesQuery.data.value?.data ?? []).map((b) => ({
+        value: b.id,
+        // Branch options show "Name — City" when city is present so
+        // disambiguation works at a glance (e.g. two "Phnom Penh" branches
+        // in different sub-locations). Pure name fallback when city is
+        // null.
+        label: b.city ? `${b.name} — ${b.city}` : b.name,
+    })),
+]);
+
 // ─── Mutations + submit ─────────────────────────────────────────────────────
 const createMutation = useCreateEmployee();
 const updateMutation = useUpdateEmployee();
@@ -238,6 +271,7 @@ function normalizePayload(values: EmployeeFormValues) {
         full_name: values.full_name,
         email: values.email === '' ? null : values.email,
         department_id: values.department_id ?? null,
+        branch_id: values.branch_id ?? null,
         position_id: values.position_id ?? null,
         hire_date: values.hire_date,
         status: values.status as EmployeeStatus,
@@ -493,16 +527,63 @@ const submitLabel = computed<string>(() => {
                             />
                         </FormField>
 
-                        <!-- Position picker — replaces the old free-text
-                             job_title input. Same standalone-chrome
-                             FormField pattern as the Department picker
-                             below: picker emits number|null which
-                             doesn't fit FormField's string-typed scoped
-                             slot, so we bind PV Select directly to the
-                             useField('position_id') above. The
-                             positionsQuery filters status='active' so
-                             archived positions never appear as
-                             assignable. -->
+                        <!-- Cross-module picker order: Department →
+                             Branch → Position. Matches the column order
+                             on the Employee list (dept then branch then
+                             pos), so the user's left-to-right scan in
+                             the form mirrors what they'll see in the
+                             list afterwards. Three pickers, all using
+                             the same standalone-chrome FormField
+                             pattern: picker emits number|null which
+                             doesn't fit the string-typed scoped slot,
+                             so PV Select is bound directly to the
+                             useField('{name}_id') above. Each picker
+                             filters status='active' so archived rows
+                             never appear as assignable. -->
+                        <FormField
+                            name="department_id"
+                            :label="t('hrm.employee.form.fields.department')"
+                        >
+                            <Select
+                                :model-value="departmentIdValue"
+                                name="department_id"
+                                :options="departmentOptions"
+                                option-label="label"
+                                option-value="value"
+                                :loading="departmentsQuery.isLoading.value"
+                                :disabled="departmentsQuery.isLoading.value"
+                                class="w-full"
+                                data-testid="employee-form-department"
+                                @update:model-value="
+                                    (v) => handleDepartmentIdChange(v as number | null)
+                                "
+                                @blur="() => handleDepartmentIdBlur()"
+                            />
+                        </FormField>
+
+                        <FormField
+                            name="branch_id"
+                            :label="t('hrm.employee.form.fields.branch')"
+                            :help="t('hrm.employee.form.fields.branchHelp')"
+                        >
+                            <Select
+                                :model-value="branchIdValue"
+                                name="branch_id"
+                                :options="branchOptions"
+                                option-label="label"
+                                option-value="value"
+                                :loading="branchesQuery.isLoading.value"
+                                :disabled="branchesQuery.isLoading.value"
+                                filter
+                                class="w-full"
+                                data-testid="employee-form-branch"
+                                @update:model-value="
+                                    (v) => handleBranchIdChange(v as number | null)
+                                "
+                                @blur="() => handleBranchIdBlur()"
+                            />
+                        </FormField>
+
                         <FormField
                             name="position_id"
                             :label="t('hrm.employee.form.fields.position')"
@@ -523,35 +604,6 @@ const submitLabel = computed<string>(() => {
                                     (v) => handlePositionIdChange(v as number | null)
                                 "
                                 @blur="() => handlePositionIdBlur()"
-                            />
-                        </FormField>
-
-                        <FormField
-                            name="department_id"
-                            :label="t('hrm.employee.form.fields.department')"
-                        >
-                            <!-- Standalone-chrome mode (no v-slot): the
-                                 picker emits number | null, which doesn't
-                                 fit FormField's string-typed scoped slot.
-                                 The script-side useField('department_id')
-                                 above is bound directly to PV Select's
-                                 v-model. FormField still renders the label
-                                 + error chrome via its internal useField on
-                                 the same name. -->
-                            <Select
-                                :model-value="departmentIdValue"
-                                name="department_id"
-                                :options="departmentOptions"
-                                option-label="label"
-                                option-value="value"
-                                :loading="departmentsQuery.isLoading.value"
-                                :disabled="departmentsQuery.isLoading.value"
-                                class="w-full"
-                                data-testid="employee-form-department"
-                                @update:model-value="
-                                    (v) => handleDepartmentIdChange(v as number | null)
-                                "
-                                @blur="() => handleDepartmentIdBlur()"
                             />
                         </FormField>
 

@@ -36,6 +36,10 @@ export const HRM_ROUTES = {
     POSITION_NEW: 'hrm.position.new',
     POSITION_DETAIL: 'hrm.position.detail',
     POSITION_EDIT: 'hrm.position.edit',
+    BRANCH_LIST: 'hrm.branch.list',
+    BRANCH_NEW: 'hrm.branch.new',
+    BRANCH_DETAIL: 'hrm.branch.detail',
+    BRANCH_EDIT: 'hrm.branch.edit',
 } as const;
 
 /**
@@ -266,6 +270,48 @@ export const hrmRoutes: RouteRecordRaw[] = [
         meta: {
             breadcrumb: 'Edit position',
             permission: 'hrm.position.update',
+        },
+        props: (route) => ({ id: Number(route.params.id) }),
+    },
+    // ── Branches ───────────────────────────────────────────────────────
+    // Same four-route shape as the other resources. Purely additive
+    // slice — Employee gets an optional branch_id FK alongside the
+    // existing department_id and position_id (the third chip).
+    {
+        path: 'branches',
+        name: HRM_ROUTES.BRANCH_LIST,
+        component: () => import('./pages/BranchListPage.vue'),
+        meta: {
+            breadcrumb: 'Branches',
+            permission: 'hrm.branch.view',
+        },
+    },
+    {
+        path: 'branches/new',
+        name: HRM_ROUTES.BRANCH_NEW,
+        component: () => import('./pages/BranchFormPage.vue'),
+        meta: {
+            breadcrumb: 'New branch',
+            permission: 'hrm.branch.create',
+        },
+    },
+    {
+        path: 'branches/:id(\\d+)',
+        name: HRM_ROUTES.BRANCH_DETAIL,
+        component: () => import('./pages/BranchDetailPage.vue'),
+        meta: {
+            breadcrumb: 'Branch',
+            permission: 'hrm.branch.view',
+        },
+        props: (route) => ({ id: Number(route.params.id) }),
+    },
+    {
+        path: 'branches/:id(\\d+)/edit',
+        name: HRM_ROUTES.BRANCH_EDIT,
+        component: () => import('./pages/BranchFormPage.vue'),
+        meta: {
+            breadcrumb: 'Edit branch',
+            permission: 'hrm.branch.update',
         },
         props: (route) => ({ id: Number(route.params.id) }),
     },

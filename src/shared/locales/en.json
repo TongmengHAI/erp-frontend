@@ -40,6 +40,7 @@
             "leaveRequests": "Leave requests",
             "attendance": "Attendance",
             "positions": "Positions",
+            "branches": "Branches",
             "accounting": "Accounting",
             "inventory": "Inventory",
             "procurement": "Procurement",
@@ -141,12 +142,15 @@
                     "code": "Code",
                     "name": "Name",
                     "department": "Department",
+                    "branch": "Branch",
                     "position": "Position",
                     "status": "Status",
                     "hireDate": "Hire date"
                 },
                 "departmentFilterChip": "Filtered to: {name}",
                 "clearDepartmentFilter": "Clear department filter",
+                "branchFilterChip": "Filtered to: {name}",
+                "clearBranchFilter": "Clear branch filter",
                 "positionFilterChip": "Filtered to: {name}",
                 "clearPositionFilter": "Clear position filter",
                 "empty": {
@@ -166,8 +170,9 @@
                     "code": "Employee code",
                     "fullName": "Full name",
                     "email": "Email",
-                    "position": "Position",
                     "department": "Department",
+                    "branch": "Branch",
+                    "position": "Position",
                     "hireDate": "Hire date",
                     "status": "Status",
                     "createdAt": "Created",
@@ -176,6 +181,8 @@
                 "noEmail": "—",
                 "noPosition": "—",
                 "noDepartment": "—",
+                "noBranch": "—",
+                "branchLocationSeparator": " · ",
                 "sections": {
                     "details": "Details"
                 }
@@ -197,11 +204,14 @@
                     "fullName": "Full name",
                     "email": "Email",
                     "emailHelp": "Optional.",
+                    "department": "Department",
+                    "noDepartment": "— None —",
+                    "branch": "Branch",
+                    "branchHelp": "Optional. Physical location the employee works from.",
+                    "noBranch": "— None —",
                     "position": "Position",
                     "positionHelp": "Optional. Pick a role from the Positions list.",
                     "noPosition": "— None —",
-                    "department": "Department",
-                    "noDepartment": "— None —",
                     "hireDate": "Hire date",
                     "status": "Status"
                 },
@@ -725,6 +735,119 @@
                 "list": "Positions",
                 "new": "New position",
                 "edit": "Edit position"
+            }
+        },
+        "branch": {
+            "list": {
+                "title": "Branches",
+                "subtitle": "Manage the physical locations your company operates from.",
+                "newAction": "New branch",
+                "search": {
+                    "placeholder": "Search by name, code, or city…",
+                    "label": "Search"
+                },
+                "filters": {
+                    "status": "Status",
+                    "anyStatus": "Any status"
+                },
+                "actions": {
+                    "view": "View",
+                    "edit": "Edit",
+                    "delete": "Delete"
+                },
+                "columns": {
+                    "code": "Code",
+                    "name": "Name",
+                    "city": "City",
+                    "status": "Status"
+                },
+                "empty": {
+                    "title": "No branches yet",
+                    "description": "Add your first branch to start tracking office and warehouse locations.",
+                    "action": "Create first branch"
+                },
+                "filteredEmpty": {
+                    "title": "No matching branches",
+                    "description": "Try clearing the search or status filter."
+                }
+            },
+            "detail": {
+                "edit": "Edit",
+                "delete": "Delete",
+                "fields": {
+                    "code": "Branch code",
+                    "name": "Name",
+                    "description": "Description",
+                    "address": "Address",
+                    "city": "City",
+                    "countryCode": "Country code",
+                    "phone": "Phone",
+                    "status": "Status"
+                },
+                "noValue": "—",
+                "sections": {
+                    "details": "Details",
+                    "employees": "Employees"
+                },
+                "employeesCount": "no employees | {n} employee | {n} employees",
+                "viewEmployees": "View employees"
+            },
+            "form": {
+                "create": {
+                    "title": "New branch",
+                    "submit": "Create branch",
+                    "submitting": "Creating…"
+                },
+                "edit": {
+                    "title": "Edit branch",
+                    "submit": "Save changes",
+                    "submitting": "Saving…"
+                },
+                "fields": {
+                    "code": "Branch code",
+                    "codeHelp": "Unique within this company (e.g. B-PNH-HQ).",
+                    "name": "Name",
+                    "description": "Description",
+                    "descriptionHelp": "Optional. Short descriptor — up to 500 characters.",
+                    "address": "Address",
+                    "addressHelp": "Optional. Street address — up to 500 characters.",
+                    "city": "City",
+                    "countryCode": "Country code",
+                    "countryCodeHelp": "Optional. ISO 3166-1 alpha-2 — two uppercase letters (e.g. KH, US).",
+                    "phone": "Phone",
+                    "status": "Status"
+                },
+                "errors": {
+                    "unknown": "Something went wrong. Please try again.",
+                    "forbidden": "You don't have permission to perform this action."
+                }
+            },
+            "status": {
+                "active": "Active",
+                "archived": "Archived"
+            },
+            "delete": {
+                "confirmTitle": "Delete branch?",
+                "confirmMessage": "Delete {name}? This can't be undone.",
+                "confirmAction": "Delete",
+                "toast": {
+                    "success": "Branch deleted.",
+                    "error": "Couldn't delete this branch. Please try again."
+                }
+            },
+            "toast": {
+                "created": "Branch created.",
+                "updated": "Changes saved."
+            },
+            "notFound": {
+                "title": "Branch not found",
+                "description": "This branch doesn't exist or has been removed.",
+                "action": "Back to branches"
+            },
+            "breadcrumb": {
+                "list": "Branches",
+                "new": "New branch",
+                "edit": "Edit branch"
             }
         }
     }

@@ -271,13 +271,90 @@ function onDelete(): void {
                         </dd>
                     </div>
 
-                    <!-- Position — replaces the old job_title display.
-                         Same cross-module-drill-down shape as the
-                         Department row below: RouterLink to
-                         PositionDetailPage when set, "—" placeholder
-                         when null (covers both unassigned and the
-                         soft-deleted-position case — backend returns
-                         position: null in both). -->
+                    <!-- Cross-module row order: Department → Branch →
+                         Position. Matches the column order on the list
+                         and the picker order on the form — one
+                         consistent reading order across all three
+                         Employee surfaces. Each row uses the same shape:
+                         RouterLink to the related detail page when set,
+                         "—" placeholder when null (covers both
+                         unassigned AND the soft-deleted-parent case —
+                         backend returns the snapshot as null in both). -->
+                    <div>
+                        <dt class="text-sm font-medium text-text-secondary">
+                            {{ t('hrm.employee.detail.fields.department') }}
+                        </dt>
+                        <dd
+                            class="mt-1 text-base"
+                            data-testid="employee-detail-department"
+                        >
+                            <RouterLink
+                                v-if="employee.department"
+                                :to="{
+                                    name: HRM_ROUTES.DEPARTMENT_DETAIL,
+                                    params: { id: employee.department.id },
+                                }"
+                                class="text-brand hover:underline focus:outline-none focus:underline"
+                                :data-testid="`employee-detail-department-link-${employee.department.id}`"
+                            >
+                                {{ employee.department.name }}
+                            </RouterLink>
+                            <span v-else class="text-text-tertiary">
+                                {{ t('hrm.employee.detail.noDepartment') }}
+                            </span>
+                        </dd>
+                    </div>
+
+                    <!-- Branch — deliberately wider snapshot than
+                         Department / Position rows. Branch name links
+                         to BranchDetailPage; city + country_code render
+                         as a muted secondary line beneath, separated by
+                         a middot. Both location fields are nullable on
+                         the backend so we render whichever is present.
+                         Location-being-the-differentiator is what
+                         justifies the wider snapshot — two "HQ" branches
+                         in different cities are distinguishable at a
+                         glance here. -->
+                    <div>
+                        <dt class="text-sm font-medium text-text-secondary">
+                            {{ t('hrm.employee.detail.fields.branch') }}
+                        </dt>
+                        <dd
+                            class="mt-1 text-base"
+                            data-testid="employee-detail-branch"
+                        >
+                            <template v-if="employee.branch">
+                                <RouterLink
+                                    :to="{
+                                        name: HRM_ROUTES.BRANCH_DETAIL,
+                                        params: { id: employee.branch.id },
+                                    }"
+                                    class="text-brand hover:underline focus:outline-none focus:underline"
+                                    :data-testid="`employee-detail-branch-link-${employee.branch.id}`"
+                                >
+                                    {{ employee.branch.name }}
+                                </RouterLink>
+                                <div
+                                    v-if="employee.branch.city || employee.branch.country_code"
+                                    class="mt-0.5 text-sm text-text-tertiary"
+                                    data-testid="employee-detail-branch-location"
+                                >
+                                    <span v-if="employee.branch.city">{{ employee.branch.city }}</span>
+                                    <span
+                                        v-if="employee.branch.city && employee.branch.country_code"
+                                    >{{ t('hrm.employee.detail.branchLocationSeparator') }}</span>
+                                    <span
+                                        v-if="employee.branch.country_code"
+                                        class="tabular-nums"
+                                    >{{ employee.branch.country_code }}</span>
+                                </div>
+                            </template>
+                            <span v-else class="text-text-tertiary">
+                                {{ t('hrm.employee.detail.noBranch') }}
+                            </span>
+                        </dd>
+                    </div>
+
                     <div>
                         <dt class="text-sm font-medium text-text-secondary">
                             {{ t('hrm.employee.detail.fields.position') }}
@@ -299,39 +376,6 @@ function onDelete(): void {
                             </RouterLink>
                             <span v-else class="text-text-tertiary">
                                 {{ t('hrm.employee.detail.noPosition') }}
-                            </span>
-                        </dd>
-                    </div>
-
-                    <div>
-                        <dt class="text-sm font-medium text-text-secondary">
-                            {{ t('hrm.employee.detail.fields.department') }}
-                        </dt>
-                        <dd
-                            class="mt-1 text-base"
-                            data-testid="employee-detail-department"
-                        >
-                            <!-- Department name links to the Department detail
-                                 page — natural cross-module drill-down. The
-                                 RouterLink uses the named route so any future
-                                 URL change to /hrm/departments/:id ripples
-                                 through automatically. Null renders as "—"
-                                 (also covers the soft-deleted-department
-                                 case — backend returns department: null
-                                 when the parent row is trashed). -->
-                            <RouterLink
-                                v-if="employee.department"
-                                :to="{
-                                    name: HRM_ROUTES.DEPARTMENT_DETAIL,
-                                    params: { id: employee.department.id },
-                                }"
-                                class="text-brand hover:underline focus:outline-none focus:underline"
-                                :data-testid="`employee-detail-department-link-${employee.department.id}`"
-                            >
-                                {{ employee.department.name }}
-                            </RouterLink>
-                            <span v-else class="text-text-tertiary">
-                                {{ t('hrm.employee.detail.noDepartment') }}
                             </span>
                         </dd>
                     </div>

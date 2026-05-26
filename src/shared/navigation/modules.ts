@@ -71,6 +71,16 @@ export const SIDEBAR_MODULES: readonly SidebarModule[] = Object.freeze([
         permissionPrefix: 'hrm',
     },
     {
+        // Branches — sixth HRM sibling. With 11 sidebar entries after
+        // this slice (and 12 after Leave Balances) the flat IA is at
+        // its breaking point — the Odoo-style nav refactor is the
+        // committed follow-up. Not action this slice; just registered.
+        label: 'navigation.modules.branches',
+        icon: 'pi pi-building',
+        routeName: 'hrm.branch.list',
+        permissionPrefix: 'hrm',
+    },
+    {
         label: 'navigation.modules.accounting',
         icon: 'pi pi-book',
         routeName: 'accounting',

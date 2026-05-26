@@ -51,6 +51,10 @@ export const employeeFormSchema = z.object({
     // "— None —", id for an assignment. Same load-bearing scoped-FK
     // backend guard.
     position_id: z.number().int().positive().nullable().optional(),
+    // Branch FK — third optional cross-module FK alongside
+    // department_id and position_id. Same shape, same load-bearing
+    // scoped-FK backend guard. Purely additive — no cutover.
+    branch_id: z.number().int().positive().nullable().optional(),
     hire_date: z
         .string({ required_error: 'Hire date is required.' })
         .min(1, 'Hire date is required.')

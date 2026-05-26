@@ -26,6 +26,7 @@ import {
 } from '@/modules/hrm/composables/useEmployees';
 import { useDepartmentQuery } from '@/modules/hrm/composables/useDepartments';
 import { usePositionQuery } from '@/modules/hrm/composables/usePositions';
+import { useBranchQuery } from '@/modules/hrm/composables/useBranches';
 import { HRM_ROUTES } from '@/modules/hrm/routes';
 import type {
     EmployeeBrief,
@@ -71,19 +72,21 @@ const statusFilter = ref<EmployeeStatus | null>(null);
 const page = ref(1);
 const perPage = ref(25);
 
-// URL-driven filters — both department_id and position_id arrive via
-// deep-link from the respective detail page's "View employees" link.
-// Same useUrlNumericFilter composable + FilterChip component for both
-// — the generalization done in Session 2 means the two flows are
-// identical except for the i18n label and the URL key. Both filters
-// can coexist (independent AND filters via the API).
+// URL-driven filters — department_id, branch_id, and position_id each
+// arrive via deep-link from the respective detail page's "View employees"
+// link. Same useUrlNumericFilter composable + FilterChip component for
+// all three — the generalization is paying off: three filters wired
+// with the same five-line pattern. All three can coexist (independent
+// AND filters via the API).
 const { value: departmentIdFilter, clear: clearDepartmentFilter } =
     useUrlNumericFilter('department_id');
+const { value: branchIdFilter, clear: clearBranchFilter } =
+    useUrlNumericFilter('branch_id');
 const { value: positionIdFilter, clear: clearPositionFilter } =
     useUrlNumericFilter('position_id');
 
-// Look up the filtered department's name for the chip label. Falls back
-// to displaying the id if the lookup fails (deleted, wrong tenant).
+// Look up each filtered entity's display label for the chip. Falls
+// back to the id if the lookup fails (deleted, wrong tenant).
 const filteredDepartmentQuery = useDepartmentQuery(
     () => departmentIdFilter.value ?? 0,
 );
@@ -91,7 +94,13 @@ const filteredDepartmentName = computed<string | null>(
     () => filteredDepartmentQuery.data.value?.data?.name ?? null,
 );
 
-// Same for the position filter chip label.
+const filteredBranchQuery = useBranchQuery(
+    () => branchIdFilter.value ?? 0,
+);
+const filteredBranchName = computed<string | null>(
+    () => filteredBranchQuery.data.value?.data?.name ?? null,
+);
+
 const filteredPositionQuery = usePositionQuery(
     () => positionIdFilter.value ?? 0,
 );
@@ -99,11 +108,10 @@ const filteredPositionTitle = computed<string | null>(
     () => filteredPositionQuery.data.value?.data?.title ?? null,
 );
 
-// Reset to page 1 when EITHER filter changes via URL. Critical for
-// back/forward navigation through filtered-vs-unfiltered states —
-// otherwise switching filters can leave the user on page 3 of zero
-// results.
-watch([departmentIdFilter, positionIdFilter], () => {
+// Reset to page 1 when ANY filter changes via URL. Critical for back/
+// forward navigation through filtered-vs-unfiltered states — otherwise
+// switching filters can leave the user on page 3 of zero results.
+watch([departmentIdFilter, branchIdFilter, positionIdFilter], () => {
     page.value = 1;
 });
 
@@ -133,6 +141,7 @@ const queryParams = computed<EmployeeListParams>(() => {
     if (trimmed !== '') params.search = trimmed;
     if (statusFilter.value !== null) params.status = statusFilter.value;
     if (departmentIdFilter.value !== null) params.department_id = departmentIdFilter.value;
+    if (branchIdFilter.value !== null) params.branch_id = branchIdFilter.value;
     if (positionIdFilter.value !== null) params.position_id = positionIdFilter.value;
     return params;
 });
@@ -169,8 +178,10 @@ const columns = computed<DataTableColumn<EmployeeBrief>[]>(() => [
     { field: 'employee_code', label: 'hrm.employee.list.columns.code', type: 'custom', width: '140px' },
     { field: 'full_name', label: 'hrm.employee.list.columns.name', type: 'custom' },
     { field: 'department_name', label: 'hrm.employee.list.columns.department', type: 'custom' },
-    // The Position column that replaces the old job_title column lands
-    // in Session 3 alongside the position chip + filter wiring.
+    // Branch column lands between Department and Position — physical
+    // location reads naturally before the role label, and the three
+    // chip/picker/column orders all line up (dept → branch → pos).
+    { field: 'branch_name', label: 'hrm.employee.list.columns.branch', type: 'custom' },
     { field: 'position_title', label: 'hrm.employee.list.columns.position', type: 'custom' },
     { field: 'status', label: 'hrm.employee.list.columns.status', type: 'custom', align: 'center', width: '140px' },
     {
@@ -340,30 +351,51 @@ const tableEmptyOverride = computed(() => ({
         </FilterBar>
 
         <!-- Filter chips — same FilterChip + useUrlNumericFilter pattern
-             for both department_id and position_id URL filters. Each
-             chip renders independently; both can be active at once
-             (independent AND filters via the API). Clear() on one chip
-             only removes that param. -->
-        <FilterChip
-            v-if="departmentIdFilter !== null"
-            class="mb-2"
-            :label="t('hrm.employee.list.departmentFilterChip', {
-                name: filteredDepartmentName ?? `#${departmentIdFilter}`,
-            })"
-            :clear-aria-label="t('hrm.employee.list.clearDepartmentFilter')"
-            data-testid="employee-list-department-filter-chip"
-            @clear="clearDepartmentFilter"
-        />
-        <FilterChip
-            v-if="positionIdFilter !== null"
-            class="mb-2"
-            :label="t('hrm.employee.list.positionFilterChip', {
-                name: filteredPositionTitle ?? `#${positionIdFilter}`,
-            })"
-            :clear-aria-label="t('hrm.employee.list.clearPositionFilter')"
-            data-testid="employee-list-position-filter-chip"
-            @clear="clearPositionFilter"
-        />
+             for all three URL filters (department_id, branch_id,
+             position_id). Each chip renders independently; up to three
+             can be active at once (independent AND filters via the API).
+             Clear() on one chip only removes that param — the others
+             stay put. Chip order matches the column order on the table
+             below (dept → branch → pos), so the visual flow is
+             consistent left-to-right.
+             flex-wrap container so up to three chips form a single row
+             on a wide viewport and gracefully wrap to a second line on
+             narrower viewports — verified visually in the 4-moment walk.
+             Wrapping the previously-stacked 2-chip case in a row is the
+             intended visual upgrade alongside the third chip landing. -->
+        <div
+            v-if="departmentIdFilter !== null || branchIdFilter !== null || positionIdFilter !== null"
+            class="mb-2 flex flex-wrap items-center gap-2"
+            data-testid="employee-list-filter-chips"
+        >
+            <FilterChip
+                v-if="departmentIdFilter !== null"
+                :label="t('hrm.employee.list.departmentFilterChip', {
+                    name: filteredDepartmentName ?? `#${departmentIdFilter}`,
+                })"
+                :clear-aria-label="t('hrm.employee.list.clearDepartmentFilter')"
+                data-testid="employee-list-department-filter-chip"
+                @clear="clearDepartmentFilter"
+            />
+            <FilterChip
+                v-if="branchIdFilter !== null"
+                :label="t('hrm.employee.list.branchFilterChip', {
+                    name: filteredBranchName ?? `#${branchIdFilter}`,
+                })"
+                :clear-aria-label="t('hrm.employee.list.clearBranchFilter')"
+                data-testid="employee-list-branch-filter-chip"
+                @clear="clearBranchFilter"
+            />
+            <FilterChip
+                v-if="positionIdFilter !== null"
+                :label="t('hrm.employee.list.positionFilterChip', {
+                    name: filteredPositionTitle ?? `#${positionIdFilter}`,
+                })"
+                :clear-aria-label="t('hrm.employee.list.clearPositionFilter')"
+                data-testid="employee-list-position-filter-chip"
+                @clear="clearPositionFilter"
+            />
+        </div>
 
         <!-- First-employee EmptyState swaps in for the DataTable entirely
              when the company has zero employees AND no filter is active.
@@ -451,6 +483,24 @@ const tableEmptyOverride = computed(() => ({
                         :title="row.department_name"
                     >
                         {{ row.department_name }}
+                    </span>
+                    <span v-else class="text-text-tertiary">—</span>
+                </template>
+
+                <!-- Branch — same "—" affordance + truncation guard as
+                     Department. Branches are first-class structured
+                     entities (same as Department), so the null state
+                     reads as "no branch assigned" intentionally rather
+                     than empty space. Brief shape carries branch_name
+                     flat; city/country_code only surface on the detail
+                     row's nested snapshot. -->
+                <template #cell-branch_name="{ row }">
+                    <span
+                        v-if="row.branch_name"
+                        class="block max-w-[20ch] truncate"
+                        :title="row.branch_name"
+                    >
+                        {{ row.branch_name }}
                     </span>
                     <span v-else class="text-text-tertiary">—</span>
                 </template>
