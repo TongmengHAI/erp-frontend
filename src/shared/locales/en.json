@@ -41,6 +41,7 @@
             "attendance": "Attendance",
             "positions": "Positions",
             "branches": "Branches",
+            "leaveBalances": "Leave balances",
             "accounting": "Accounting",
             "inventory": "Inventory",
             "procurement": "Procurement",
@@ -852,6 +853,125 @@
                 "list": "Branches",
                 "new": "New branch",
                 "edit": "Edit branch"
+            }
+        },
+        "leaveBalance": {
+            "leaveType": {
+                "annual": "Annual",
+                "sick": "Sick"
+            },
+            "display": {
+                "daysRemaining": "{n} day remaining | {n} days remaining",
+                "zeroRemainingLabel": "0 days remaining",
+                "overConsumedLabel": "Over-consumed by {n} day | Over-consumed by {n} days"
+            },
+            "list": {
+                "title": "Leave balances",
+                "subtitle": "Allocated days minus approved leave requests per employee, type, and year.",
+                "newAction": "New balance",
+                "actions": {
+                    "view": "View",
+                    "edit": "Edit",
+                    "delete": "Delete"
+                },
+                "filters": {
+                    "type": "Leave type",
+                    "anyType": "Any type",
+                    "periodYear": "Year"
+                },
+                "columns": {
+                    "employee": "Employee",
+                    "type": "Type",
+                    "period": "Year",
+                    "allocated": "Allocated",
+                    "consumed": "Consumed",
+                    "remaining": "Remaining"
+                },
+                "employeeFilterChip": "Filtered to: {name}",
+                "clearEmployeeFilter": "Clear employee filter",
+                "empty": {
+                    "title": "No leave balances yet",
+                    "description": "Allocate annual or sick days to an employee to start tracking consumption.",
+                    "action": "Create first balance"
+                },
+                "filteredEmpty": {
+                    "title": "No matching balances",
+                    "description": "Try clearing the filters."
+                }
+            },
+            "detail": {
+                "title": "{employee} — {type} {year}",
+                "edit": "Edit",
+                "delete": "Delete",
+                "sections": {
+                    "details": "Details",
+                    "consumingRequests": "Consuming leave requests"
+                },
+                "fields": {
+                    "employee": "Employee",
+                    "type": "Leave type",
+                    "periodYear": "Year",
+                    "allocated": "Allocated days",
+                    "consumed": "Consumed days",
+                    "remaining": "Remaining",
+                    "notes": "Notes"
+                },
+                "noEmployee": "(deleted employee)",
+                "noNotes": "—",
+                "consumingEmpty": "No approved leave requests have consumed from this balance yet.",
+                "consumingDays": "{n} day | {n} days",
+                "approvedOn": "Approved"
+            },
+            "form": {
+                "create": {
+                    "title": "New leave balance",
+                    "submit": "Create balance",
+                    "submitting": "Creating…"
+                },
+                "edit": {
+                    "title": "Edit leave balance",
+                    "submit": "Save changes",
+                    "submitting": "Saving…"
+                },
+                "fields": {
+                    "employee": "Employee",
+                    "type": "Leave type",
+                    "typeHelp": "Only annual and sick leave are allocated. Unpaid and other leave are unbounded by design.",
+                    "periodYear": "Period year",
+                    "periodYearHelp": "Calendar year this allocation covers.",
+                    "allocated": "Allocated days",
+                    "allocatedHelp": "Whole or half days (e.g. 7, 7.5, 14).",
+                    "notes": "Notes",
+                    "notesHelp": "Optional context — e.g. probationary, contract amendment."
+                },
+                "errors": {
+                    "unknown": "Something went wrong. Please try again.",
+                    "forbidden": "You don't have permission to perform this action."
+                }
+            },
+            "delete": {
+                "confirmTitle": "Delete leave balance?",
+                "confirmMessage": "Delete the {type} {year} balance for {employee}? This can't be undone.",
+                "confirmAction": "Delete",
+                "toast": {
+                    "success": "Leave balance deleted.",
+                    "error": "Couldn't delete this balance. Please try again."
+                }
+            },
+            "toast": {
+                "created": "Leave balance created.",
+                "updated": "Changes saved."
+            },
+            "notFound": {
+                "title": "Leave balance not found",
+                "description": "This balance doesn't exist or has been removed.",
+                "action": "Back to leave balances"
+            },
+            "breadcrumb": {
+                "list": "Leave balances",
+                "new": "New balance",
+                "edit": "Edit balance",
+                "item": "{employee} — {type} {year}"
             }
         }
     }

@@ -40,6 +40,10 @@ export const HRM_ROUTES = {
     BRANCH_NEW: 'hrm.branch.new',
     BRANCH_DETAIL: 'hrm.branch.detail',
     BRANCH_EDIT: 'hrm.branch.edit',
+    LEAVE_BALANCE_LIST: 'hrm.leaveBalance.list',
+    LEAVE_BALANCE_NEW: 'hrm.leaveBalance.new',
+    LEAVE_BALANCE_DETAIL: 'hrm.leaveBalance.detail',
+    LEAVE_BALANCE_EDIT: 'hrm.leaveBalance.edit',
 } as const;
 
 /**
@@ -312,6 +316,48 @@ export const hrmRoutes: RouteRecordRaw[] = [
         meta: {
             breadcrumb: 'Edit branch',
             permission: 'hrm.branch.update',
+        },
+        props: (route) => ({ id: Number(route.params.id) }),
+    },
+    // ── Leave Balances ──────────────────────────────────────────────────
+    // Same four-route shape. Computed-state pattern: remaining_days
+    // arrives on the wire signed (negative = over-consumed); the UI
+    // labels it explicitly via the formatRemainingDays helper.
+    {
+        path: 'leave-balances',
+        name: HRM_ROUTES.LEAVE_BALANCE_LIST,
+        component: () => import('./pages/LeaveBalanceListPage.vue'),
+        meta: {
+            breadcrumb: 'Leave balances',
+            permission: 'hrm.leave_balance.view',
+        },
+    },
+    {
+        path: 'leave-balances/new',
+        name: HRM_ROUTES.LEAVE_BALANCE_NEW,
+        component: () => import('./pages/LeaveBalanceFormPage.vue'),
+        meta: {
+            breadcrumb: 'New leave balance',
+            permission: 'hrm.leave_balance.create',
+        },
+    },
+    {
+        path: 'leave-balances/:id(\\d+)',
+        name: HRM_ROUTES.LEAVE_BALANCE_DETAIL,
+        component: () => import('./pages/LeaveBalanceDetailPage.vue'),
+        meta: {
+            breadcrumb: 'Leave balance',
+            permission: 'hrm.leave_balance.view',
+        },
+        props: (route) => ({ id: Number(route.params.id) }),
+    },
+    {
+        path: 'leave-balances/:id(\\d+)/edit',
+        name: HRM_ROUTES.LEAVE_BALANCE_EDIT,
+        component: () => import('./pages/LeaveBalanceFormPage.vue'),
+        meta: {
+            breadcrumb: 'Edit leave balance',
+            permission: 'hrm.leave_balance.update',
         },
         props: (route) => ({ id: Number(route.params.id) }),
     },

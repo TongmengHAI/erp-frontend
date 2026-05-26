@@ -81,6 +81,17 @@ export const SIDEBAR_MODULES: readonly SidebarModule[] = Object.freeze([
         permissionPrefix: 'hrm',
     },
     {
+        // Leave Balances — seventh HRM sibling (eighth slot overall after
+        // Dashboard). 12 sidebar entries in the flat IA now — well past
+        // the Odoo-nav refactor threshold called out at Position +
+        // Branches. The refactor is the IMMEDIATE next post-HRM-v1
+        // priority. Not action this slice; just registered.
+        label: 'navigation.modules.leaveBalances',
+        icon: 'pi pi-wallet',
+        routeName: 'hrm.leaveBalance.list',
+        permissionPrefix: 'hrm',
+    },
+    {
         label: 'navigation.modules.accounting',
         icon: 'pi pi-book',
         routeName: 'accounting',

@@ -26,6 +26,7 @@ const NAV_ROUTES: RouteRecordRaw[] = [
     { path: '/hrm/attendance', name: 'hrm.attendance.list', component: STUB },
     { path: '/hrm/positions', name: 'hrm.position.list', component: STUB },
     { path: '/hrm/branches', name: 'hrm.branch.list', component: STUB },
+    { path: '/hrm/leave-balances', name: 'hrm.leaveBalance.list', component: STUB },
     { path: '/accounting', name: 'accounting', component: STUB },
     { path: '/inventory', name: 'inventory', component: STUB },
     { path: '/procurement', name: 'procurement', component: STUB },
@@ -68,13 +69,13 @@ function seedSomePermissions(perms: string[]): void {
 }
 
 describe('AppSidebar', () => {
-    it('renders all 11 modules when the user has every permission', async () => {
+    it('renders all 12 modules when the user has every permission', async () => {
         const w = await mountWithGlobals(AppSidebar, { routes: NAV_ROUTES });
         seedAllPermissions();
         await w.vm.$nextTick();
 
         const links = w.findAll('a[data-route-name]');
-        expect(links).toHaveLength(11);
+        expect(links).toHaveLength(12);
         const names = links.map((l) => l.attributes('data-route-name'));
         expect(names).toEqual([
             'dashboard',
@@ -84,6 +85,7 @@ describe('AppSidebar', () => {
             'hrm.attendance.list',
             'hrm.position.list',
             'hrm.branch.list',
+            'hrm.leaveBalance.list',
             'accounting',
             'inventory',
             'procurement',
