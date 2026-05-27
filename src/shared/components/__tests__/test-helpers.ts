@@ -22,7 +22,11 @@ import ErpPreset from '@/shared/styles/primevue-preset';
 
 const DEFAULT_ROUTES: RouteRecordRaw[] = [
     { path: '/', name: 'home', component: { template: '<div />' } },
-    { path: '/dashboard', name: 'dashboard', component: { template: '<div />' } },
+    // launcher — post-nav-refactor "always-available home." NotFoundPage,
+    // PermissionDeniedPage, and LogoLink all link to { name: 'launcher' }
+    // as their default. Tests that mount any of these components would
+    // emit a Vue Router warning without this route registered.
+    { path: '/apps', name: 'launcher', component: { template: '<div />' } },
 ];
 
 export function createTestRouter(routes: RouteRecordRaw[] = DEFAULT_ROUTES) {

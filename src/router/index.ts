@@ -1,92 +1,103 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router';
 
 import { authRoutes } from '@/modules/auth/routes';
-import { DASHBOARD_ROUTES } from '@/modules/dashboard/routes';
-import { hrmRoutes, HRM_ROUTES } from '@/modules/hrm/routes';
+import { hrmRoutes } from '@/modules/hrm/routes';
 import { installGuards } from '@/router/guards';
+import { getDefaultRoute } from '@/shared/launcher/getDefaultRoute';
+import { useAuthStore } from '@/shared/stores/useAuthStore';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Breadcrumb convention (consumed by F2c's Breadcrumbs component via
-// route.matched[*].meta.breadcrumb):
-//   - Static label:  meta: { breadcrumb: 'Dashboard' }
-//   - Dynamic label: meta: { breadcrumb: (route) => `Entry ${route.params.id}` }
-// Breadcrumbs auto-skip route records that omit the meta key (typical for
-// the layout parent itself). Trails with fewer than 2 items render nothing.
+// Top-level router structure (post-Odoo-style refactor):
 //
-// Module-placeholder convention (temporary, until each domain ships):
-// Routes under the shell with `meta.moduleLabel` render
-// ModuleComingSoonPage.vue. When a module ships its real Phase content,
-// the slice swaps the `component` and drops `moduleLabel` from the route
-// definition. The route name, path, and breadcrumb meta stay the same —
-// no callsite changes anywhere else. shared-stubs/ disappears entirely
-// once the last module ships.
+//   /                    →  redirect via getDefaultRoute(user.permissions)
+//                           — first registered app the user has access to,
+//                             else the launcher.
+//
+//   /apps                →  LauncherLayout
+//     ''                 →  LauncherPlaceholderPage (Session 1)
+//                           — replaced by the real LauncherPage in Session 2
+//
+//   /hrm                 →  HrmAppLayout (meta: { app: 'hrm' })
+//     ''                 →  HrmDashboardPlaceholderPage (Session 1)
+//                           — replaced by the real HrmDashboardPage Session 2
+//     employees          →  EmployeeListPage  (unchanged)
+//     ... all existing HRM children                          (unchanged)
+//
+//   /login, /tenant-suspended  →  public routes, no shell    (unchanged)
+//
+// Key design properties:
+//
+//   1. URL space under /hrm/* is UNCHANGED. Every existing bookmark
+//      (/hrm/employees/5, /hrm/leave-balances/3, etc.) resolves to the
+//      same component — now wrapped in HrmAppLayout instead of the old
+//      AppShellLayout. Deep links work for free.
+//
+//   2. Route NAMES are unchanged. Every existing
+//      `RouterLink :to="{ name: 'hrm.employee.detail' }"` keeps working.
+//
+//   3. `meta: { app: 'hrm' }` on the /hrm parent — Vue Router merges
+//      meta down the matched chain; child routes inherit. The
+//      AppIdentityBadge reads route.matched[0].meta.app to surface the
+//      current app's identity in the top bar.
+//
+//   4. No /dashboard route. The old generic dashboard is gone; users
+//      land on /hrm via getDefaultRoute. Stale bookmarks 404 cleanly
+//      via Vue Router's default behaviour (no graceful redirect — this
+//      is a feature branch with no production bookmarks to preserve).
+//
+// Module placeholders (accounting/inventory/procurement/sales) are
+// REMOVED from the router. They never had real content; the new
+// architecture is "apps that ship get a layout + routes; apps that
+// don't, don't exist in the URL space." Future Accounting ships its
+// own AccountingAppLayout following the HRM template.
 // ─────────────────────────────────────────────────────────────────────────────
-
-const moduleComingSoon = (): Promise<typeof import('@/modules/shared-stubs/pages/ModuleComingSoonPage.vue')> =>
-    import('@/modules/shared-stubs/pages/ModuleComingSoonPage.vue');
 
 const routes: RouteRecordRaw[] = [
-    // Authenticated shell — every page mounted as a child here renders
-    // inside the AppSidebar + AppTopBar + Breadcrumbs chrome.
-    // requiresAuth inherits to all children via Vue Router's meta merge.
+    // Root URL — resolves to the user's default app via getDefaultRoute.
+    // Function-form redirect so the auth store's current permissions
+    // drive the destination at navigation time (not module-load time).
     {
         path: '/',
-        component: () => import('@/shared/components/layout/AppShellLayout.vue'),
+        meta: { requiresAuth: true },
+        redirect: () => {
+            const auth = useAuthStore();
+            return getDefaultRoute(auth.permissions);
+        },
+    },
+
+    // Launcher — /apps. LauncherLayout wraps; the Session-1 placeholder
+    // page renders as the '' child. Session 2 swaps in the real
+    // LauncherPage (grid of app cards from LAUNCHER_APPS).
+    {
+        path: '/apps',
+        component: () => import('@/shared/layouts/LauncherLayout.vue'),
         meta: { requiresAuth: true },
         children: [
             {
                 path: '',
-                name: DASHBOARD_ROUTES.DASHBOARD,
-                component: () => import('@/modules/dashboard/pages/DashboardPlaceholderPage.vue'),
-                meta: { breadcrumb: 'Dashboard' },
-            },
-            // ── HRM ──────────────────────────────────────────────────────
-            // E1 slice: the real HRM module. /hrm itself redirects to the
-            // employee list; the four employee pages are nested children
-            // (list / new / detail / edit) declared in
-            // modules/hrm/routes.ts.
-            {
-                path: 'hrm',
-                redirect: { name: HRM_ROUTES.EMPLOYEE_LIST },
-                meta: { breadcrumb: 'HRM' },
-                children: hrmRoutes,
-            },
-            // ── Module placeholders ──────────────────────────────────────
-            // Each Phase slice swaps the `component` and drops the
-            // `moduleLabel` meta when the real module lands. Route name,
-            // path, and breadcrumb stay stable across the swap.
-            {
-                path: 'accounting',
-                name: 'accounting',
-                component: moduleComingSoon,
-                meta: { breadcrumb: 'Accounting', moduleLabel: 'Accounting' },
-            },
-            {
-                path: 'inventory',
-                name: 'inventory',
-                component: moduleComingSoon,
-                meta: { breadcrumb: 'Inventory', moduleLabel: 'Inventory' },
-            },
-            {
-                path: 'procurement',
-                name: 'procurement',
-                component: moduleComingSoon,
-                meta: { breadcrumb: 'Procurement', moduleLabel: 'Procurement' },
-            },
-            {
-                path: 'sales',
-                name: 'sales',
-                component: moduleComingSoon,
-                meta: { breadcrumb: 'Sales', moduleLabel: 'Sales' },
+                name: 'launcher',
+                component: () => import('@/modules/launcher/pages/LauncherPlaceholderPage.vue'),
             },
         ],
     },
-    // Public routes — no shell. /login and /tenant-suspended.
+
+    // HRM app — /hrm. HrmAppLayout wraps every child. The existing
+    // hrmRoutes (employees, departments, positions, branches, leave
+    // requests, attendance, leave balances + the new dashboard '' child)
+    // mount unchanged. meta.app drives AppIdentityBadge.
+    {
+        path: '/hrm',
+        component: () => import('@/shared/layouts/HrmAppLayout.vue'),
+        meta: { requiresAuth: true, app: 'hrm' },
+        children: hrmRoutes,
+    },
+
+    // Public routes — no shell. /login + /tenant-suspended.
     ...authRoutes,
 ];
 
-// Dev-only routes. Guarded by `import.meta.env.DEV` so Vite tree-shakes them
-// out of production. The playground chunks never ship to prod.
+// Dev-only routes. Guarded by `import.meta.env.DEV` so Vite tree-shakes
+// them out of production. The playground chunks never ship to prod.
 if (import.meta.env.DEV) {
     routes.push({
         path: '/__dev/tokens',
@@ -101,13 +112,6 @@ if (import.meta.env.DEV) {
         component: () => import('@/dev/ComponentsPlaygroundPage.vue'),
         meta: { requiresAuth: false },
     });
-
-    // No module-name stub routes here anymore — the production routes
-    // above own the `hrm`, `accounting`, etc. names. Clicking a module
-    // link from the dev playground will navigate into the real shell
-    // route, which requires auth. Dev users are typically authenticated
-    // locally; if not, the route guard sends them to /login (correct
-    // behavior, not a regression).
 }
 
 const router = createRouter({

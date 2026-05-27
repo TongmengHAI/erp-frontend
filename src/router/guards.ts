@@ -2,6 +2,7 @@ import type { RouteLocationNormalized, Router } from 'vue-router';
 
 import { AUTH_ROUTES } from '@/modules/auth/routes';
 import { bootstrapAuth } from '@/shared/composables/useAuthBootstrap';
+import { getDefaultRoute } from '@/shared/launcher/getDefaultRoute';
 import { useAuthStore } from '@/shared/stores/useAuthStore';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -60,10 +61,15 @@ export function installGuards(router: Router): void {
             };
         }
 
-        // Guest-only gate (login page).
+        // Guest-only gate (login page). Bounce already-authenticated
+        // users via the explicit ?redirect= when present, else through
+        // getDefaultRoute() — same single-source destination logic the
+        // LoginPage success path uses.
         if (to.meta.requiresGuest === true && auth.isAuthenticated) {
-            const redirect = (to.query.redirect as string) || '/';
-            return redirect;
+            const explicitRedirect = to.query.redirect as string | undefined;
+            return explicitRedirect && explicitRedirect.length > 0
+                ? explicitRedirect
+                : getDefaultRoute(auth.permissions);
         }
 
         return true;

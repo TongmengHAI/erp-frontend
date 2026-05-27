@@ -32,23 +32,9 @@
         }
     },
     "navigation": {
-        "modules": {
-            "dashboard": "Dashboard",
-            "hrm": "HRM",
-            "employees": "Employees",
-            "departments": "Departments",
-            "leaveRequests": "Leave requests",
-            "attendance": "Attendance",
-            "positions": "Positions",
-            "branches": "Branches",
-            "leaveBalances": "Leave balances",
-            "accounting": "Accounting",
-            "inventory": "Inventory",
-            "procurement": "Procurement",
-            "sales": "Sales"
-        },
         "topbar": {
             "logo": "MyERP",
+            "logoAriaLabel": "Go to apps launcher",
             "tenantPlaceholder": "—",
             "menu": {
                 "profile": "Profile",
@@ -120,7 +106,35 @@
         "cardTitle": "In development",
         "cardDescription": "{module} workflows aren't available yet. The navigation entry is in place — content arrives as the module ships."
     },
+    "launcher": {
+        "placeholder": {
+            "title": "Apps",
+            "description": "Pick an app to enter. The full launcher with one card per accessible app ships next session."
+        },
+        "apps": {
+            "hrm": {
+                "label": "HRM",
+                "description": "Employees, departments, branches, positions, attendance, leave requests and balances."
+            }
+        }
+    },
     "hrm": {
+        "navigation": {
+            "dashboard": "Dashboard",
+            "employees": "Employees",
+            "departments": "Departments",
+            "positions": "Positions",
+            "branches": "Branches",
+            "leaveRequests": "Leave requests",
+            "attendance": "Attendance",
+            "leaveBalances": "Leave balances"
+        },
+        "dashboard": {
+            "placeholder": {
+                "title": "HRM Dashboard",
+                "description": "Active employees, pending leave requests, and your approver queue. Full dashboard content ships next session."
+            }
+        },
         "employee": {
             "list": {
                 "title": "Employees",
@@ -391,6 +405,8 @@
                 "decidedByLine": "{name}",
                 "decidedByEmpty": "—",
                 "deletedEmployeePlaceholder": "(deleted employee)",
+                "statusFilterChip": "Status: {status}",
+                "clearStatusFilter": "Clear status filter",
                 "empty": {
                     "title": "No leave requests yet",
                     "description": "Once an employee submits a request, it will appear here.",

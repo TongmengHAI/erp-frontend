@@ -4,41 +4,39 @@ import { useI18n } from 'vue-i18n';
 import { RouterLink, useRoute } from 'vue-router';
 import Tooltip from 'primevue/tooltip';
 
-import { SIDEBAR_MODULES } from '@/shared/navigation/modules';
+import { HRM_NAV_ITEMS } from '@/modules/hrm/navigation/hrmNavItems';
 import { useAuthStore } from '@/shared/stores/useAuthStore';
 import { useUiStore } from '@/shared/stores/useUiStore';
 import type { SidebarModule } from '@/shared/types/navigation';
 
-/**
- * AppSidebar — left-rail navigation for authenticated app pages.
- *
- * Permission-gated: modules with a `permission` field render only when the
- * current user has it. Modules without a permission (Dashboard) always show.
- *
- * Two visual modes driven by `useUiStore().sidebarCollapsed`:
- *   - expanded (240px): icon + label
- *   - collapsed (60px): icon only, label rendered as a PV tooltip on hover
- *
- * Active route gets a subtle highlight (bg-brand-bg-subtle + text-brand).
- * No left border indicator — calmer aesthetic per §7.K reference set.
- */
+// ─────────────────────────────────────────────────────────────────────────────
+// HrmAppSidebar — left-rail navigation rendered ONLY inside the HRM app
+// (i.e. as a child of HrmAppLayout). Replaces the old global AppSidebar.
+//
+// Two visual modes driven by `useUiStore().sidebarCollapsed`:
+//   - expanded (240px): icon + label
+//   - collapsed (60px): icon only, label rendered as a PV tooltip
+//
+// Permission-gating uses canAny(prefix). For HRM items the prefix is
+// 'hrm', so any hrm.* permission unlocks the full sidebar. Per-resource
+// permissions (e.g. hrm.position.view) still gate the individual route
+// at the route guard level — the sidebar's job is "is this app worth
+// showing in the rail at all," not per-route capability.
+//
+// Active route highlight: bg-brand-bg-subtle + text-brand. No left
+// border indicator (calmer aesthetic per §7.K). Active-match uses
+// route.matched.some() so a nested route like /hrm/employees/5/edit
+// still highlights the Employees item.
+// ─────────────────────────────────────────────────────────────────────────────
+
 const vTooltip = Tooltip;
 const { t } = useI18n();
 const ui = useUiStore();
 const auth = useAuthStore();
 const route = useRoute();
 
-/**
- * A module renders when:
- *   - it has no permission/permissionPrefix (Dashboard-style ungated), OR
- *   - `permission` is set and `auth.can(permission)` is true, OR
- *   - `permissionPrefix` is set and `auth.canAny(permissionPrefix)` is true.
- *
- * Both fields combine as OR — either gate passes the module through. See
- * SidebarModule JSDoc in types/navigation.ts for the semantics.
- */
-const visibleModules = computed<SidebarModule[]>(() =>
-    SIDEBAR_MODULES.filter((m) => {
+const visibleItems = computed<SidebarModule[]>(() =>
+    HRM_NAV_ITEMS.filter((m) => {
         if (!m.permission && !m.permissionPrefix) return true;
         if (m.permission && auth.can(m.permission)) return true;
         if (m.permissionPrefix && auth.canAny(m.permissionPrefix)) return true;
@@ -46,8 +44,16 @@ const visibleModules = computed<SidebarModule[]>(() =>
     }),
 );
 
+/**
+ * A nav item is active when:
+ *   • the current route name matches exactly, OR
+ *   • the current route is a child of the item's route (matched chain
+ *     contains the item's name) — covers detail/edit pages keeping the
+ *     list item highlighted.
+ */
 function isActive(routeName: string): boolean {
-    return route.name === routeName;
+    if (route.name === routeName) return true;
+    return route.matched.some((r) => r.name === routeName);
 }
 </script>
 
@@ -56,11 +62,12 @@ function isActive(routeName: string): boolean {
         class="app-sidebar flex flex-col border-r border-border-default bg-surface transition-[width] duration-200"
         :class="ui.sidebarCollapsed ? 'w-15' : 'w-60'"
         :data-collapsed="ui.sidebarCollapsed"
-        aria-label="Primary navigation"
+        aria-label="HRM navigation"
+        data-testid="hrm-app-sidebar"
     >
         <nav class="flex-1 overflow-y-auto py-4">
             <ul class="flex flex-col gap-1 px-2">
-                <li v-for="m in visibleModules" :key="m.routeName">
+                <li v-for="m in visibleItems" :key="m.routeName">
                     <RouterLink
                         v-tooltip:right="ui.sidebarCollapsed ? t(m.label) : null"
                         :to="{ name: m.routeName }"

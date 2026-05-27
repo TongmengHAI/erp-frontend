@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import Button from 'primevue/button';
@@ -14,6 +14,7 @@ import DataTable from '@/shared/components/data-table/DataTable.vue';
 import StatusBadge, {
     type StatusSeverity,
 } from '@/shared/components/data-display/StatusBadge.vue';
+import FilterChip from '@/shared/components/data-display/FilterChip.vue';
 import { formatLeaveRequestDateLabel } from '@/modules/hrm/composables/useLeaveRequestDateLabel';
 import type {
     DataTableColumn,
@@ -36,6 +37,7 @@ import {
 } from '@/modules/hrm/types/leaveRequest';
 import { useAuthStore } from '@/shared/stores/useAuthStore';
 import { useAppConfirm } from '@/shared/composables/useAppConfirm';
+import { useUrlEnumFilter } from '@/shared/composables/useUrlEnumFilter';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // LeaveRequestListPage — paginated list with status + type filters.
@@ -67,10 +69,40 @@ const { confirmDelete } = useAppConfirm();
 const deleteMutation = useDeleteLeaveRequest();
 
 // ─── Filter state ───────────────────────────────────────────────────────────
-const statusFilter = ref<LeaveRequestStatus | null>(null);
+// status filter is URL-driven via useUrlEnumFilter — same shape as
+// the numeric department_id/branch_id/position_id filters used by
+// EmployeeListPage. Two reasons for status specifically:
+//
+//   1. Deep-link entry from the HRM dashboard ("Pending leave
+//      requests" card → /hrm/leave-requests?status=pending). The
+//      URL is what carries the filter from one page to the next;
+//      a local-only ref would lose the filter on landing.
+//   2. Bookmark / share parity — a manager who lives in the pending
+//      queue can bookmark /hrm/leave-requests?status=pending and
+//      land directly on their inbox.
+//
+// FilterChip renders when the URL is active, mirroring the chip
+// pattern used by department/branch/position filters. The Select
+// stays as the user-facing affordance — its v-model is a computed
+// proxy over the URL filter so manual changes write back to the URL.
+const { value: statusFilter, set: setStatusFilter, clear: clearStatusFilter } =
+    useUrlEnumFilter<LeaveRequestStatus>('status', LEAVE_REQUEST_STATUSES);
+
+const statusFilterModel = computed<LeaveRequestStatus | null>({
+    get: () => statusFilter.value,
+    set: (next) => void setStatusFilter(next),
+});
+
 const typeFilter = ref<LeaveType | null>(null);
 const page = ref(1);
 const perPage = ref(25);
+
+// Page reset when ANY filter changes (URL-driven or local) —
+// otherwise filtering down to 2 results while on page 3 leaves
+// the user staring at an empty page.
+watch([statusFilter, typeFilter], () => {
+    page.value = 1;
+});
 
 function resetPage(): void {
     page.value = 1;
@@ -256,7 +288,7 @@ const tableEmptyOverride = computed(() => ({
 
         <FilterBar class="mb-4 rounded-lg border border-border-default">
             <Select
-                v-model="statusFilter"
+                v-model="statusFilterModel"
                 :options="statusOptions"
                 option-label="label"
                 option-value="value"
@@ -278,6 +310,22 @@ const tableEmptyOverride = computed(() => ({
                 @change="resetPage"
             />
         </FilterBar>
+
+        <!-- Status filter chip — surfaces when the URL carries
+             ?status=. The Select above is the user-facing
+             affordance; the chip is the visual marker that
+             "you arrived here via a deep link." Clear via the
+             chip's [×] strips the URL param + resets the Select. -->
+        <FilterChip
+            v-if="statusFilter !== null"
+            class="mb-2"
+            :label="t('hrm.leaveRequest.list.statusFilterChip', {
+                status: t(`hrm.leaveRequest.status.${statusFilter}`),
+            })"
+            :clear-aria-label="t('hrm.leaveRequest.list.clearStatusFilter')"
+            data-testid="leave-request-list-status-filter-chip"
+            @clear="clearStatusFilter"
+        />
 
         <div
             v-if="showWelcomeEmpty"

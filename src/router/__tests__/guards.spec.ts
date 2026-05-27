@@ -42,6 +42,12 @@ const ROUTES: RouteRecordRaw[] = [
         component: STUB,
         meta: { requiresAuth: false },
     },
+    // Post-nav-refactor: the guest-gate falls back to getDefaultRoute()
+    // when no ?redirect is supplied. These two stubs register the
+    // target routes (launcher for users with no app perms; hrm.dashboard
+    // for users with hrm.*) so the redirect resolves in tests.
+    { path: '/apps', name: 'launcher', component: STUB },
+    { path: '/hrm', name: 'hrm.dashboard', component: STUB, meta: { requiresAuth: true } },
 ];
 
 function buildRouter(): Router {
@@ -103,6 +109,35 @@ describe('route guards', () => {
 
         await router.push({ name: 'login', query: { redirect: '/' } });
         expect(router.currentRoute.value.path).toBe('/');
+    });
+
+    it('authenticated user with hrm.* hitting /login (no ?redirect) is routed to hrm.dashboard via getDefaultRoute', async () => {
+        // Guest-gate fallback when no ?redirect is supplied. The
+        // gate now routes through getDefaultRoute(auth.permissions);
+        // hrm.* permissions → hrm.dashboard.
+        const auth = useAuthStore();
+        auth.$patch({
+            user: { id: 1, name: 'X', email: 'x', email_verified_at: null },
+            permissions: ['hrm.employee.view'],
+        });
+
+        await router.push({ name: 'login' });
+        expect(router.currentRoute.value.name).toBe('hrm.dashboard');
+    });
+
+    it('authenticated user with no app perms hitting /login (no ?redirect) is routed to launcher', async () => {
+        // Same fallback path, different branch: no hrm.* perms →
+        // launcher (zero-card state). The user is authenticated to
+        // the tenant but has no app access; landing on the launcher
+        // is graceful, 401 would be wrong.
+        const auth = useAuthStore();
+        auth.$patch({
+            user: { id: 2, name: 'Y', email: 'y', email_verified_at: null },
+            permissions: [],
+        });
+
+        await router.push({ name: 'login' });
+        expect(router.currentRoute.value.name).toBe('launcher');
     });
 
     it('tenantInactive overrides everything except /tenant-suspended itself', async () => {

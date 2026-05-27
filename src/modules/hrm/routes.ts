@@ -44,6 +44,11 @@ export const HRM_ROUTES = {
     LEAVE_BALANCE_NEW: 'hrm.leaveBalance.new',
     LEAVE_BALANCE_DETAIL: 'hrm.leaveBalance.detail',
     LEAVE_BALANCE_EDIT: 'hrm.leaveBalance.edit',
+    // HRM dashboard — the app's landing page when the user enters /hrm.
+    // The full HrmDashboardPage component lands in Session 2; Session 1
+    // ships a placeholder so the route resolves and getDefaultRoute()
+    // has a valid target for hrm-permissioned users post-login.
+    DASHBOARD: 'hrm.dashboard',
 } as const;
 
 /**
@@ -57,6 +62,21 @@ export const HRM_ROUTES = {
  * once the page files land.
  */
 export const hrmRoutes: RouteRecordRaw[] = [
+    // ── HRM Dashboard ──────────────────────────────────────────────────
+    // The '' child route — renders at /hrm when no further path. The
+    // Session-1 placeholder lands here; Session 2 swaps in the real
+    // HrmDashboardPage. Tagged with hrm.dashboard via the name constant
+    // so getDefaultRoute() + HrmAppSidebar's first entry resolve cleanly.
+    {
+        path: '',
+        name: HRM_ROUTES.DASHBOARD,
+        component: () => import('./pages/HrmDashboardPlaceholderPage.vue'),
+        meta: {
+            // Intentionally no breadcrumb here — the dashboard IS the
+            // app root, so the trail starts at the next level
+            // (e.g. Employees › Sokha Chan, NOT Dashboard › ...).
+        },
+    },
     {
         path: 'employees',
         name: HRM_ROUTES.EMPLOYEE_LIST,

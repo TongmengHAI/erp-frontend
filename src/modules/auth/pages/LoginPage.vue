@@ -12,6 +12,7 @@ import { z } from 'zod';
 
 import FormField from '@/shared/components/form/FormField.vue';
 import { useAuthStore } from '@/shared/stores/useAuthStore';
+import { getDefaultRoute } from '@/shared/launcher/getDefaultRoute';
 import type { ApiErrorBody } from '@/modules/auth/types';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -58,9 +59,15 @@ const onSubmit = handleSubmit(async (values) => {
             email: values.email as string,
             password: values.password as string,
         });
-        // Honor ?redirect=<encoded path> when present; default to /.
-        const redirect = (route.query.redirect as string | undefined) || '/';
-        await router.push(redirect);
+        // Honor ?redirect=<encoded path> when present (user was sent
+        // here by an auth guard from a protected URL); otherwise route
+        // through getDefaultRoute(), which lands the user on the HRM
+        // dashboard if they have hrm.* perms, else on the launcher.
+        const explicitRedirect = route.query.redirect as string | undefined;
+        const target = explicitRedirect && explicitRedirect.length > 0
+            ? explicitRedirect
+            : getDefaultRoute(auth.permissions);
+        await router.push(target);
     } catch (e: unknown) {
         if (!isAxiosError(e) || !e.response) {
             formError.value = t('auth.login.errors.unknown');

@@ -7,9 +7,14 @@ import { RouterLink } from 'vue-router';
  * NotFoundPage — full-viewport 404 page.
  *
  * Same structural shape as PermissionDeniedPage: full-viewport, centered,
- * icon + title + description + action. Mounted as the catch-all route in F4.
+ * icon + title + description + action.
  *
- * Slot `actions` overrides the default "Go to dashboard" link.
+ * Default action: navigate to the launcher (named route `launcher`).
+ * After the Odoo-style nav refactor the launcher is the always-
+ * available home — users who land here are by definition lost, so
+ * "back home" sends them to the app-picker rather than guessing
+ * which app they meant. Slot `actions` overrides if a caller wants
+ * different copy.
  */
 const { t } = useI18n();
 </script>
@@ -27,7 +32,7 @@ const { t } = useI18n();
         </p>
         <div class="mt-4">
             <slot name="actions">
-                <RouterLink v-slot="{ navigate }" :to="{ name: 'dashboard' }" custom>
+                <RouterLink v-slot="{ navigate }" :to="{ name: 'launcher' }" custom>
                     <Button
                         :label="t('common.notFound.action')"
                         icon="pi pi-home"

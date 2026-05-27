@@ -10,10 +10,10 @@ import { RouterLink } from 'vue-router';
  * a bounded preview frame so the full-viewport behavior is visible without
  * taking over the page.
  *
- * Default action links to { name: 'dashboard' }. The named route is
- * registered by F4 in production; in dev, F2a's router adds a stub
- * `dashboard` route that redirects to /__dev/components so the link is
- * clickable from the playground without router warnings.
+ * Default action links to { name: 'launcher' }. Post-nav-refactor
+ * the launcher is the always-available home — a user denied access to
+ * a specific resource should land on the app-picker rather than back
+ * on the original app (where they'd just be denied again).
  *
  * Slot `actions` overrides the default link entirely.
  */
@@ -46,7 +46,7 @@ const { t } = useI18n();
         </p>
         <div class="mt-4">
             <slot name="actions">
-                <RouterLink v-slot="{ navigate }" :to="{ name: 'dashboard' }" custom>
+                <RouterLink v-slot="{ navigate }" :to="{ name: 'launcher' }" custom>
                     <Button
                         :label="t('common.permissionDenied.action')"
                         icon="pi pi-home"
