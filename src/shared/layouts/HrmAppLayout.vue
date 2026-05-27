@@ -4,6 +4,7 @@ import { RouterView } from 'vue-router';
 import AppTopBarShell from '@/shared/components/navigation/AppTopBarShell.vue';
 import LogoLink from '@/shared/components/navigation/LogoLink.vue';
 import AppIdentityBadge from '@/shared/components/navigation/AppIdentityBadge.vue';
+import AppSwitcherDropdown from '@/shared/components/navigation/AppSwitcherDropdown.vue';
 import UserMenu from '@/shared/components/navigation/UserMenu.vue';
 import Breadcrumbs from '@/shared/components/navigation/Breadcrumbs.vue';
 import HrmAppSidebar from '@/modules/hrm/navigation/HrmAppSidebar.vue';
@@ -39,6 +40,12 @@ import HrmAppSidebar from '@/modules/hrm/navigation/HrmAppSidebar.vue';
                     <AppIdentityBadge />
                 </template>
                 <template #right>
+                    <!-- AppSwitcherDropdown hides itself when fewer
+                         than 2 apps are accessible (v1 default: hrm-
+                         only users see nothing here). Future Accounting
+                         lands → users with both perms see the dropdown
+                         surface automatically; no layout changes. -->
+                    <AppSwitcherDropdown />
                     <UserMenu />
                 </template>
             </AppTopBarShell>

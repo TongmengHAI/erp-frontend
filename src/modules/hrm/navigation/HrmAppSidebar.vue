@@ -67,7 +67,19 @@ function isActive(routeName: string): boolean {
     >
         <nav class="flex-1 overflow-y-auto py-4">
             <ul class="flex flex-col gap-1 px-2">
-                <li v-for="m in visibleItems" :key="m.routeName">
+                <li
+                    v-for="(m, idx) in visibleItems"
+                    :key="m.routeName"
+                    :class="[
+                        // Subtle separator BELOW the Dashboard entry (first
+                        // item in HRM_NAV_ITEMS): visually groups Dashboard
+                        // as 'app home' distinct from the 7 module entries
+                        // beneath. Border + small mb-1 give visual breathing
+                        // room without making it look like a section header
+                        // — calmer than a labeled group.
+                        idx === 0 ? 'mb-1 border-b border-border-default pb-2' : '',
+                    ]"
+                >
                     <RouterLink
                         v-tooltip:right="ui.sidebarCollapsed ? t(m.label) : null"
                         :to="{ name: m.routeName }"

@@ -81,16 +81,17 @@ const approverQueueTotal = computed<number>(
 const approverQueueHasMore = computed<boolean>(
     () => approverQueueTotal.value > approverQueueRows.value.length,
 );
-
-const breadcrumbs = [{ label: t('hrm.dashboard.breadcrumb') }];
 </script>
 
 <template>
     <PageLayout>
+        <!-- No breadcrumbs — the dashboard IS the app root.
+             Breadcrumbs.vue's length-guard would render nothing for a
+             single-item trail anyway; not passing the prop keeps the
+             intent in the code rather than in a no-op array. -->
         <PageHeader
             :title="t('hrm.dashboard.title')"
             :subtitle="t('hrm.dashboard.subtitle')"
-            :breadcrumbs="breadcrumbs"
         />
 
         <!-- Stat-card grid: independently-loading per section so the
