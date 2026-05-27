@@ -186,6 +186,14 @@
                 "branchLocationSeparator": " · ",
                 "sections": {
                     "details": "Details"
+                },
+                "leaveBalances": {
+                    "title": "Leave balances · {year}",
+                    "empty": "No leave balances allocated for {year} yet.",
+                    "error": "Couldn't load leave balances.",
+                    "outOfAllocated": "of {allocated} allocated",
+                    "viewDetail": "View detail",
+                    "manageBalances": "Manage balances"
                 }
             },
             "form": {

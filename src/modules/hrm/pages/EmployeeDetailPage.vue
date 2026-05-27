@@ -19,6 +19,8 @@ import {
     useDeleteEmployee,
     useEmployeeQuery,
 } from '@/modules/hrm/composables/useEmployees';
+import { useEmployeeLeaveBalancesQuery } from '@/modules/hrm/composables/useEmployeeLeaveBalances';
+import EmployeeLeaveBalancesCard from '@/modules/hrm/components/EmployeeLeaveBalancesCard.vue';
 import { HRM_ROUTES } from '@/modules/hrm/routes';
 import type { EmployeeStatus } from '@/modules/hrm/types/employee';
 import { useAuthStore } from '@/shared/stores/useAuthStore';
@@ -56,6 +58,21 @@ const { data, isLoading, isError, error, refetch } = useEmployeeQuery(
 const deleteMutation = useDeleteEmployee();
 
 const employee = computed(() => data.value?.data ?? null);
+
+// Leave Balances card — current calendar year. The card itself owns
+// the empty / loading / error rendering; this page just feeds it the
+// employee id, the year, and the query result. The composable's
+// `enabled` guard keeps it dormant until employeeId resolves.
+//
+// Year is computed once on page load. Changing it would mean a year
+// picker on the card; not in this slice (current year is the natural
+// "how many days does this employee have left right now?" question
+// the page is here to answer).
+const currentYear = new Date().getFullYear();
+const leaveBalancesQuery = useEmployeeLeaveBalancesQuery(
+    () => props.id,
+    () => currentYear,
+);
 
 /**
  * 404 vs generic-error split. Axios attaches the response to the thrown
@@ -405,6 +422,22 @@ function onDelete(): void {
                     </div>
                 </dl>
             </CardSection>
+
+            <!-- Leave Balances card — the closing slice of HRM v1.
+                 Lands after the Status row in the Details card and
+                 before the (future) audit-timestamps section. Shows
+                 the employee's current-year allocations + remaining
+                 days using the same balanceSeverity + formatRemaining
+                 Days helpers the LB list / detail pages use — so a
+                 -2 here renders identically to a -2 there. The
+                 "Manage balances" footer link pre-filters the LB
+                 list to this employee. -->
+            <EmployeeLeaveBalancesCard
+                class="mt-4"
+                :employee-id="employee.id"
+                :period-year="currentYear"
+                :query="leaveBalancesQuery"
+            />
         </template>
     </PageLayout>
 </template>

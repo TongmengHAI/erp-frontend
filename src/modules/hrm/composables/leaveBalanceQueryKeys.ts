@@ -17,4 +17,13 @@ export const leaveBalanceQueryKeys = {
         [...leaveBalanceQueryKeys.all, 'list', params] as const,
 
     detail: (id: number) => [...leaveBalanceQueryKeys.all, 'detail', id] as const,
+
+    // Distinct subtree for the EmployeeDetailPage "Leave Balances" card.
+    // Sits under .all so create/update/delete mutations invalidate it
+    // along with the list and detail keys (single .all invalidation
+    // refreshes every surface). Distinct from .list so the card +
+    // list-page-filtered-to-the-same-employee don't share cache —
+    // different contexts, different staleTime tunings.
+    byEmployee: (employeeId: number, periodYear: number) =>
+        [...leaveBalanceQueryKeys.all, 'by-employee', employeeId, periodYear] as const,
 } as const;
