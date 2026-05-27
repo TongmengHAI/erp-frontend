@@ -1,4 +1,4 @@
-import { computed, type MaybeRefOrGetter, toValue } from 'vue';
+import { computed, type ComputedRef, type MaybeRefOrGetter, toValue } from 'vue';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query';
 
 import * as leaveRequestsApi from '@/modules/hrm/api/leaveRequests';
@@ -9,6 +9,16 @@ import type {
     LeaveRequestListParams,
     UpdateLeaveRequestRequest,
 } from '@/modules/hrm/types/leaveRequest';
+
+interface UseLeaveRequestsQueryOptions {
+    /**
+     * Conditionally fire the query. False → no fetch, no cache write,
+     * `isLoading=false` and `data=undefined` from the start. Used by
+     * the HRM dashboard's approver-queue section, which should not
+     * request rows for users lacking hrm.leave_request.approve.
+     */
+    enabled?: ComputedRef<boolean> | boolean;
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Leave Request composables — TanStack Query wrappers.
@@ -31,14 +41,20 @@ import type {
 /**
  * Paginated leave-request list. Reactive params — TanStack refetches
  * automatically as filters change.
+ *
+ * Optional `options.enabled` gates whether the query fires at all.
+ * Used by the HRM dashboard's approver-queue section to skip the
+ * fetch when the user lacks hrm.leave_request.approve.
  */
 export function useLeaveRequestsQuery(
     params: MaybeRefOrGetter<LeaveRequestListParams> = () => ({}),
+    options: UseLeaveRequestsQueryOptions = {},
 ) {
     return useQuery({
         queryKey: computed(() => leaveRequestQueryKeys.list(toValue(params))),
         queryFn: () => leaveRequestsApi.listLeaveRequests(toValue(params)),
         staleTime: 30_000,
+        enabled: options.enabled ?? true,
     });
 }
 

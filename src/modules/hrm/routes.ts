@@ -70,7 +70,7 @@ export const hrmRoutes: RouteRecordRaw[] = [
     {
         path: '',
         name: HRM_ROUTES.DASHBOARD,
-        component: () => import('./pages/HrmDashboardPlaceholderPage.vue'),
+        component: () => import('./pages/HrmDashboardPage.vue'),
         meta: {
             // Intentionally no breadcrumb here — the dashboard IS the
             // app root, so the trail starts at the next level

@@ -107,9 +107,11 @@
         "cardDescription": "{module} workflows aren't available yet. The navigation entry is in place — content arrives as the module ships."
     },
     "launcher": {
-        "placeholder": {
-            "title": "Apps",
-            "description": "Pick an app to enter. The full launcher with one card per accessible app ships next session."
+        "title": "Apps",
+        "subtitle": "Pick an app to enter.",
+        "empty": {
+            "title": "No accessible apps",
+            "description": "You're signed in, but no apps have been enabled for your account. Talk to your administrator to get access."
         },
         "apps": {
             "hrm": {
@@ -130,9 +132,24 @@
             "leaveBalances": "Leave balances"
         },
         "dashboard": {
-            "placeholder": {
-                "title": "HRM Dashboard",
-                "description": "Active employees, pending leave requests, and your approver queue. Full dashboard content ships next session."
+            "title": "HRM Dashboard",
+            "subtitle": "Today's snapshot for your company.",
+            "breadcrumb": "Dashboard",
+            "activeEmployees": {
+                "title": "Active employees",
+                "subtitle": "Currently on the roster."
+            },
+            "pendingLeaveRequests": {
+                "title": "Pending leave requests",
+                "subtitle": "Awaiting a decision."
+            },
+            "approverQueue": {
+                "title": "Your approver queue",
+                "subtitle": "Pending requests waiting on you.",
+                "empty": "Inbox is clear. No pending leave requests need your decision.",
+                "error": "Couldn't load the approver queue.",
+                "viewAll": "View all ({n} pending)",
+                "deletedEmployee": "(deleted employee)"
             }
         },
         "employee": {

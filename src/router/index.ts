@@ -76,7 +76,7 @@ const routes: RouteRecordRaw[] = [
             {
                 path: '',
                 name: 'launcher',
-                component: () => import('@/modules/launcher/pages/LauncherPlaceholderPage.vue'),
+                component: () => import('@/modules/launcher/pages/LauncherPage.vue'),
             },
         ],
     },
