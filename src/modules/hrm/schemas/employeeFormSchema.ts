@@ -3,30 +3,32 @@ import { z } from 'zod';
 import { EMPLOYEE_STATUSES } from '@/modules/hrm/types/employee';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Zod schema for the Employee create/edit form.
+// Zod schemas for the Employee create/edit form.
 //
-// Mirrors the backend's StoreEmployeeRequest / UpdateEmployeeRequest rules
-// (see backend/docs/api/v1/hrm.md "Field semantics"). Client-side validation
-// catches the common mistakes before submit; the backend remains the final
-// authority — server-validation errors (422) flow back through the form's
-// setErrors() handler per the LoginPage pattern.
+// Two schemas, one per tenant per-company HrmSettings state. The
+// EmployeeFormPage uses a reactive `validationSchema: computed(...)` that
+// picks between them based on the fetched settings — schema SELECTION is
+// the load-bearing thing, not a discriminator field inside the values
+// object. (An earlier attempt embedded a `_autoGen` discriminator field
+// in a single discriminated union; VeeValidate's setValues did not
+// reliably propagate that synthetic field, so the schema branch never
+// flipped and the form kept showing "code is required" even when the
+// auto-gen template was rendered. Two separate schemas avoid the entire
+// class of bug.)
 //
-// Notes:
-//   - email and job_title are nullable on the backend; the form treats
-//     empty string as "absent" and emits null on submit (the request layer
-//     converts).
-//   - status is a strict enum literal union so TypeScript's type narrowing
-//     works at every consumer.
-//   - hire_date is a YYYY-MM-DD string. PrimeVue Calendar emits a Date
-//     object — the form will format it before validation runs.
+// Mirrors the backend's StoreEmployeeRequest:
+//   - When auto-gen is OFF: employee_code is required (min 1, max 32).
+//     `employeeFormSchemaManual` — pre-Session-3 behavior.
+//   - When auto-gen is ON: employee_code is `prohibited` server-side, so
+//     the form omits the field entirely from the payload AND from
+//     validation. `employeeFormSchemaAutoGen` simply has no
+//     employee_code key.
+//
+// Edit mode always uses the manual schema — the employee's existing
+// employee_code stays editable regardless of the tenant flag.
 // ─────────────────────────────────────────────────────────────────────────────
 
-export const employeeFormSchema = z.object({
-    employee_code: z
-        .string({ required_error: 'Employee code is required.' })
-        .trim()
-        .min(1, 'Employee code is required.')
-        .max(32, 'Employee code must be 32 characters or fewer.'),
+const baseFields = {
     full_name: z
         .string({ required_error: 'Full name is required.' })
         .trim()
@@ -39,31 +41,62 @@ export const employeeFormSchema = z.object({
         ])
         .optional()
         .nullable(),
-    // Department FK — nullable integer, optional. The picker's "— None —"
-    // option emits null; assigning a department emits the id. No
-    // client-side existence check (the picker only shows valid
-    // same-company departments); foreign-context ids only reach the
-    // backend if the cached picker data is stale, in which case the
-    // 422 → setErrors path surfaces the error inline.
     department_id: z.number().int().positive().nullable().optional(),
-    // Position FK — replaces the old free-text job_title field. Same
-    // shape as department_id: nullable integer, picker emits null for
-    // "— None —", id for an assignment. Same load-bearing scoped-FK
-    // backend guard.
     position_id: z.number().int().positive().nullable().optional(),
-    // Branch FK — third optional cross-module FK alongside
-    // department_id and position_id. Same shape, same load-bearing
-    // scoped-FK backend guard. Purely additive — no cutover.
     branch_id: z.number().int().positive().nullable().optional(),
     hire_date: z
         .string({ required_error: 'Hire date is required.' })
         .min(1, 'Hire date is required.')
-        // YYYY-MM-DD — the form converts the PrimeVue Calendar Date to this.
         .regex(/^\d{4}-\d{2}-\d{2}$/, 'Hire date must be a valid date.'),
     status: z.enum(EMPLOYEE_STATUSES as readonly [string, ...string[]], {
         required_error: 'Status is required.',
         invalid_type_error: 'Status is required.',
     }),
+};
+
+/**
+ * Auto-gen OFF (and ALL edit-mode flows). Free-input employee_code,
+ * required. Pre-Session-3 behavior.
+ */
+export const employeeFormSchemaManual = z.object({
+    employee_code: z
+        .string({ required_error: 'Employee code is required.' })
+        .trim()
+        .min(1, 'Employee code is required.')
+        .max(32, 'Employee code must be 32 characters or fewer.'),
+    ...baseFields,
 });
 
-export type EmployeeFormValues = z.infer<typeof employeeFormSchema>;
+/**
+ * Auto-gen ON (create-mode only). No employee_code in the schema —
+ * Zod strips it from the values object on parse, and the form template
+ * doesn't render an input for it. The backend's StoreEmployeeRequest
+ * treats a present employee_code as `prohibited` in this mode, so the
+ * payload omits the key entirely (see EmployeeFormPage.normalizePayload).
+ */
+export const employeeFormSchemaAutoGen = z.object({
+    ...baseFields,
+});
+
+export type EmployeeFormManualValues = z.infer<typeof employeeFormSchemaManual>;
+export type EmployeeFormAutoGenValues = z.infer<typeof employeeFormSchemaAutoGen>;
+
+/**
+ * Form-state type — covers both runtime branches. employee_code is
+ * optional because the auto-gen schema omits it; the manual schema
+ * requires it, but the form-state always carries a (possibly empty)
+ * string in manual mode anyway.
+ *
+ * Consumers narrow against `isAutoGenMode` at the call site.
+ */
+export type EmployeeFormValues = EmployeeFormAutoGenValues & {
+    employee_code?: string;
+};
+
+/**
+ * Backwards-compat alias. Defaults to the manual variant for any callsite
+ * that still imports `employeeFormSchema` directly (e.g. future unit
+ * tests on the schema itself). New code should pick the right schema
+ * explicitly.
+ */
+export const employeeFormSchema = employeeFormSchemaManual;

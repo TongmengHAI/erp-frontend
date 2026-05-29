@@ -25,8 +25,10 @@ import {
 import { useDepartmentsQuery } from '@/modules/hrm/composables/useDepartments';
 import { usePositionsQuery } from '@/modules/hrm/composables/usePositions';
 import { useBranchesQuery } from '@/modules/hrm/composables/useBranches';
+import { useHrmSettingsQuery } from '@/modules/admin/composables/useHrmSettings';
 import {
-    employeeFormSchema,
+    employeeFormSchemaAutoGen,
+    employeeFormSchemaManual,
     type EmployeeFormValues,
 } from '@/modules/hrm/schemas/employeeFormSchema';
 import { HRM_ROUTES } from '@/modules/hrm/routes';
@@ -61,6 +63,39 @@ import type { BreadcrumbItem } from '@/shared/types/navigation';
 // typed `string | undefined`, so the conversion happens at the call site
 // — string in via stringToDate(), string out via dateToYYYYMMDD(). The
 // utility module covers the local-vs-UTC parsing trap; see its docblock.
+//
+// Session 3 — per-company HRM Settings integration:
+//   - Fetch settings via useHrmSettingsQuery() on mount.
+//   - When create + settings.auto_generate_employee_code = true:
+//       • Hide the employee_code free-input.
+//       • Render a read-only label ("Code will be auto-generated as
+//         {prefix}… when saved.").
+//       • OMIT employee_code from the payload — backend's `prohibited`
+//         rule must not fire.
+//   - When create + auto-gen off: current free-input behavior.
+//   - When edit: NEVER apply auto-gen behavior. The employee already
+//     has a code; it stays editable.
+//   - Default status from settings.default_employee_status (create only).
+//     Edit mode keeps the employee's actual status.
+//   - Settings loading: chrome renders; code field is the only thing
+//     deferred (disabled). Other fields paint immediately.
+//   - Settings error (403, network, etc.): non-blocking warning toast
+//     once; form falls back to manual-input behavior. Doesn't lock the
+//     form.
+//   - Mid-edit settings changes don't propagate (settings fetched on
+//     mount only). Re-opening the form picks up the new value. v1
+//     intentional — real-time multi-tab sync is post-v1 polish.
+//
+// Schema selection (the load-bearing piece): TWO schemas live in
+// employeeFormSchema.ts — `employeeFormSchemaManual` (required
+// employee_code) and `employeeFormSchemaAutoGen` (no employee_code key
+// at all). The `activeSchema` computed below picks one based on
+// `isAutoGenMode`. The `validationSchema` passed to useForm is a
+// computed of `toTypedSchema(activeSchema.value)` — VeeValidate's
+// documented reactive-schema support means when isAutoGenMode flips,
+// the form re-validates against the new schema in a single tick.
+// Template rendering, schema validation, and payload shape all key off
+// the same `isAutoGenMode` ref → they cannot drift.
 // ─────────────────────────────────────────────────────────────────────────────
 
 interface Props {
@@ -99,7 +134,60 @@ const isGenericLoadError = computed<boolean>(
     () => isEditError.value && !isNotFound.value,
 );
 
+// ─── Per-company HRM Settings ──────────────────────────────────────────────
+// Fetched on mount. The form starts in manual-input mode (defaultInitial
+// below) and flips to auto-gen when settings arrive (create-mode only).
+//
+// Permission note: the show endpoint requires settings.hrm.view. In v1
+// the only role granted hrm.employee.create (tenant_admin) also has
+// settings.hrm.view, so 403 is theoretical. Future roles (team_lead /
+// hrm_manager / etc.) might split the grant — the error fallback
+// preserves form usability in that case.
+const settingsQuery = useHrmSettingsQuery();
+const isSettingsLoading = computed<boolean>(
+    () => settingsQuery.isLoading.value,
+);
+const settingsData = computed(() => settingsQuery.data.value?.data);
+const isAutoGenSetting = computed<boolean>(
+    () => settingsData.value?.auto_generate_employee_code ?? false,
+);
+const autoGenPrefix = computed<string>(
+    () => settingsData.value?.employee_code_prefix ?? '',
+);
+
+// Auto-gen mode applies ONLY in create + when settings says ON. Edit
+// mode keeps the existing employee_code editable regardless of the
+// tenant-wide flag.
+const isAutoGenMode = computed<boolean>(
+    () => !isEditMode.value && isAutoGenSetting.value,
+);
+
+// One-shot warning toast on settings-query failure. ref() flag prevents
+// re-emitting the toast on every reactive recompute or refetch retry.
+// immediate: true so a query that's already in error state at mount
+// (e.g. a cached failure from a prior page visit) still surfaces the
+// toast on this form's first paint.
+const hasShownSettingsWarning = ref<boolean>(false);
+watch(
+    () => settingsQuery.isError.value,
+    (errored) => {
+        if (!errored || hasShownSettingsWarning.value) return;
+        hasShownSettingsWarning.value = true;
+        toast.add({
+            severity: 'warn',
+            summary: t('hrm.employee.form.settingsErrorWarning'),
+            life: 5000,
+        });
+    },
+    { immediate: true },
+);
+
 // ─── Form state ─────────────────────────────────────────────────────────────
+// Manual-input mode is the safe default — the form is usable from first
+// paint with no settings response. If settings arrive saying "auto-gen
+// is on" (create-mode), the computed validationSchema below switches to
+// the auto-gen schema (no employee_code at all), and the conditional
+// template renders the read-only label in place of the input.
 const defaultInitial: EmployeeFormValues = {
     employee_code: '',
     full_name: '',
@@ -111,9 +199,21 @@ const defaultInitial: EmployeeFormValues = {
     status: 'active',
 };
 
-const { handleSubmit, setErrors, setValues, isSubmitting } =
+// Reactive validation schema. VeeValidate re-validates the form when
+// this ref's value changes — so when settings resolve and isAutoGenMode
+// flips, the form transitions atomically from "code required" to "code
+// not part of schema" in a single tick. No mid-state where the visual
+// template says auto-gen but validation still demands a code (the bug
+// that surfaced when the discriminator lived inside a single schema as
+// a synthetic `_autoGen` field — VeeValidate's setValues didn't reliably
+// propagate that field, so the schema branch never flipped).
+const activeSchema = computed(() =>
+    isAutoGenMode.value ? employeeFormSchemaAutoGen : employeeFormSchemaManual,
+);
+
+const { handleSubmit, setErrors, setValues, values, isSubmitting } =
     useForm<EmployeeFormValues>({
-        validationSchema: toTypedSchema(employeeFormSchema),
+        validationSchema: computed(() => toTypedSchema(activeSchema.value)),
         initialValues: defaultInitial,
     });
 
@@ -121,6 +221,12 @@ const { handleSubmit, setErrors, setValues, isSubmitting } =
  * Pre-fill the form once edit data arrives. Watch fires exactly once per
  * load (data is stable post-fetch). resetForm would clear dirty state, but
  * since this runs before the user has interacted, setValues is enough.
+ *
+ * Edit mode always uses the manual schema — the row's existing
+ * employee_code is editable; settings.auto_generate doesn't retroactively
+ * lock previously-set codes. The `isAutoGenMode` computed already short-
+ * circuits on isEditMode, so activeSchema is `manual` here regardless of
+ * the tenant flag.
  */
 watch(
     () => editData.value?.data,
@@ -138,6 +244,53 @@ watch(
             position_id: employee.position?.id ?? null,
             hire_date: employee.hire_date,
             status: employee.status,
+        });
+    },
+    { immediate: true },
+);
+
+/**
+ * Apply settings to form state in CREATE mode only. Two effects:
+ *   1. Clear employee_code when auto-gen is on (it's not part of the
+ *      auto-gen schema and won't be sent — but a stale value left in
+ *      form state would still appear if the user toggled OFF mid-edit
+ *      in some future iteration; clearing is the safe default).
+ *   2. Seed `status` from settings.default_employee_status — the form's
+ *      hardcoded 'active' was the previous behavior; this respects an
+ *      explicit override from the admin.
+ *
+ * Edit mode is untouched: the employee's own values (set by the edit
+ * watch above) are authoritative.
+ *
+ * The schema swap (manual ↔ auto-gen) happens automatically via the
+ * `activeSchema` computed — VeeValidate re-validates on schema-ref
+ * change. No imperative schema-flip needed here.
+ *
+ * `immediate: true` is load-bearing: TanStack Query returns cached
+ * settings synchronously when the admin just visited /admin/hrm/settings,
+ * so `settingsData` is already populated when this watcher registers.
+ * Without immediate, the watcher would only fire on transitions, and
+ * the cached-on-mount case would never run setValues — the form would
+ * silently keep defaultInitial.status='active' regardless of the saved
+ * default_employee_status. The cold-cache path (settingsData starts
+ * undefined) also works: immediate fires once with `s = undefined`
+ * (early-returns), then fires again when data lands.
+ */
+watch(
+    settingsData,
+    (s) => {
+        if (!s || isEditMode.value) return;
+        setValues({
+            employee_code: s.auto_generate_employee_code
+                ? ''
+                : (values.employee_code ?? ''),
+            full_name: values.full_name,
+            email: values.email,
+            department_id: values.department_id ?? null,
+            branch_id: values.branch_id ?? null,
+            position_id: values.position_id ?? null,
+            hire_date: values.hire_date,
+            status: s.default_employee_status,
         });
     },
     { immediate: true },
@@ -261,20 +414,38 @@ const statusOptions = computed<StatusOption[]>(() =>
     })),
 );
 
-/** Empty-string → null for nullable optional fields. The backend's
- *  StoreEmployeeRequest treats null/missing as "no value"; bare '' would
- *  fail the email validator. department_id is already a number or null
- *  from the picker — no string conversion needed. */
-function normalizePayload(values: EmployeeFormValues) {
+/**
+ * Build the wire payload from form values.
+ *
+ * Two important transforms:
+ *   - `employee_code` is OMITTED from the payload when isAutoGenMode is
+ *     true (the backend's StoreEmployeeRequest treats it as `prohibited`
+ *     in that mode; sending '' or null would still trigger 422). The
+ *     payload is computed at submit time off the live mode flag — the
+ *     same flag that selects the schema and the template branch, so
+ *     they cannot drift.
+ *   - empty-string → null for nullable optional fields (email).
+ *     department_id is already number-or-null from the picker.
+ */
+function normalizePayload(vals: EmployeeFormValues) {
+    const base = {
+        full_name: vals.full_name,
+        email: vals.email === '' ? null : vals.email,
+        department_id: vals.department_id ?? null,
+        branch_id: vals.branch_id ?? null,
+        position_id: vals.position_id ?? null,
+        hire_date: vals.hire_date,
+        status: vals.status as EmployeeStatus,
+    };
+
+    if (isAutoGenMode.value) {
+        // employee_code intentionally OMITTED — backend's prohibited rule.
+        return base;
+    }
+
     return {
-        employee_code: values.employee_code,
-        full_name: values.full_name,
-        email: values.email === '' ? null : values.email,
-        department_id: values.department_id ?? null,
-        branch_id: values.branch_id ?? null,
-        position_id: values.position_id ?? null,
-        hire_date: values.hire_date,
-        status: values.status as EmployeeStatus,
+        ...base,
+        employee_code: vals.employee_code ?? '',
     };
 }
 
@@ -282,9 +453,9 @@ function isAxiosErr(e: unknown): e is import('axios').AxiosError<ApiErrorBody> {
     return axios.isAxiosError(e);
 }
 
-const onSubmit = handleSubmit(async (values) => {
+const onSubmit = handleSubmit(async (vals) => {
     formError.value = null;
-    const payload = normalizePayload(values);
+    const payload = normalizePayload(vals);
 
     try {
         if (isEditMode.value && props.id) {
@@ -393,6 +564,14 @@ const submitLabel = computed<string>(() => {
         : t('hrm.employee.form.create.submit');
 });
 
+// Auto-gen read-only label text — interpolates the prefix from settings.
+// "Code will be auto-generated as TT-… when saved."
+const autoGenLabelText = computed<string>(() =>
+    t('hrm.employee.form.fields.codeAutoGenerated', {
+        prefix: autoGenPrefix.value,
+    }),
+);
+
 // Submit button stays clickable even when fields are blank — VeeValidate's
 // handleSubmit guards correctness, and disabling-on-invalid is the anti-
 // pattern that surfaced as Day 6 Bug 1: a user trying to submit got no
@@ -483,7 +662,51 @@ const submitLabel = computed<string>(() => {
 
                 <form class="flex flex-col gap-5" novalidate @submit.prevent="onSubmit">
                     <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                        <!--
+                          employee_code — three branches:
+                            1. Settings loading: disabled InputText with the
+                               loading state. Chrome paints; the user just
+                               can't type the code until we know whether
+                               auto-gen is on.
+                            2. Auto-gen ON (settings loaded, create mode):
+                               read-only label, no input. Backend assigns
+                               the code at submit time.
+                            3. Auto-gen OFF (settings loaded OR error
+                               fallback, OR edit mode): free-input
+                               (today's behavior, required by schema).
+                        -->
                         <FormField
+                            v-if="!isEditMode && isSettingsLoading"
+                            name="employee_code"
+                            :label="t('hrm.employee.form.fields.code')"
+                            :help="t('hrm.employee.form.fields.codeLoading')"
+                            required
+                        >
+                            <InputText
+                                model-value=""
+                                disabled
+                                class="w-full"
+                                autocomplete="off"
+                                data-testid="employee-form-code"
+                            />
+                        </FormField>
+
+                        <FormField
+                            v-else-if="isAutoGenMode"
+                            name="employee_code"
+                            :label="t('hrm.employee.form.fields.code')"
+                            :help="t('hrm.employee.form.fields.codeAutoGeneratedHelp')"
+                        >
+                            <div
+                                class="flex h-10 items-center rounded-md border border-border-default bg-surface-sunken px-3 text-sm text-text-secondary"
+                                data-testid="employee-form-code-auto"
+                            >
+                                {{ autoGenLabelText }}
+                            </div>
+                        </FormField>
+
+                        <FormField
+                            v-else
                             v-slot="{ field }"
                             name="employee_code"
                             :label="t('hrm.employee.form.fields.code')"

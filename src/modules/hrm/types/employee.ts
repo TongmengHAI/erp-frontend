@@ -182,9 +182,23 @@ export interface EmployeeShowResponse {
  * Request body for POST /api/v1/hrm/employees. `tenant_id` and
  * `company_id` are deliberately absent — the backend derives them from
  * the request context and ignores any client-supplied values.
+ *
+ * `employee_code` is conditionally required:
+ *   - When the company's HrmSettings.auto_generate_employee_code is
+ *     OFF, employee_code is REQUIRED (the backend rejects missing /
+ *     empty with 422).
+ *   - When auto-generate is ON, employee_code is `prohibited` — the
+ *     payload MUST omit the key entirely. The form's normalizePayload
+ *     strips it in that branch.
+ *
+ * Marked optional in TypeScript because the contract is a runtime
+ * (settings-driven) split rather than a compile-time one. The
+ * EmployeeFormPage's discriminated-union form schema enforces the
+ * frontend-side discipline; the StoreEmployeeRequest enforces the
+ * backend-side discipline.
  */
 export interface CreateEmployeeRequest {
-    employee_code: string;
+    employee_code?: string;
     full_name: string;
     email?: string | null;
     /** FK → departments.id, or null for "no department". MUST be a
