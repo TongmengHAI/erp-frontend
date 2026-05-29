@@ -30,8 +30,16 @@ import { useAuthStore } from '@/shared/stores/useAuthStore';
 const { t } = useI18n();
 const auth = useAuthStore();
 
+// Two-stage filter (belt + suspenders per the user-menu-not-launcher
+// design): permission gate AND hiddenFromLauncher exclusion. The two
+// stages cover orthogonal concerns: permission decides "is this app
+// visible to this user," hiddenFromLauncher decides "is this surface
+// where the app should appear at all." Admin uses the latter to stay
+// out of the launcher even for users who have settings.* perms.
 const accessibleApps = computed<LauncherApp[]>(() =>
-    LAUNCHER_APPS.filter((app) => auth.canAny(app.permissionPrefix)),
+    LAUNCHER_APPS
+        .filter((app) => !app.hiddenFromLauncher)
+        .filter((app) => auth.canAny(app.permissionPrefix)),
 );
 </script>
 

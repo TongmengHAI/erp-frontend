@@ -40,6 +40,7 @@
             "menu": {
                 "profile": "Profile",
                 "settings": "Settings",
+                "adminSettings": "Admin settings",
                 "logout": "Log out"
             }
         },
@@ -118,6 +119,10 @@
             "hrm": {
                 "label": "HRM",
                 "description": "Employees, departments, branches, positions, attendance, leave requests and balances."
+            },
+            "admin": {
+                "label": "Admin",
+                "description": "Tenant-wide configuration and administration."
             }
         }
     },
@@ -1013,6 +1018,52 @@
                 "new": "New balance",
                 "edit": "Edit balance",
                 "item": "{employee} — {type} {year}"
+            }
+        }
+    },
+    "admin": {
+        "navigation": {
+            "hrmSettings": "HRM Settings"
+        },
+        "settings": {
+            "hrm": {
+                "title": "HRM Settings",
+                "breadcrumb": "HRM Settings",
+                "companyPicker": {
+                    "label": "Company",
+                    "placeholder": "Select a company",
+                    "help": "Settings apply to the selected company only."
+                },
+                "form": {
+                    "submit": "Save changes",
+                    "submitting": "Saving...",
+                    "cancel": "Discard changes",
+                    "fields": {
+                        "autoGenerate": "Auto-generate employee codes",
+                        "autoGenerateHelp": "When enabled, new employees get a sequential code prefixed with the value below.",
+                        "prefix": "Employee code prefix",
+                        "prefixHelpOn": "Required. Uppercase letters, digits, underscore, or hyphen. Max 8 characters.",
+                        "prefixHelpOff": "Optional. Saved for next time auto-generate is turned back on.",
+                        "defaultStatus": "Default employee status",
+                        "defaultStatusHelp": "The lifecycle status applied to newly-created employees."
+                    },
+                    "errors": {
+                        "forbidden": "You don't have permission to update these settings.",
+                        "unknown": "Something went wrong. Please try again."
+                    }
+                },
+                "status": {
+                    "active": "Active",
+                    "on_leave": "On leave",
+                    "suspended": "Suspended"
+                },
+                "toast": {
+                    "updated": "HRM settings updated."
+                },
+                "notFound": {
+                    "title": "Settings not found",
+                    "description": "No HRM settings exist for the selected company."
+                }
             }
         }
     }

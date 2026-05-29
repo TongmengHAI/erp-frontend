@@ -34,6 +34,22 @@ export interface LauncherApp {
      * getDefaultRoute() skips apps the user can't access.
      */
     permissionPrefix: string;
+    /**
+     * When true, the app is registered in the canonical "what apps
+     * exist" sense (AppIdentityBadge picks it up, the URL space + meta
+     * are real) BUT it does NOT appear on the launcher grid OR in the
+     * AppSwitcherDropdown.
+     *
+     * Used by `admin` — accessed via the user menu, not via the
+     * launcher / app-switcher. Admins navigate to /admin from the
+     * top-right avatar dropdown; the launcher's "pick a line of
+     * business" affordance + the inter-app jumping affordance both
+     * exclude admin because it's a configuration surface, not a
+     * line of business.
+     *
+     * Defaults to false (most apps appear in both surfaces).
+     */
+    hiddenFromLauncher?: boolean;
 }
 
 export const LAUNCHER_APPS: readonly LauncherApp[] = Object.freeze([
@@ -44,6 +60,23 @@ export const LAUNCHER_APPS: readonly LauncherApp[] = Object.freeze([
         icon: 'pi pi-users',
         defaultRouteName: 'hrm.dashboard',
         permissionPrefix: 'hrm',
+    },
+    {
+        // Admin — accessed via the user menu's "Admin Settings" item
+        // (gated on settings.hrm.view). hiddenFromLauncher: true means
+        // it doesn't appear in the launcher grid OR the AppSwitcher
+        // dropdown — both surfaces filter via !a.hiddenFromLauncher
+        // (belt + suspenders so a permissions edge case can't surface
+        // admin in the launcher or switcher unintentionally).
+        // AppIdentityBadge DOES read this entry (so "ADMIN" surfaces
+        // in the top bar inside /admin/*).
+        id: 'admin',
+        label: 'launcher.apps.admin.label',
+        description: 'launcher.apps.admin.description',
+        icon: 'pi pi-cog',
+        defaultRouteName: 'admin.hrm.settings',
+        permissionPrefix: 'settings',
+        hiddenFromLauncher: true,
     },
 ]);
 

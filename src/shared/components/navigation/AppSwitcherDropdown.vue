@@ -37,8 +37,15 @@ const { t } = useI18n();
 const router = useRouter();
 const auth = useAuthStore();
 
+// Two-stage filter (belt + suspenders, same shape as LauncherPage):
+// hiddenFromLauncher exclusion + permission gate. Admin is
+// hiddenFromLauncher=true so it never appears in the switcher even
+// for users who have settings.* perms — admin is reached via the
+// user menu, not via inter-app switching.
 const accessibleApps = computed(() =>
-    LAUNCHER_APPS.filter((app) => auth.canAny(app.permissionPrefix)),
+    LAUNCHER_APPS
+        .filter((app) => !app.hiddenFromLauncher)
+        .filter((app) => auth.canAny(app.permissionPrefix)),
 );
 
 // Hidden when fewer than 2 apps are accessible. v1 default for

@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router';
 
+import { adminRoutes } from '@/modules/admin/routes';
 import { authRoutes } from '@/modules/auth/routes';
 import { hrmRoutes } from '@/modules/hrm/routes';
 import { installGuards } from '@/router/guards';
@@ -90,6 +91,18 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/shared/layouts/HrmAppLayout.vue'),
         meta: { requiresAuth: true, app: 'hrm' },
         children: hrmRoutes,
+    },
+
+    // Admin app — /admin. AdminAppLayout wraps every child. v1 has one
+    // child (HRM Settings); Stage 2-5 features land here. meta.app drives
+    // AppIdentityBadge (looks up the admin entry via findLauncherApp);
+    // hiddenFromLauncher means the launcher + switcher exclude this app
+    // from their grids, but the URL space + identity badge are real.
+    {
+        path: '/admin',
+        component: () => import('@/shared/layouts/AdminAppLayout.vue'),
+        meta: { requiresAuth: true, app: 'admin' },
+        children: adminRoutes,
     },
 
     // Public routes — no shell. /login + /tenant-suspended.

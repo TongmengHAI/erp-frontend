@@ -32,6 +32,17 @@ export interface UrlNumericFilterResult {
      */
     value: ComputedRef<number | null>;
     /**
+     * Write the value into the URL via router.replace. Pass null to
+     * remove the key (same as clear()). Returns the navigation Promise
+     * so tests can await; page-side handlers can fire-and-forget via
+     * `void set(...)`.
+     *
+     * Added for the admin Settings company picker — bidirectional URL
+     * sync (Select control writes; URL drives the query). Same shape
+     * as useUrlEnumFilter's `set`.
+     */
+    set: (next: number | null) => Promise<void>;
+    /**
      * Remove the key from the URL via router.replace. Other query
      * params survive untouched. Safe to call when the key isn't
      * currently set (no-op write to the same URL).
@@ -56,14 +67,19 @@ export function useUrlNumericFilter(key: string): UrlNumericFilterResult {
         return Number.isFinite(n) && n > 0 ? n : null;
     });
 
-    async function clear(): Promise<void> {
-        // router.replace (not push) — the chip-clear shouldn't add a
-        // back-button entry; navigating away and back should land on
-        // the unfiltered state, not the filtered-then-cleared state.
+    async function set(next: number | null): Promise<void> {
         const newQuery = { ...route.query };
-        delete newQuery[key];
+        if (next === null) {
+            delete newQuery[key];
+        } else {
+            newQuery[key] = String(next);
+        }
         await router.replace({ query: newQuery });
     }
 
-    return { value, clear };
+    async function clear(): Promise<void> {
+        await set(null);
+    }
+
+    return { value, set, clear };
 }

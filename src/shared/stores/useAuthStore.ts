@@ -2,7 +2,14 @@ import axios from 'axios';
 import { defineStore } from 'pinia';
 
 import * as authApi from '@/modules/auth/api/auth';
-import type { ApiErrorBody, AuthTenant, AuthUser, LoginRequest } from '@/modules/auth/types';
+import type {
+    ApiErrorBody,
+    AuthCompany,
+    AuthCompanyBrief,
+    AuthTenant,
+    AuthUser,
+    LoginRequest,
+} from '@/modules/auth/types';
 import { resetCsrfReady } from '@/shared/api/client';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -23,6 +30,12 @@ import { resetCsrfReady } from '@/shared/api/client';
 interface AuthState {
     user: AuthUser | null;
     tenant: AuthTenant | null;
+    /** The resolved company for this session, or null on a company:optional
+     *  route where the user hasn't picked yet. Mirrors /auth/me.current_company. */
+    currentCompany: AuthCompany | null;
+    /** All active companies in the user's tenant. Drives the company picker
+     *  on multi-company surfaces (admin Settings, future tenant switcher). */
+    companies: AuthCompanyBrief[];
     roles: string[];
     permissions: string[];
     tenantInactive: boolean;
@@ -37,6 +50,8 @@ export const useAuthStore = defineStore('auth', {
     state: (): AuthState => ({
         user: null,
         tenant: null,
+        currentCompany: null,
+        companies: [],
         roles: [],
         permissions: [],
         tenantInactive: false,
@@ -84,6 +99,8 @@ export const useAuthStore = defineStore('auth', {
                 this.$patch({
                     user: res.data.user,
                     tenant: res.data.tenant,
+                    currentCompany: res.data.current_company,
+                    companies: res.data.companies,
                     roles: res.data.roles,
                     permissions: res.data.permissions,
                     tenantInactive: false,
