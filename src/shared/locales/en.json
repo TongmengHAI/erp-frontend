@@ -2,6 +2,7 @@
     "common": {
         "save": "Save",
         "cancel": "Cancel",
+        "edit": "Edit",
         "retry": "Try again",
         "error": {
             "title": "Something went wrong",
