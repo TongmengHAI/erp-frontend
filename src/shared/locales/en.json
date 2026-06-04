@@ -3,6 +3,7 @@
         "save": "Save",
         "cancel": "Cancel",
         "edit": "Edit",
+        "view": "View",
         "retry": "Try again",
         "error": {
             "title": "Something went wrong",
