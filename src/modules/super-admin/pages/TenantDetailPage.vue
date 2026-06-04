@@ -132,6 +132,14 @@ function onEdit(): void {
         params: { id: tenant.value.id },
     });
 }
+
+function onManageModules(): void {
+    if (!tenant.value) return;
+    void router.push({
+        name: SUPER_ADMIN_ROUTES.TENANT_MODULES,
+        params: { id: tenant.value.id },
+    });
+}
 </script>
 
 <template>
@@ -151,6 +159,13 @@ function onEdit(): void {
         <template v-else-if="tenant">
             <PageHeader :title="tenant.name" :breadcrumbs="breadcrumbs">
                 <template #actions>
+                    <Button
+                        :label="t('superAdmin.tenants.detail.manageModules')"
+                        icon="pi pi-cog"
+                        severity="secondary"
+                        data-testid="tenant-detail-modules"
+                        @click="onManageModules"
+                    />
                     <Button
                         :label="t('common.edit')"
                         icon="pi pi-pencil"

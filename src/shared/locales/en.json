@@ -18,6 +18,13 @@
             "descriptionWithResource": "You don't have permission to view {resource}.",
             "action": "Go to dashboard"
         },
+        "moduleNotEntitled": {
+            "title": "Module unavailable",
+            "description": "This module has been disabled by your administrator.",
+            "descriptionWithModule": "{module} has been disabled by your administrator.",
+            "action": "Please contact your administrator to request access. Once they re-enable the module you'll be able to use it again immediately.",
+            "cta": "Go to apps"
+        },
         "confirm": {
             "delete": "Delete",
             "cancel": "Cancel",
@@ -1081,9 +1088,66 @@
             "tenants": "Tenants"
         },
         "dashboard": {
-            "placeholder": {
-                "title": "Super Admin Dashboard",
-                "description": "Platform metrics and recent activity will appear here. The real dashboard ships in a later session."
+            "title": "Platform Overview",
+            "subtitle": "Tenants, entitlement, and recent activity at a glance.",
+            "actions": {
+                "newTenant": "New tenant",
+                "viewAll": "All tenants"
+            },
+            "empty": {
+                "title": "No tenants yet",
+                "description": "Get started by creating the first tenant. They'll be set up with a default company, an initial admin user, and HRM entitlement."
+            },
+            "tiles": {
+                "totalTenants": "Total tenants",
+                "activeShort": "{n} active",
+                "suspendedShort": "{n} suspended",
+                "activeTenants": "Active tenants",
+                "activeTenantsCaption": "Currently signed in and operational.",
+                "tenantsByModule": "Tenants per module",
+                "tenantsByModuleRow": "{active} active · {disabled} disabled",
+                "tenantsByModuleEmpty": "No modules have been provisioned for any tenant yet."
+            },
+            "lists": {
+                "recentSignups": {
+                    "title": "Recent signups",
+                    "subtitle": "Last {days} days",
+                    "empty": "No new tenants in the last {days} days."
+                },
+                "recentSuspensions": {
+                    "title": "Recent suspensions",
+                    "subtitle": "Last {days} days",
+                    "empty": "No suspensions in the last {days} days."
+                }
+            }
+        },
+        "tenantModules": {
+            "editor": {
+                "title": "Module entitlement — {name}",
+                "titleGeneric": "Module entitlement",
+                "breadcrumb": "Modules",
+                "intro": "Toggle a module's status to enable or disable it for this tenant. Disabled modules return a friendly module-disabled page to the tenant's users on their next request. Only Super Admins can change entitlement.",
+                "sections": {
+                    "modules": "Available modules"
+                },
+                "statusLabel": {
+                    "active": "Active",
+                    "disabled": "Disabled"
+                },
+                "save": "Save changes",
+                "toast": {
+                    "saved": "Module entitlement updated."
+                },
+                "errors": {
+                    "forbidden": "You don't have permission to update entitlement for this tenant.",
+                    "unknown": "Something went wrong. Please try again."
+                }
+            },
+            "modules": {
+                "hrm": {
+                    "label": "HRM",
+                    "description": "Employees, departments, branches, positions, attendance, leave."
+                }
             }
         },
         "tenants": {
@@ -1121,6 +1185,7 @@
                 }
             },
             "detail": {
+                "manageModules": "Modules",
                 "suspend": "Suspend tenant",
                 "resume": "Resume tenant",
                 "sections": {

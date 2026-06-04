@@ -126,6 +126,20 @@ const routes: RouteRecordRaw[] = [
     // Public routes — no shell. /login + /tenant-suspended.
     ...authRoutes,
 
+    // Module-not-entitled — friendly 403 page for the
+    // module_not_entitled case. Distinct from the catch-all 404 because
+    // the user IS authenticated + their tenant simply doesn't (or
+    // doesn't anymore) have access to the module. Reached by the axios
+    // interceptor when ANY /api/v1/* response returns 403 +
+    // error_code=module_not_entitled. The ?module=<key> query param
+    // carries the affected module key for the page's specific copy.
+    {
+        path: '/module-disabled',
+        name: 'module-not-entitled',
+        component: () => import('@/shared/components/state/ModuleNotEntitledPage.vue'),
+        meta: { requiresAuth: true },
+    },
+
     // Catch-all 404 — renders the existing NotFoundPage component.
     // Two consumer paths land here:
     //   1. Unmatched URLs (typos, stale bookmarks against removed

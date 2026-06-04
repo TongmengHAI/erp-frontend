@@ -36,13 +36,17 @@ export function createTestRouter(routes: RouteRecordRaw[] = DEFAULT_ROUTES) {
     });
 }
 
+// Plugins can be installed bare or with options as a tuple. Vue's runtime
+// accepts both shapes; the test helper mirrors that.
+type PluginEntry = Plugin | readonly [Plugin, ...unknown[]];
+
 interface MountWithGlobalsOpts {
     props?: Record<string, unknown>;
     slots?: Record<string, string>;
     attachTo?: HTMLElement | string;
     routes?: RouteRecordRaw[];
     initialRoute?: string;
-    extraPlugins?: Plugin[];
+    extraPlugins?: PluginEntry[];
 }
 
 export async function mountWithGlobals(
@@ -78,7 +82,13 @@ export async function mountWithGlobals(
                 i18n as Plugin,
                 router as Plugin,
                 primeVuePlugin,
-                ...extraPlugins,
+                // Vue's plugin install accepts both `Plugin` and
+                // `[Plugin, ...args]` at runtime; Vue Test Utils' typing
+                // requires a mutable tuple, but `freshVueQueryPlugin`
+                // helpers return `readonly [...]` (which is safe — we
+                // never mutate). Cast through `any` to bridge the
+                // shape mismatch without weakening callers.
+                ...(extraPlugins as Array<Plugin | [Plugin, ...unknown[]]>),
             ],
         },
     });

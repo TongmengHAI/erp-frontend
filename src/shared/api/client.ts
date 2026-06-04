@@ -84,6 +84,17 @@ interface RetryableConfig extends InternalAxiosRequestConfig {
     __csrfRetried?: boolean;
 }
 
+/**
+ * 403 module_not_entitled body shape (backend ModuleNotEntitledException::render).
+ * Distinct field name (`module`) so destructuring stays unambiguous against
+ * other 403 shapes (which carry just `message`).
+ */
+interface ModuleNotEntitledBody {
+    message?: string;
+    error_code?: string;
+    module?: string;
+}
+
 apiClient.interceptors.response.use(
     (response) => response,
     async (error: AxiosError) => {
@@ -103,6 +114,26 @@ apiClient.interceptors.response.use(
             }
             config.__csrfRetried = true;
             return apiClient.request(config);
+        }
+
+        // 403 module_not_entitled — the tenant lost (or never had) the
+        // module entitlement. Surface the friendly ModuleNotEntitledPage
+        // via a navigation hook. We defer the import to break a cycle
+        // (router imports the auth store; the auth store uses this client).
+        if (status === 403) {
+            const body = error.response?.data as ModuleNotEntitledBody | undefined;
+            if (body?.error_code === 'module_not_entitled') {
+                // Lazy-resolve the router instance so this module doesn't
+                // pull vue-router at import time (the auth store also
+                // routes through this client during bootstrap).
+                const { default: router } = await import('@/router');
+                void router.push({
+                    name: 'module-not-entitled',
+                    query: body.module ? { module: body.module } : {},
+                });
+                // Still throw so the caller's try/catch fires; the
+                // navigation is a side effect, not a recovery.
+            }
         }
 
         // 401 / 422 / 429 / anything else: pass through.

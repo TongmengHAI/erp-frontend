@@ -4,17 +4,13 @@ import type { RouteRecordRaw } from 'vue-router';
 // Super Admin module routes.
 //
 // SUPER_ADMIN_ROUTES holds the named-route constants — getDefaultRoute,
-// the user menu's Super Admin link, the SuperAdminAppSidebar, and the
+// the user menu's Super Admin link, the SuperAdminAppSidebar, and
 // internal RouterLink usages all reference them through here.
 //
 // The shell-mounted parent route ('super-admin' path with
 // SuperAdminAppLayout + meta.requiresSuperAdmin) is declared in
 // router/index.ts; these children spread under it. Each inherits the
 // requiresAuth + requiresSuperAdmin gate from the parent.
-//
-// v1 ships:
-//   • Dashboard (placeholder; real page lands in Session 7)
-//   • Tenants list / detail / new / edit (Session 6 — real pages)
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const SUPER_ADMIN_ROUTES = {
@@ -23,14 +19,14 @@ export const SUPER_ADMIN_ROUTES = {
     TENANT_NEW: 'super-admin.tenants.new',
     TENANT_DETAIL: 'super-admin.tenants.detail',
     TENANT_EDIT: 'super-admin.tenants.edit',
+    TENANT_MODULES: 'super-admin.tenants.modules',
 } as const;
 
 export const superAdminRoutes: RouteRecordRaw[] = [
     {
         path: '',
         name: SUPER_ADMIN_ROUTES.DASHBOARD,
-        component: () =>
-            import('./pages/SuperAdminDashboardPlaceholderPage.vue'),
+        component: () => import('./pages/SuperAdminDashboardPage.vue'),
         meta: {},
     },
     {
@@ -62,6 +58,15 @@ export const superAdminRoutes: RouteRecordRaw[] = [
         props: (route) => ({ id: Number(route.params.id) }),
         meta: {
             breadcrumb: 'superAdmin.tenants.breadcrumb.edit',
+        },
+    },
+    {
+        path: 'tenants/:id/modules',
+        name: SUPER_ADMIN_ROUTES.TENANT_MODULES,
+        component: () => import('./pages/TenantModuleEditorPage.vue'),
+        props: (route) => ({ id: Number(route.params.id) }),
+        meta: {
+            breadcrumb: 'superAdmin.tenantModules.editor.breadcrumb',
         },
     },
 ];
