@@ -1087,12 +1087,120 @@
             }
         },
         "tenants": {
-            "placeholder": {
-                "title": "Tenants",
-                "description": "Tenant CRUD and management will appear here. The real list page ships in a later session."
-            },
             "breadcrumb": {
-                "list": "Tenants"
+                "list": "Tenants",
+                "new": "New tenant",
+                "edit": "Edit"
+            },
+            "status": {
+                "active": "Active",
+                "suspended": "Suspended",
+                "archived": "Archived"
+            },
+            "list": {
+                "title": "Tenants",
+                "subtitle": "Every tenant on the platform — across statuses.",
+                "newAction": "New tenant",
+                "statusFilterChip": "Status: {status}",
+                "clearStatusFilter": "Clear status filter",
+                "filters": {
+                    "anyStatus": "All statuses"
+                },
+                "columns": {
+                    "slug": "Slug",
+                    "name": "Name",
+                    "country": "Country",
+                    "currency": "Currency",
+                    "status": "Status",
+                    "createdAt": "Onboarded"
+                },
+                "empty": {
+                    "welcomeTitle": "No tenants yet",
+                    "welcomeDescription": "Create the first tenant — they'll be set up with a default company, an initial admin user, and HRM entitlement.",
+                    "filteredTitle": "No tenants match the current filter."
+                }
+            },
+            "detail": {
+                "suspend": "Suspend tenant",
+                "resume": "Resume tenant",
+                "sections": {
+                    "profile": "Profile"
+                },
+                "fields": {
+                    "slug": "Slug",
+                    "status": "Status",
+                    "legalName": "Legal name",
+                    "country": "Country code",
+                    "functionalCurrency": "Functional currency",
+                    "defaultCurrency": "Default currency",
+                    "timezone": "Timezone",
+                    "createdAt": "Onboarded"
+                },
+                "suspendConfirm": {
+                    "title": "Suspend this tenant?",
+                    "detail": "{name} users will be signed out on their next request and see the suspended-tenant screen. You can resume them later."
+                },
+                "resumeConfirm": {
+                    "title": "Resume this tenant?",
+                    "detail": "{name} users will be able to sign in again normally."
+                },
+                "toast": {
+                    "suspended": "{name} suspended.",
+                    "resumed": "{name} resumed."
+                }
+            },
+            "form": {
+                "create": {
+                    "title": "New tenant",
+                    "submit": "Create tenant"
+                },
+                "edit": {
+                    "title": "Edit tenant",
+                    "submit": "Save changes"
+                },
+                "sections": {
+                    "profile": "Tenant profile",
+                    "company": "Default company",
+                    "initialAdmin": "Initial admin user",
+                    "initialAdminHelp": "We'll create a tenant_admin user with a one-time generated password. You'll see the password ONCE on the next screen — copy and securely deliver it. Future resets via the standard forgot-password flow."
+                },
+                "fields": {
+                    "name": "Name",
+                    "slug": "Slug",
+                    "slugHelp": "Auto-generated from the name. Lowercase, digits, hyphens only.",
+                    "legalName": "Legal name",
+                    "status": "Status",
+                    "country": "Country code (ISO 3166-1)",
+                    "functionalCurrency": "Functional currency (ISO 4217)",
+                    "defaultCurrency": "Default currency (ISO 4217)",
+                    "timezone": "Timezone (IANA)",
+                    "companyName": "Company name",
+                    "companySlug": "Company slug",
+                    "companyLegalName": "Company legal name",
+                    "adminName": "Admin full name",
+                    "adminEmail": "Admin email"
+                },
+                "toast": {
+                    "created": "Tenant created.",
+                    "updated": "Tenant updated."
+                },
+                "errors": {
+                    "forbidden": "You don't have permission to perform this action.",
+                    "unknown": "Something went wrong. Please try again."
+                }
+            },
+            "create": {
+                "banner": {
+                    "title": "One-time password — copy now",
+                    "warning": "This password is shown ONLY once. Copy and securely deliver it to the tenant admin now.",
+                    "adminLabel": "Admin email",
+                    "passwordLabel": "Initial password",
+                    "recoveryNote": "If the password is lost before being delivered, the admin can use the standard forgot-password flow to reset.",
+                    "copy": "Copy to clipboard",
+                    "copied": "Copied",
+                    "copyToast": "Password copied to clipboard.",
+                    "acknowledge": "I've copied it — continue"
+                }
             }
         }
     }
