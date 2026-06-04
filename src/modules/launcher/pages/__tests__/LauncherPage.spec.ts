@@ -34,16 +34,20 @@ const NAV_ROUTES: RouteRecordRaw[] = [
 function seedHrmUser(): void {
     const auth = useAuthStore();
     auth.$patch({
-        user: { id: 1, name: 'HRM User', email: 'hrm@x', email_verified_at: null },
+        user: { id: 1, name: 'HRM User', email: 'hrm@x', email_verified_at: null, type: 'tenant_user', is_super_admin: false },
         permissions: ['hrm.employee.view'],
+        // Session 5: entitled_modules is the per-tenant gate. HRM
+        // entitlement + hrm.* permission together unlock the card.
+        entitledModules: ['hrm'],
     });
 }
 
 function seedNoAccessUser(): void {
     const auth = useAuthStore();
     auth.$patch({
-        user: { id: 2, name: 'No Access', email: 'na@x', email_verified_at: null },
+        user: { id: 2, name: 'No Access', email: 'na@x', email_verified_at: null, type: 'tenant_user', is_super_admin: false },
         permissions: [],
+        entitledModules: [],
     });
 }
 
@@ -94,8 +98,9 @@ describe('LauncherPage', () => {
         const w = await mountWithGlobals(LauncherPage, { routes: NAV_ROUTES });
         const auth = useAuthStore();
         auth.$patch({
-            user: { id: 3, name: 'Tenant Admin Only', email: 'ta@x', email_verified_at: null },
+            user: { id: 3, name: 'Tenant Admin Only', email: 'ta@x', email_verified_at: null, type: 'tenant_user', is_super_admin: false },
             permissions: ['tenant.settings.manage'],
+            entitledModules: [],
         });
         await w.vm.$nextTick();
 

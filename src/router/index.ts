@@ -3,6 +3,7 @@ import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
 import { adminRoutes } from '@/modules/admin/routes';
 import { authRoutes } from '@/modules/auth/routes';
 import { hrmRoutes } from '@/modules/hrm/routes';
+import { superAdminRoutes } from '@/modules/super-admin/routes';
 import { installGuards } from '@/router/guards';
 import { getDefaultRoute } from '@/shared/launcher/getDefaultRoute';
 import { useAuthStore } from '@/shared/stores/useAuthStore';
@@ -62,7 +63,11 @@ const routes: RouteRecordRaw[] = [
         meta: { requiresAuth: true },
         redirect: () => {
             const auth = useAuthStore();
-            return getDefaultRoute(auth.permissions);
+            return getDefaultRoute({
+                isSuperAdmin: auth.isSuperAdmin,
+                entitledModules: auth.entitledModules,
+                permissions: auth.permissions,
+            });
         },
     },
 
@@ -105,8 +110,38 @@ const routes: RouteRecordRaw[] = [
         children: adminRoutes,
     },
 
+    // Super Admin Portal — /super-admin. FOURTH per-app layout
+    // (Session 5 of the SA Portal slice). meta.requiresSuperAdmin is
+    // the route guard hook: non-SA users hitting any /super-admin/*
+    // URL get 404 via the catch-all NotFoundPage (Q8 — security-
+    // through-obscurity, matches the backend's SuperAdminGuard
+    // middleware disposition).
+    {
+        path: '/super-admin',
+        component: () => import('@/shared/layouts/SuperAdminAppLayout.vue'),
+        meta: { requiresAuth: true, requiresSuperAdmin: true, app: 'super-admin' },
+        children: superAdminRoutes,
+    },
+
     // Public routes — no shell. /login + /tenant-suspended.
     ...authRoutes,
+
+    // Catch-all 404 — renders the existing NotFoundPage component.
+    // Two consumer paths land here:
+    //   1. Unmatched URLs (typos, stale bookmarks against removed
+    //      routes).
+    //   2. The SA-guard rejection (non-SA hitting /super-admin/* per
+    //      Q8 — see guards.ts). The route effectively doesn't exist
+    //      for them.
+    // requiresAuth: false so the 404 renders for both authenticated
+    // and unauthenticated callers; the page itself doesn't disclose
+    // tenant or user data.
+    {
+        path: '/:pathMatch(.*)*',
+        name: 'not-found',
+        component: () => import('@/shared/components/state/NotFoundPage.vue'),
+        meta: { requiresAuth: false },
+    },
 ];
 
 // Dev-only routes. Guarded by `import.meta.env.DEV` so Vite tree-shakes

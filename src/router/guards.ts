@@ -69,7 +69,20 @@ export function installGuards(router: Router): void {
             const explicitRedirect = to.query.redirect as string | undefined;
             return explicitRedirect && explicitRedirect.length > 0
                 ? explicitRedirect
-                : getDefaultRoute(auth.permissions);
+                : getDefaultRoute({
+                      isSuperAdmin: auth.isSuperAdmin,
+                      entitledModules: auth.entitledModules,
+                      permissions: auth.permissions,
+                  });
+        }
+
+        // SA-only route gate: meta.requiresSuperAdmin protects the
+        // /super-admin/* tree. Tenant users hitting any SA URL → 404
+        // via the NotFoundPage (Q8 security-through-obscurity: the
+        // route effectively doesn't exist for them). Same disposition
+        // as the backend's SuperAdminGuard middleware.
+        if (to.meta.requiresSuperAdmin === true && !auth.isSuperAdmin) {
+            return { name: 'not-found', params: { pathMatch: to.path.replace(/^\//, '').split('/') } };
         }
 
         return true;

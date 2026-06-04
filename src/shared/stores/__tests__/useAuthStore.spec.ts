@@ -19,6 +19,8 @@ const ME_OK: AuthMeResponse = {
             name: 'Jane Bookkeeper',
             email: 'jane@acme.example',
             email_verified_at: '2026-05-12T08:00:00+00:00',
+            type: 'tenant_user',
+            is_super_admin: false,
         },
         tenant: {
             id: 7,
@@ -47,6 +49,29 @@ const ME_OK: AuthMeResponse = {
             'accounting.journal_entry.view',
             'accounting.journal_entry.create',
         ],
+        entitled_modules: ['hrm'],
+    },
+};
+
+// Companion fixture for super_admin /auth/me. The backend returns
+// tenant: null + current_company: null + empty companies/roles/
+// permissions/entitled_modules for SA.
+const ME_SA: AuthMeResponse = {
+    data: {
+        user: {
+            id: 99,
+            name: 'Vendor Ops',
+            email: 'ops@myerp.local',
+            email_verified_at: '2026-06-01T08:00:00+00:00',
+            type: 'super_admin',
+            is_super_admin: true,
+        },
+        tenant: null,
+        current_company: null,
+        companies: [],
+        roles: [],
+        permissions: [],
+        entitled_modules: [],
     },
 };
 
@@ -71,8 +96,12 @@ describe('useAuthStore (real)', () => {
     });
 
     it('login then fetchMe populates user/tenant/roles/permissions', async () => {
+        // ME_OK.data.tenant is typed nullable on AuthMeResponse (SA case);
+        // LoginResponse.data.tenant is non-null because login is only
+        // reached by tenant_users. Narrow with non-null assertion for
+        // this fixture which is guaranteed tenant-shaped.
         const loginSpy = vi.spyOn(authApi, 'login').mockResolvedValue({
-            data: { user: ME_OK.data.user, tenant: ME_OK.data.tenant },
+            data: { user: ME_OK.data.user, tenant: ME_OK.data.tenant! },
         });
         const meSpy = vi.spyOn(authApi, 'me').mockResolvedValue(ME_OK);
 
@@ -163,5 +192,55 @@ describe('useAuthStore (real)', () => {
         // Exact equality also counts.
         auth.$patch({ permissions: ['accounting'] });
         expect(auth.canAny('accounting')).toBe(true);
+    });
+
+    // ─── Session 5 — SA-side extensions ──────────────────────────────────────
+
+    it('isSuperAdmin getter reflects user.is_super_admin', () => {
+        const auth = useAuthStore();
+        expect(auth.isSuperAdmin).toBe(false); // no user
+
+        // structuredClone keeps the module-scoped ME_OK / ME_SA fixtures
+        // safe from Pinia's reactive-wrap mutations leaking across
+        // tests within the same file run.
+        auth.$patch({ user: structuredClone(ME_OK.data.user) });
+        expect(auth.isSuperAdmin).toBe(false); // tenant_user
+
+        auth.$patch({ user: structuredClone(ME_SA.data.user) });
+        expect(auth.isSuperAdmin).toBe(true); // super_admin
+    });
+
+    it('fetchMe populates entitled_modules from the response (tenant_user)', async () => {
+        vi.spyOn(authApi, 'me').mockResolvedValue(structuredClone(ME_OK));
+
+        const auth = useAuthStore();
+        await auth.fetchMe();
+
+        expect(auth.entitledModules).toEqual(['hrm']);
+        expect(auth.isSuperAdmin).toBe(false);
+        // Regression: existing state still populated correctly with
+        // the extended response shape (the new `entitled_modules`
+        // field didn't break the older keys).
+        expect(auth.user?.id).toBe(42);
+        expect(auth.tenant?.slug).toBe('acme');
+        expect(auth.permissions).toHaveLength(2);
+        expect(auth.roles).toEqual(['accountant']);
+    });
+
+    it('fetchMe handles the SA shape — null tenant + empty arrays + isSuperAdmin true', async () => {
+        vi.spyOn(authApi, 'me').mockResolvedValue(structuredClone(ME_SA));
+
+        const auth = useAuthStore();
+        await auth.fetchMe();
+
+        expect(auth.user?.id).toBe(99);
+        expect(auth.tenant).toBeNull();
+        expect(auth.currentCompany).toBeNull();
+        expect(auth.companies).toEqual([]);
+        expect(auth.roles).toEqual([]);
+        expect(auth.permissions).toEqual([]);
+        expect(auth.entitledModules).toEqual([]);
+        expect(auth.isSuperAdmin).toBe(true);
+        expect(auth.isAuthenticated).toBe(true);
     });
 });

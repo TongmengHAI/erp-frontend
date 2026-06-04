@@ -66,7 +66,11 @@ const onSubmit = handleSubmit(async (values) => {
         const explicitRedirect = route.query.redirect as string | undefined;
         const target = explicitRedirect && explicitRedirect.length > 0
             ? explicitRedirect
-            : getDefaultRoute(auth.permissions);
+            : getDefaultRoute({
+                  isSuperAdmin: auth.isSuperAdmin,
+                  entitledModules: auth.entitledModules,
+                  permissions: auth.permissions,
+              });
         await router.push(target);
     } catch (e: unknown) {
         if (!isAxiosError(e) || !e.response) {

@@ -5,7 +5,7 @@ import { useRouter } from 'vue-router';
 import Menu from 'primevue/menu';
 import type { MenuItem } from 'primevue/menuitem';
 
-import { LAUNCHER_APPS } from '@/shared/launcher/apps';
+import { accessibleApps as filterAccessibleApps } from '@/shared/launcher/accessibleApps';
 import { useAuthStore } from '@/shared/stores/useAuthStore';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -37,15 +37,16 @@ const { t } = useI18n();
 const router = useRouter();
 const auth = useAuthStore();
 
-// Two-stage filter (belt + suspenders, same shape as LauncherPage):
-// hiddenFromLauncher exclusion + permission gate. Admin is
-// hiddenFromLauncher=true so it never appears in the switcher even
-// for users who have settings.* perms — admin is reached via the
-// user menu, not via inter-app switching.
+// Filter routed through shared accessibleApps() helper — single source
+// of truth for "which apps does this user see in launcher / switcher
+// surfaces?" Both LauncherPage and this component consume the same
+// helper so they can't drift. Belt-and-suspenders per §10.6.
 const accessibleApps = computed(() =>
-    LAUNCHER_APPS
-        .filter((app) => !app.hiddenFromLauncher)
-        .filter((app) => auth.canAny(app.permissionPrefix)),
+    filterAccessibleApps({
+        isSuperAdmin: auth.isSuperAdmin,
+        entitledModules: auth.entitledModules,
+        permissions: auth.permissions,
+    }),
 );
 
 // Hidden when fewer than 2 apps are accessible. v1 default for

@@ -6,6 +6,19 @@
 // callsites in a single slice.
 // ─────────────────────────────────────────────────────────────────────────────
 
+/**
+ * Identity discriminator (Session 1 of the SA Portal slice). Mirrors
+ * the backend `users.type` enum:
+ *
+ *   tenant_user — normal user belonging to a tenant. Participates in
+ *                 tenant + company resolution. The vast majority of
+ *                 users.
+ *   super_admin — vendor-side platform operator. No tenant/company FKs;
+ *                 bypasses tenant + company resolution AND module
+ *                 entitlement enforcement.
+ */
+export type AuthUserType = 'tenant_user' | 'super_admin';
+
 export interface AuthUser {
     /** Stable user identifier (int). */
     id: number;
@@ -13,6 +26,15 @@ export interface AuthUser {
     email: string;
     /** ISO 8601 string or null. */
     email_verified_at: string | null;
+    /** Identity discriminator — see AuthUserType. */
+    type: AuthUserType;
+    /**
+     * Convenience derived flag — `type === 'super_admin'`. The backend
+     * returns it pre-computed so every consumer (auth store getter,
+     * route guards, navigation, layout selection) reads from one
+     * source of truth and never re-checks the string discriminator.
+     */
+    is_super_admin: boolean;
 }
 
 export interface AuthTenant {
@@ -83,28 +105,45 @@ export interface LoginResponse {
 export interface AuthMeResponse {
     data: {
         user: AuthUser;
-        tenant: AuthTenant;
+        /**
+         * The resolved tenant. NULL for super_admin (SA has no tenant
+         * context by composite DB CHECK; SA reads cross-tenant via the
+         * five user-type bypass sites).
+         */
+        tenant: AuthTenant | null;
         /**
          * The resolved company for this request. May be null when the route
          * is `company:optional` AND no company resolves (e.g. multi-company
-         * tenant where the user hasn't picked yet). For company-required
-         * routes, this is never null in practice — the backend returns 401
-         * `error_code=company_required` before reaching here.
+         * tenant where the user hasn't picked yet). Always null for SA.
          */
         current_company: AuthCompany | null;
         /**
          * All active companies in the user's tenant. Drives the company
          * picker UI (deferred) when `current_company` is null. Always
-         * present; empty array means no active companies exist.
+         * present; empty array for SA.
          */
         companies: AuthCompanyBrief[];
         /**
          * Role names assigned in the current tenant. Display-only. NEVER
-         * branch UI on role names — only on permissions.
+         * branch UI on role names — only on permissions. Empty array for
+         * SA (SA gates by user-type, not roles).
          */
         roles: string[];
-        /** Flat list of permission names; drives can() / canAny(). */
+        /** Flat list of permission names; drives can() / canAny(). Empty
+         *  array for SA. */
         permissions: string[];
+        /**
+         * Active module entitlements for this tenant (Session 2 of the
+         * SA Portal slice). Drives the launcher's per-tenant filter:
+         * apps whose registry id appears in this array are visible to
+         * the user; absent ones are hidden. Backend source of truth is
+         * tenant_modules where status='active' AND deleted_at IS NULL.
+         *
+         * Empty array for SA — the SA's launcher view is driven by
+         * the orthogonal `superAdminOnly` LAUNCHER_APPS field, not by
+         * this array.
+         */
+        entitled_modules: string[];
     };
 }
 

@@ -48,6 +48,23 @@ const ROUTES: RouteRecordRaw[] = [
     // for users with hrm.*) so the redirect resolves in tests.
     { path: '/apps', name: 'launcher', component: STUB },
     { path: '/hrm', name: 'hrm.dashboard', component: STUB, meta: { requiresAuth: true } },
+    // SA-only route — Session 5 of the SA Portal slice. requiresSuperAdmin
+    // is the new guard hook. Without this stub, the guard rejection
+    // would have nowhere to come from in the test routes.
+    {
+        path: '/super-admin/dashboard',
+        name: 'super-admin.dashboard',
+        component: STUB,
+        meta: { requiresAuth: true, requiresSuperAdmin: true },
+    },
+    // Catch-all 404 — the SA-guard redirects here for non-SA users
+    // (per Q8, security-through-obscurity).
+    {
+        path: '/:pathMatch(.*)*',
+        name: 'not-found',
+        component: STUB,
+        meta: { requiresAuth: false },
+    },
 ];
 
 function buildRouter(): Router {
@@ -95,7 +112,7 @@ describe('route guards', () => {
     it('authenticated user hitting /login is redirected to the ?redirect target', async () => {
         const auth = useAuthStore();
         auth.$patch({
-            user: { id: 1, name: 'X', email: 'x', email_verified_at: null },
+            user: { id: 1, name: 'X', email: 'x', email_verified_at: null, type: 'tenant_user', is_super_admin: false },
             tenant: {
                 id: 1,
                 slug: 'x',
@@ -111,14 +128,16 @@ describe('route guards', () => {
         expect(router.currentRoute.value.path).toBe('/');
     });
 
-    it('authenticated user with hrm.* hitting /login (no ?redirect) is routed to hrm.dashboard via getDefaultRoute', async () => {
+    it('authenticated user with hrm.* + HRM entitlement hitting /login (no ?redirect) is routed to hrm.dashboard via getDefaultRoute', async () => {
         // Guest-gate fallback when no ?redirect is supplied. The
-        // gate now routes through getDefaultRoute(auth.permissions);
-        // hrm.* permissions → hrm.dashboard.
+        // gate now routes through getDefaultRoute({isSuperAdmin,
+        // entitledModules, permissions}); HRM entitlement + hrm.*
+        // permissions → hrm.dashboard.
         const auth = useAuthStore();
         auth.$patch({
-            user: { id: 1, name: 'X', email: 'x', email_verified_at: null },
+            user: { id: 1, name: 'X', email: 'x', email_verified_at: null, type: 'tenant_user', is_super_admin: false },
             permissions: ['hrm.employee.view'],
+            entitledModules: ['hrm'],
         });
 
         await router.push({ name: 'login' });
@@ -248,6 +267,8 @@ describe('route guards', () => {
                     name: 'Test User',
                     email: 't@x',
                     email_verified_at: null,
+                    type: 'tenant_user',
+                    is_super_admin: false,
                 },
                 tenant: {
                     id: 1,
@@ -262,6 +283,7 @@ describe('route guards', () => {
                 companies: [],
                 roles: [],
                 permissions: [],
+                entitled_modules: [],
             },
         });
 
@@ -282,5 +304,73 @@ describe('route guards', () => {
         expect(auth.initialized).toBe(true);
         expect(auth.user?.id).toBe(1);
         expect(freshRouter.currentRoute.value.path).toBe('/');
+    });
+
+    // ─── Session 5 — SA route guard ──────────────────────────────────────────
+
+    it('LOAD-BEARING: non-SA hitting /super-admin/* is rejected as 404 (Q8 — security through obscurity)', async () => {
+        // tenant_user with HRM permissions tries to type a /super-admin
+        // URL. The route guard reads meta.requiresSuperAdmin on the
+        // matched route and redirects to the catch-all not-found
+        // (preserving the URL via the pathMatch params so the user
+        // experiences "route doesn't exist," not "you're forbidden").
+        const auth = useAuthStore();
+        auth.$patch({
+            user: { id: 1, name: 'X', email: 'x', email_verified_at: null, type: 'tenant_user', is_super_admin: false },
+            permissions: ['hrm.employee.view'],
+            entitledModules: ['hrm'],
+        });
+
+        await router.push('/super-admin/dashboard');
+
+        // Lands on the catch-all 404, not on the SA dashboard.
+        expect(router.currentRoute.value.name).toBe('not-found');
+    });
+
+    it('LOAD-BEARING: SA hitting /super-admin/* is allowed through', async () => {
+        const auth = useAuthStore();
+        auth.$patch({
+            user: { id: 99, name: 'Vendor Ops', email: 'ops@myerp.local', email_verified_at: null, type: 'super_admin', is_super_admin: true },
+            permissions: [],
+            entitledModules: [],
+            tenant: null,
+        });
+
+        await router.push('/super-admin/dashboard');
+
+        expect(router.currentRoute.value.name).toBe('super-admin.dashboard');
+    });
+
+    it('SA hitting /login (no ?redirect) is routed to super-admin.dashboard via getDefaultRoute', async () => {
+        const auth = useAuthStore();
+        auth.$patch({
+            user: { id: 99, name: 'Vendor Ops', email: 'ops@myerp.local', email_verified_at: null, type: 'super_admin', is_super_admin: true },
+            permissions: [],
+            entitledModules: [],
+            tenant: null,
+        });
+
+        await router.push({ name: 'login' });
+        expect(router.currentRoute.value.name).toBe('super-admin.dashboard');
+    });
+
+    it('SA hitting /hrm/* is allowed through (bypass on the OTHER side — SA reaches tenant modules if needed)', async () => {
+        // The bypass is parallel — SA is not GATED OUT of /hrm/* via
+        // any guard. In practice the SA's launcher view doesn't surface
+        // HRM (filtered out by accessibleApps), so they'd never get
+        // there via normal navigation. But typing the URL directly
+        // works — the SA bypass at the backend's TenantScope + all
+        // five middleware bypass sites means the SA can read tenant
+        // data when explicitly requesting it.
+        const auth = useAuthStore();
+        auth.$patch({
+            user: { id: 99, name: 'Vendor Ops', email: 'ops@myerp.local', email_verified_at: null, type: 'super_admin', is_super_admin: true },
+            permissions: [],
+            entitledModules: [],
+            tenant: null,
+        });
+
+        await router.push('/hrm');
+        expect(router.currentRoute.value.name).toBe('hrm.dashboard');
     });
 });

@@ -1,6 +1,6 @@
 import type { RouteLocationRaw } from 'vue-router';
 
-import { LAUNCHER_APPS } from '@/shared/launcher/apps';
+import { accessibleApps } from '@/shared/launcher/accessibleApps';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // getDefaultRoute — single source of truth for "where does the user go
@@ -11,34 +11,63 @@ import { LAUNCHER_APPS } from '@/shared/launcher/apps';
 //   • Route guard's guest-gate (logged-in user hits /login → bounce here)
 //   • The `/` redirect (root URL with no specific target)
 //
-// v1: HRM is the only app. A user with any hrm.* permission lands directly
-// on the HRM dashboard — skips a launcher round-trip when there's only one
-// place to go. Users without hrm.* (rare; tenant member with no app
-// access) land on the launcher, which renders zero cards with a
-// "talk to your admin" empty state. That's better than 401-ing them
-// out of an authenticated session.
+// Decision matrix (Session 5 of the SA Portal slice — extended from
+// the original "first hrm.* permission wins" v1):
 //
-// Future: when Accounting / Inventory / etc. ship, this function walks
-// the registry — first app the user has access to wins. Eventually the
-// "preferred default app" user preference (currently in explicit cuts)
-// would slot in here without touching any consumer.
+//   1. SA user                                  → super-admin.dashboard
+//      Skips launcher round-trip — SA always knows their destination.
 //
-// Pure function over the permissions array — no Pinia / no router /
-// no side effects — so it's unit-testable without a Vue context.
+//   2. Tenant user with exactly ONE entitled       → that app's dashboard
+//      module (and permission for it)
+//      Single-app users skip the launcher; one less click on every
+//      session start.
+//
+//   3. Tenant user with MULTIPLE entitled modules  → launcher
+//      Multi-module users pick their landing app each session.
+//
+//   4. Tenant user with ZERO entitled modules    → launcher
+//      Zero-card empty state on the launcher explains the situation
+//      ("contact your admin"). Better than 401-ing them out of an
+//      authenticated session.
+//
+// Pure function — no Pinia / no router / no side effects — so it's
+// unit-testable without a Vue context.
 // ─────────────────────────────────────────────────────────────────────────────
 
-export function getDefaultRoute(permissions: readonly string[]): RouteLocationRaw {
-    for (const app of LAUNCHER_APPS) {
-        const prefix = app.permissionPrefix;
-        const hasAccess = permissions.some(
-            (p) => p === prefix || p.startsWith(`${prefix}.`),
-        );
-        if (hasAccess) {
-            return { name: app.defaultRouteName };
-        }
+/**
+ * Input shape — what the function needs to make its decision. Matches
+ * the shape useAuthStore exposes (isSuperAdmin getter + entitledModules
+ * state + permissions array). Keeping it a plain object so the function
+ * stays Pinia-free and unit-testable.
+ */
+export interface DefaultRouteUser {
+    isSuperAdmin: boolean;
+    entitledModules: readonly string[];
+    permissions: readonly string[];
+}
+
+export function getDefaultRoute(user: DefaultRouteUser): RouteLocationRaw {
+    // 1. SA — fast path. SA has no entitledModules + no permissions;
+    //    the user-type flag IS the gate.
+    if (user.isSuperAdmin) {
+        return { name: 'super-admin.dashboard' };
     }
 
-    // Fall-through: no accessible apps. Land on the launcher; its
-    // zero-card empty state explains the situation to the user.
+    // 2. Tenant user — route through the shared accessibleApps()
+    //    helper for filter parity with LauncherPage + AppSwitcherDropdown.
+    //    Admin and Super Admin are excluded automatically (admin via
+    //    hiddenFromLauncher, super-admin via superAdminOnly). The
+    //    remaining apps are the ones the user can REACH as a landing
+    //    destination.
+    //
+    //    Exactly-one case: skip the launcher and land on that app.
+    //    Two-or-more or zero: land on the launcher and let the user
+    //    pick (or see the empty state).
+    const apps = accessibleApps(user);
+
+    if (apps.length === 1) {
+        return { name: apps[0].defaultRouteName };
+    }
+
     return { name: 'launcher' };
 }

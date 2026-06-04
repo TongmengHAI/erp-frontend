@@ -123,6 +123,10 @@
             "admin": {
                 "label": "Admin",
                 "description": "Tenant-wide configuration and administration."
+            },
+            "superAdmin": {
+                "label": "Super Admin",
+                "description": "Vendor-side platform operations — tenants, entitlement, dashboard."
             }
         }
     },
@@ -1068,6 +1072,27 @@
                     "title": "Settings not found",
                     "description": "No HRM settings exist for the selected company."
                 }
+            }
+        }
+    },
+    "superAdmin": {
+        "navigation": {
+            "dashboard": "Dashboard",
+            "tenants": "Tenants"
+        },
+        "dashboard": {
+            "placeholder": {
+                "title": "Super Admin Dashboard",
+                "description": "Platform metrics and recent activity will appear here. The real dashboard ships in a later session."
+            }
+        },
+        "tenants": {
+            "placeholder": {
+                "title": "Tenants",
+                "description": "Tenant CRUD and management will appear here. The real list page ships in a later session."
+            },
+            "breadcrumb": {
+                "list": "Tenants"
             }
         }
     }

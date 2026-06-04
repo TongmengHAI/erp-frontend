@@ -3,7 +3,8 @@ import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 import LauncherAppCard from '@/modules/launcher/components/LauncherAppCard.vue';
-import { LAUNCHER_APPS, type LauncherApp } from '@/shared/launcher/apps';
+import { accessibleApps } from '@/shared/launcher/accessibleApps';
+import { type LauncherApp } from '@/shared/launcher/apps';
 import { useAuthStore } from '@/shared/stores/useAuthStore';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -30,16 +31,19 @@ import { useAuthStore } from '@/shared/stores/useAuthStore';
 const { t } = useI18n();
 const auth = useAuthStore();
 
-// Two-stage filter (belt + suspenders per the user-menu-not-launcher
-// design): permission gate AND hiddenFromLauncher exclusion. The two
-// stages cover orthogonal concerns: permission decides "is this app
-// visible to this user," hiddenFromLauncher decides "is this surface
-// where the app should appear at all." Admin uses the latter to stay
-// out of the launcher even for users who have settings.* perms.
-const accessibleApps = computed<LauncherApp[]>(() =>
-    LAUNCHER_APPS
-        .filter((app) => !app.hiddenFromLauncher)
-        .filter((app) => auth.canAny(app.permissionPrefix)),
+// Filtered apps — routed through the shared accessibleApps() helper so
+// LauncherPage and AppSwitcherDropdown can't drift. Four orthogonal
+// dimensions: surfaceVisibility (hiddenFromLauncher), userType
+// (superAdminOnly), entitlement (entitlementGated + entitled_modules),
+// and permission (permissionPrefix + auth.canAny semantics). Session 5
+// extension: the SA path now lands here too — SA's view is just the
+// Super Admin Portal card (the only superAdminOnly entry).
+const accessibleAppsList = computed<LauncherApp[]>(() =>
+    accessibleApps({
+        isSuperAdmin: auth.isSuperAdmin,
+        entitledModules: auth.entitledModules,
+        permissions: auth.permissions,
+    }),
 );
 </script>
 
@@ -60,7 +64,7 @@ const accessibleApps = computed<LauncherApp[]>(() =>
              surfaces "talk to your admin" rather than a generic empty
              message — the action is human, not technical. -->
         <div
-            v-if="accessibleApps.length === 0"
+            v-if="accessibleAppsList.length === 0"
             class="rounded-lg border border-border-default bg-surface p-8 text-center"
             data-testid="launcher-empty-state"
         >
@@ -82,7 +86,7 @@ const accessibleApps = computed<LauncherApp[]>(() =>
             style="grid-template-columns: repeat(auto-fit, minmax(280px, 320px));"
             data-testid="launcher-app-grid"
         >
-            <li v-for="app in accessibleApps" :key="app.id">
+            <li v-for="app in accessibleAppsList" :key="app.id">
                 <LauncherAppCard :app="app" />
             </li>
         </ul>

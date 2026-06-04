@@ -50,6 +50,44 @@ export interface LauncherApp {
      * Defaults to false (most apps appear in both surfaces).
      */
     hiddenFromLauncher?: boolean;
+    /**
+     * When true, the app is visible ONLY to super_admin users. Tenant
+     * users never see it (LauncherPage + AppSwitcherDropdown filter
+     * it out via the auth.isSuperAdmin gate).
+     *
+     * Used by `super-admin` — the SA Portal entry. The SA's launcher
+     * view shows ONLY this card (because every other app has
+     * `superAdminOnly` falsy AND the SA has no entitled_modules); the
+     * tenant-user's launcher view shows entitled modules ONLY (because
+     * this entry's superAdminOnly is true and SA is the user-type
+     * filter).
+     *
+     * The two flags (`hiddenFromLauncher`, `superAdminOnly`) are
+     * orthogonal:
+     *   - hiddenFromLauncher: hide from launcher + switcher; appears
+     *     elsewhere (e.g. user menu link). Admin uses this.
+     *   - superAdminOnly: restrict to SA user type. Super-admin uses
+     *     this. The SA wants the SA card IN the launcher (for the
+     *     parity-with-tenant-users entrypoint experience); the tenant
+     *     user must never see it.
+     *
+     * Defaults to false.
+     */
+    superAdminOnly?: boolean;
+    /**
+     * Whether this app's launcher visibility is gated by tenant
+     * entitlement (the `entitled_modules` array from /auth/me). When
+     * true, the launcher hides the card unless `id` is in the user's
+     * entitled_modules. When false, the launcher shows the card
+     * regardless of entitlement (admin uses this — admin isn't an
+     * entitlement-gated module; every tenant has access to their
+     * settings UI). SA-only apps (superAdminOnly: true) bypass
+     * entitlement entirely (SA's entitled_modules is always [] by
+     * design; the SA gate is user-type, not entitlement).
+     *
+     * Defaults to true — most apps are entitlement-gated modules.
+     */
+    entitlementGated?: boolean;
 }
 
 export const LAUNCHER_APPS: readonly LauncherApp[] = Object.freeze([
@@ -70,6 +108,12 @@ export const LAUNCHER_APPS: readonly LauncherApp[] = Object.freeze([
         // admin in the launcher or switcher unintentionally).
         // AppIdentityBadge DOES read this entry (so "ADMIN" surfaces
         // in the top bar inside /admin/*).
+        //
+        // entitlementGated: false — admin isn't an entitlement-gated
+        // module. A tenant whose HRM is disabled still has access to
+        // settings (well, until the future Stage-2 admin features
+        // gain their own entitlement layer, but for v1, admin sits
+        // outside the per-tenant module bundle).
         id: 'admin',
         label: 'launcher.apps.admin.label',
         description: 'launcher.apps.admin.description',
@@ -77,6 +121,33 @@ export const LAUNCHER_APPS: readonly LauncherApp[] = Object.freeze([
         defaultRouteName: 'admin.hrm.settings',
         permissionPrefix: 'settings',
         hiddenFromLauncher: true,
+        entitlementGated: false,
+    },
+    {
+        // Super Admin Portal (Session 5 of the SA Portal slice).
+        // Visible ONLY to super_admin users via the superAdminOnly
+        // flag. SA's launcher view shows just this card; tenant users
+        // never see it. AppIdentityBadge reads this entry so "SUPER
+        // ADMIN" surfaces in the top bar inside /super-admin/*.
+        //
+        // entitlementGated: false — SA isn't a tenant-entitled module;
+        // SA's entitled_modules is always [] by design. Gate is the
+        // user-type flag (auth.isSuperAdmin), not the entitlement
+        // array.
+        //
+        // permissionPrefix: 'super-admin' — currently unused for
+        // canAny() gates (SA users have no Spatie permissions; gate
+        // is the user-type flag). Reserved for the eventual Stage 2
+        // granular SA permissions (billing-only SA, support-only SA,
+        // etc. with `super-admin.*` Spatie permissions).
+        id: 'super-admin',
+        label: 'launcher.apps.superAdmin.label',
+        description: 'launcher.apps.superAdmin.description',
+        icon: 'pi pi-shield',
+        defaultRouteName: 'super-admin.dashboard',
+        permissionPrefix: 'super-admin',
+        superAdminOnly: true,
+        entitlementGated: false,
     },
 ]);
 

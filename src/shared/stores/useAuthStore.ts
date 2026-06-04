@@ -38,6 +38,11 @@ interface AuthState {
     companies: AuthCompanyBrief[];
     roles: string[];
     permissions: string[];
+    /** Active module entitlement keys for this tenant (Session 5 of the
+     *  SA Portal slice). Drives the launcher's per-tenant filter. Empty
+     *  for SA — the SA's launcher view uses the orthogonal `superAdminOnly`
+     *  LAUNCHER_APPS field. */
+    entitledModules: string[];
     tenantInactive: boolean;
     initialized: boolean;
 }
@@ -54,6 +59,7 @@ export const useAuthStore = defineStore('auth', {
         companies: [],
         roles: [],
         permissions: [],
+        entitledModules: [],
         tenantInactive: false,
         initialized: false,
     }),
@@ -61,6 +67,18 @@ export const useAuthStore = defineStore('auth', {
     getters: {
         isAuthenticated: (state): boolean =>
             state.user !== null && !state.tenantInactive,
+        /**
+         * SA gate — the canonical "is this user a super-admin" check.
+         * Single source of truth consumed by route guards, the launcher
+         * filter, the AppSwitcherDropdown filter, getDefaultRoute, the
+         * UserMenu's Super Admin link, and the SuperAdminAppLayout's
+         * own access check. Five sites — same belt-and-suspenders
+         * discipline as the backend's five user-type bypass sites
+         * (TenantScope, CompanyScope, ResolveTenant, ResolveCompany,
+         * EnforceModuleEntitlement).
+         */
+        isSuperAdmin: (state): boolean =>
+            state.user?.is_super_admin ?? false,
         /**
          * Exact-match permission check. `permission` is the canonical
          * dotted name (e.g. `'accounting.journal_entry.view'`).
@@ -103,6 +121,7 @@ export const useAuthStore = defineStore('auth', {
                     companies: res.data.companies,
                     roles: res.data.roles,
                     permissions: res.data.permissions,
+                    entitledModules: res.data.entitled_modules,
                     tenantInactive: false,
                 });
             } catch (e) {

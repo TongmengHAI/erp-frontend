@@ -52,6 +52,8 @@ describe('LoginPage', () => {
                     name: 'X',
                     email: 'x@example.test',
                     email_verified_at: null,
+                    type: 'tenant_user',
+                    is_super_admin: false,
                 },
                 tenant: {
                     id: 1,
@@ -71,6 +73,8 @@ describe('LoginPage', () => {
                     name: 'X',
                     email: 'x@example.test',
                     email_verified_at: null,
+                    type: 'tenant_user',
+                    is_super_admin: false,
                 },
                 tenant: {
                     id: 1,
@@ -85,6 +89,7 @@ describe('LoginPage', () => {
                 companies: [],
                 roles: [],
                 permissions: [],
+                entitled_modules: [],
             },
         });
 
