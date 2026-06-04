@@ -132,6 +132,18 @@ const { handleSubmit, setErrors, setValues, values, isSubmitting } = useForm({
     initialValues: defaultInitial,
 });
 
+// ─── Slugify-on-name affordance (Session 6 plan tightening #4) ────────────
+// Declared BEFORE the pre-fill watch below — the watch runs with
+// `immediate: true` and, on a warm-cache navigate-from-detail mount,
+// fires SYNCHRONOUSLY during setup with the cached tenant payload.
+// It assigns to these two refs to lock the slug against auto-clobber;
+// if the refs are declared after the watch, the synchronous fire hits
+// a TDZ ReferenceError and the entire setup() throws → blank page.
+// Cold-cache (hard reload) never tripped this because `tenant` is
+// undefined and the watch early-returns before touching the refs.
+const slugManuallyEdited = ref<boolean>(false);
+const companySlugManuallyEdited = ref<boolean>(false);
+
 // Pre-fill from edit data when it lands.
 watch(
     () => editData.value?.data,
@@ -159,10 +171,6 @@ watch(
     },
     { immediate: true },
 );
-
-// ─── Slugify-on-name affordance (Session 6 plan tightening #4) ────────────
-const slugManuallyEdited = ref<boolean>(false);
-const companySlugManuallyEdited = ref<boolean>(false);
 
 watch(
     () => values.name,
