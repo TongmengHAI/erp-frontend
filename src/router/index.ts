@@ -3,6 +3,7 @@ import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
 import { adminRoutes } from '@/modules/admin/routes';
 import { authRoutes } from '@/modules/auth/routes';
 import { hrmRoutes } from '@/modules/hrm/routes';
+import { invitationRoutes } from '@/modules/invitations/routes';
 import { superAdminRoutes } from '@/modules/super-admin/routes';
 import { installGuards } from '@/router/guards';
 import { getDefaultRoute } from '@/shared/launcher/getDefaultRoute';
@@ -125,6 +126,13 @@ const routes: RouteRecordRaw[] = [
 
     // Public routes — no shell. /login + /tenant-suspended.
     ...authRoutes,
+
+    // Public invitation accept — no shell, no auth. The invitee hasn't
+    // signed up yet; they reach this URL via the email link. On
+    // successful accept, the backend issues a Sanctum session cookie
+    // inside the POST handler; auth.fetchMe() picks it up and the
+    // page redirects via getDefaultRoute.
+    ...invitationRoutes,
 
     // Module-not-entitled — friendly 403 page for the
     // module_not_entitled case. Distinct from the catch-all 404 because

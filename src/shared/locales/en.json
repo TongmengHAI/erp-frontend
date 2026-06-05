@@ -1038,6 +1038,51 @@
             }
         }
     },
+    "invitations": {
+        "accept": {
+            "title": "Set up your account",
+            "intro": "You've been invited. Set a password to finish creating your account.",
+            "preview": {
+                "email": "Email",
+                "tenant": "Organization",
+                "role": "Role",
+                "inviter": "Invited by",
+                "expires": "Expires"
+            },
+            "fields": {
+                "name": "Display name (optional)",
+                "nameHelp": "How others will see you. Defaults to what your admin entered.",
+                "password": "Password",
+                "passwordHelp": "At least 12 characters with uppercase, lowercase, a number, and a symbol."
+            },
+            "submit": "Create account and sign in",
+            "errors": {
+                "unknown": "Something went wrong setting up your account. Please try again."
+            }
+        },
+        "invalid": {
+            "token_invalid": {
+                "title": "Invitation link not valid",
+                "description": "This invitation link doesn't match any active invitation. Check the link in your email, or ask your administrator to send a fresh invitation.",
+                "footer": "If you believe this is a mistake, contact your administrator."
+            },
+            "expired": {
+                "title": "Invitation expired",
+                "description": "This invitation has expired. Ask your administrator to send a new one.",
+                "footer": "Once they re-issue, you'll receive a fresh email with a new link."
+            },
+            "cancelled": {
+                "title": "Invitation cancelled",
+                "description": "This invitation was cancelled by your administrator. If you believe this is a mistake, contact them to issue a new one.",
+                "footer": "Cancelled invitations cannot be reactivated. A new invitation will arrive by email."
+            },
+            "accepted": {
+                "title": "Invitation already used",
+                "description": "This invitation has already been used to create an account. If that account is yours, sign in instead.",
+                "cta": "Sign in"
+            }
+        }
+    },
     "admin": {
         "navigation": {
             "hrmSettings": "HRM Settings",
