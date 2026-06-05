@@ -2,6 +2,7 @@
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
+import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import Select from 'primevue/select';
 
@@ -66,6 +67,11 @@ const auth = useAuthStore();
 
 // ─── STATE 1: permission-denied (page-level, precedes data-fetch) ──────────
 const canViewUsers = computed<boolean>(() => auth.can('users.view'));
+const canInvite = computed<boolean>(() => auth.can('users.invite'));
+
+function navigateToInvite(): void {
+    void router.push({ name: ADMIN_ROUTES.USER_INVITE });
+}
 
 // ─── Filter state ───────────────────────────────────────────────────────────
 const searchInput = ref('');
@@ -94,11 +100,8 @@ const queryParams = computed<AdminUsersListParams>(() => {
     const trimmed = searchInput.value.trim();
     if (trimmed !== '') params.search = trimmed;
 
-    const lifecycle = lifecycleFilter.value;
-    if (lifecycle === 'deactivated') {
-        params.include_deactivated = true;
-    } else if (lifecycle === 'active' || lifecycle === 'inactive') {
-        params.status = lifecycle;
+    if (lifecycleFilter.value !== null) {
+        params.lifecycle = lifecycleFilter.value;
     }
     return params;
 });
@@ -178,16 +181,20 @@ const lifecycleChipLabel = computed<string | null>(() => {
 });
 
 interface LifecycleOption {
-    value: UserLifecycleFilter | null;
+    value: UserLifecycleFilter;
     label: string;
 }
-const lifecycleOptions = computed<LifecycleOption[]>(() => [
-    { value: null, label: t('admin.users.list.filters.lifecycle.all') },
-    ...USER_LIFECYCLE_FILTERS.map((v) => ({
+// The Select's "clear" affordance is the FilterChip, NOT a sentinel
+// "All statuses" option. PV Select doesn't honor model-value=null as
+// a selected option cleanly — the placeholder is the correct surface
+// for the "no filter active" state. Clearing happens via the chip's
+// [×] when a filter IS active.
+const lifecycleOptions = computed<LifecycleOption[]>(() =>
+    USER_LIFECYCLE_FILTERS.map((v) => ({
         value: v,
         label: t(`admin.users.list.filters.lifecycle.${v}`),
     })),
-]);
+);
 </script>
 
 <template>
@@ -209,7 +216,18 @@ const lifecycleOptions = computed<LifecycleOption[]>(() => [
             <PageHeader
                 :title="t('admin.users.list.title')"
                 :breadcrumbs="[{ label: t('admin.users.list.breadcrumb') }]"
-            />
+            >
+                <template #actions>
+                    <Button
+                        v-if="canInvite"
+                        :label="t('admin.users.actions.invite')"
+                        icon="pi pi-user-plus"
+                        severity="primary"
+                        data-testid="user-list-invite-button"
+                        @click="navigateToInvite"
+                    />
+                </template>
+            </PageHeader>
 
             <p class="mb-4 text-sm text-text-secondary">
                 {{ t('admin.users.list.intro') }}
@@ -227,6 +245,8 @@ const lifecycleOptions = computed<LifecycleOption[]>(() => [
                     :options="lifecycleOptions"
                     option-label="label"
                     option-value="value"
+                    :placeholder="t('admin.users.list.filters.lifecycle.all')"
+                    show-clear
                     class="w-44"
                     data-testid="user-list-lifecycle-select"
                     @update:model-value="(v) => void setLifecycleFilter(v as UserLifecycleFilter | null)"

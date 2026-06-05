@@ -99,11 +99,20 @@ export interface AdminUser {
 
 /**
  * Query params for GET /api/v1/admin/users. Aligned with the backend
- * IndexUsersRequest fields.
+ * IndexUsersRequest fields. `lifecycle` is preferred over status +
+ * include_deactivated and takes precedence when set.
  */
 export interface AdminUsersListParams {
+    /**
+     * UI-aligned lifecycle filter. Matches USER_LIFECYCLE_FILTERS.
+     *   active       → status=active AND not deactivated
+     *   inactive     → status=inactive AND not deactivated
+     *   deactivated  → deleted_at IS NOT NULL (status irrelevant)
+     */
+    lifecycle?: UserLifecycleFilter;
+    /** Legacy. Use `lifecycle` for new callers. */
     status?: UserStatus;
-    /** When true, surfaces soft-deleted users in the result set. */
+    /** Legacy. Use `lifecycle=deactivated` for the only-deactivated case. */
     include_deactivated?: boolean;
     search?: string;
     role_id?: number;
