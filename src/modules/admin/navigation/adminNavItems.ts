@@ -22,4 +22,16 @@ export const ADMIN_NAV_ITEMS: readonly SidebarModule[] = Object.freeze([
         routeName: 'admin.hrm.settings',
         permissionPrefix: 'settings',
     },
+    {
+        // Phase 2A — User management. Permission prefix is `users`
+        // (any users.* perm unlocks the rail entry; the full surface
+        // requires users.view per the route-level meta gate, but
+        // viewer + admin who have users.view will see it). Phase 2B
+        // will eventually add a Roles entry between this and the
+        // future module-entitlement entry.
+        label: 'admin.navigation.users',
+        icon: 'pi pi-users',
+        routeName: 'admin.users.list',
+        permissionPrefix: 'users',
+    },
 ]);

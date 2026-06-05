@@ -17,6 +17,8 @@ import type { RouteRecordRaw } from 'vue-router';
 
 export const ADMIN_ROUTES = {
     HRM_SETTINGS: 'admin.hrm.settings',
+    USER_LIST: 'admin.users.list',
+    USER_DETAIL: 'admin.users.detail',
 } as const;
 
 export const adminRoutes: RouteRecordRaw[] = [
@@ -32,6 +34,30 @@ export const adminRoutes: RouteRecordRaw[] = [
             // no "Apps › Admin ›" prefix; this is the first crumb of
             // the trail inside the admin app.
             breadcrumb: 'admin.settings.hrm.breadcrumb',
+        },
+    },
+    {
+        path: 'users',
+        name: ADMIN_ROUTES.USER_LIST,
+        component: () => import('./pages/UserListPage.vue'),
+        meta: {
+            // users.view gates the WHOLE /admin/users surface. Missing
+            // perm yields 404 at the controller layer (§10.6 feature-
+            // hide convention); at the route layer we apply the same
+            // permission so the SPA doesn't render the page chrome
+            // before the backend rejects it.
+            permission: 'users.view',
+            breadcrumb: 'admin.users.list.breadcrumb',
+        },
+    },
+    {
+        path: 'users/:id(\\d+)',
+        name: ADMIN_ROUTES.USER_DETAIL,
+        component: () => import('./pages/UserDetailPage.vue'),
+        props: (route) => ({ id: Number(route.params.id) }),
+        meta: {
+            permission: 'users.view',
+            breadcrumb: 'admin.users.detail.breadcrumb',
         },
     },
 ];

@@ -1040,7 +1040,95 @@
     },
     "admin": {
         "navigation": {
-            "hrmSettings": "HRM Settings"
+            "hrmSettings": "HRM Settings",
+            "users": "Users"
+        },
+        "users": {
+            "list": {
+                "title": "Users",
+                "breadcrumb": "Users",
+                "intro": "All users in this organization, including disabled and deactivated accounts.",
+                "search": {
+                    "placeholder": "Search by name or email…"
+                },
+                "filters": {
+                    "lifecycle": {
+                        "label": "Status",
+                        "all": "All statuses",
+                        "active": "Active",
+                        "inactive": "Disabled",
+                        "deactivated": "Deactivated"
+                    },
+                    "role": {
+                        "label": "Role",
+                        "all": "All roles",
+                        "placeholder": "Filter by role"
+                    }
+                },
+                "chip": {
+                    "lifecycle": "Status: {value}",
+                    "role": "Role: {value}",
+                    "search": "Search: {value}"
+                },
+                "columns": {
+                    "name": "Name",
+                    "email": "Email",
+                    "role": "Role",
+                    "status": "Status",
+                    "createdAt": "Created"
+                },
+                "actions": {
+                    "view": "View"
+                },
+                "empty": {
+                    "title": "No users yet",
+                    "description": "Invite teammates from your organization to get started.",
+                    "cta": "Invite a user"
+                },
+                "emptyFiltered": {
+                    "title": "No users match these filters",
+                    "description": "Try clearing the search or status filter.",
+                    "cta": "Clear filters"
+                },
+                "error": {
+                    "title": "Couldn't load users",
+                    "description": "Something went wrong loading the user list. Try again, or refresh the page."
+                }
+            },
+            "detail": {
+                "breadcrumb": "Profile",
+                "sections": {
+                    "profile": "Profile",
+                    "role": "Role and permissions",
+                    "lifecycle": "Account status",
+                    "timestamps": "Timestamps"
+                },
+                "fields": {
+                    "name": "Name",
+                    "email": "Email",
+                    "emailVerifiedAt": "Email verified",
+                    "type": "User type",
+                    "status": "Status",
+                    "role": "Role",
+                    "createdAt": "Created",
+                    "updatedAt": "Updated",
+                    "deletedAt": "Deactivated at"
+                },
+                "values": {
+                    "noRole": "No role assigned",
+                    "neverVerified": "Not verified",
+                    "notDeactivated": "Active account"
+                }
+            },
+            "status": {
+                "active": "Active",
+                "inactive": "Disabled",
+                "deactivated": "Deactivated"
+            },
+            "type": {
+                "tenant_user": "Tenant user",
+                "super_admin": "Super admin"
+            }
         },
         "settings": {
             "hrm": {
