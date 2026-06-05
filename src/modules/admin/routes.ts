@@ -18,7 +18,9 @@ import type { RouteRecordRaw } from 'vue-router';
 export const ADMIN_ROUTES = {
     HRM_SETTINGS: 'admin.hrm.settings',
     USER_LIST: 'admin.users.list',
+    USER_INVITE: 'admin.users.invite',
     USER_DETAIL: 'admin.users.detail',
+    USER_EDIT: 'admin.users.edit',
 } as const;
 
 export const adminRoutes: RouteRecordRaw[] = [
@@ -51,6 +53,17 @@ export const adminRoutes: RouteRecordRaw[] = [
         },
     },
     {
+        // Invite landed BEFORE the {id} routes so the literal 'invite'
+        // segment doesn't get caught by the :id constraint.
+        path: 'users/invite',
+        name: ADMIN_ROUTES.USER_INVITE,
+        component: () => import('./pages/InviteUserForm.vue'),
+        meta: {
+            permission: 'users.invite',
+            breadcrumb: 'admin.users.invite.breadcrumb',
+        },
+    },
+    {
         path: 'users/:id(\\d+)',
         name: ADMIN_ROUTES.USER_DETAIL,
         component: () => import('./pages/UserDetailPage.vue'),
@@ -58,6 +71,16 @@ export const adminRoutes: RouteRecordRaw[] = [
         meta: {
             permission: 'users.view',
             breadcrumb: 'admin.users.detail.breadcrumb',
+        },
+    },
+    {
+        path: 'users/:id(\\d+)/edit',
+        name: ADMIN_ROUTES.USER_EDIT,
+        component: () => import('./pages/EditUserPage.vue'),
+        props: (route) => ({ id: Number(route.params.id) }),
+        meta: {
+            permission: 'users.update',
+            breadcrumb: 'admin.users.edit.breadcrumb',
         },
     },
 ];

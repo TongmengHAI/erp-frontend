@@ -1128,6 +1128,82 @@
             "type": {
                 "tenant_user": "Tenant user",
                 "super_admin": "Super admin"
+            },
+            "invite": {
+                "title": "Invite a user",
+                "breadcrumb": "Invite user",
+                "intro": "Send an invitation email. The recipient sets their own password by following the link.",
+                "fields": {
+                    "email": "Email",
+                    "emailHelp": "Where the invitation link will be sent.",
+                    "name": "Name (optional)",
+                    "nameHelp": "Pre-fills the invitee's display name. They can override during signup.",
+                    "role": "Role",
+                    "roleHelp": "Determines what this user can do once they accept."
+                },
+                "submit": "Send invitation",
+                "submitting": "Sending...",
+                "cancel": "Cancel",
+                "toast": {
+                    "success": "Invitation sent to {email}."
+                },
+                "errors": {
+                    "email_globally_registered": "This email is already registered to another organization. Each email address can only belong to one organization at a time.",
+                    "active_invitation_exists": "An active invitation already exists for this email. Re-send the existing invitation instead.",
+                    "forbidden": "You don't have permission to invite users.",
+                    "unknown": "Something went wrong while sending the invitation. Please try again."
+                },
+                "roleOptions": {
+                    "loadingFallback": "Loading roles...",
+                    "errorFallback": "Couldn't load roles. Refresh and try again."
+                }
+            },
+            "edit": {
+                "title": "Edit user",
+                "breadcrumb": "Edit",
+                "fields": {
+                    "name": "Name",
+                    "role": "Role",
+                    "roleHelp": "Changes take effect on the user's next request."
+                },
+                "submit": "Save changes",
+                "submitting": "Saving...",
+                "cancel": "Cancel",
+                "toast": {
+                    "updated": "User updated."
+                },
+                "errors": {
+                    "forbidden": "You don't have permission to edit this user.",
+                    "unknown": "Something went wrong while saving. Please try again."
+                }
+            },
+            "actions": {
+                "invite": "Invite user",
+                "edit": "Edit",
+                "disable": "Disable",
+                "enable": "Enable",
+                "deactivate": "Deactivate",
+                "restore": "Restore"
+            },
+            "confirm": {
+                "disable": {
+                    "title": "Disable this user?",
+                    "message": "Disable this user? They will be unable to log in, but their data and history remain. You can re-enable them later.",
+                    "accept": "Disable user"
+                },
+                "deactivate": {
+                    "title": "Deactivate this user?",
+                    "message": "Deactivate this user? They will be marked as removed from your organization. Their data remains for audit purposes but they cannot log in. Use Restore separately if needed.",
+                    "accept": "Deactivate user"
+                }
+            },
+            "toast": {
+                "disabled": "User disabled.",
+                "enabled": "User enabled.",
+                "deactivated": "User deactivated.",
+                "restored": "User restored.",
+                "selfAction": "You can't perform this action on your own account.",
+                "unknown": "Something went wrong. Please try again."
             }
         },
         "settings": {

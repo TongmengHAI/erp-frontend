@@ -1,9 +1,13 @@
 import { apiClient } from '@/shared/api/client';
 
 import type {
+    AdminInvitationResponse,
+    AdminRoleOptionsResponse,
     AdminUserListResponse,
     AdminUserShowResponse,
     AdminUsersListParams,
+    InviteUserRequest,
+    UpdateAdminUserRequest,
 } from '@/modules/admin/types/user';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -51,5 +55,64 @@ export async function listAdminUsers(
 
 export async function getAdminUser(id: number): Promise<AdminUserShowResponse> {
     const res = await apiClient.get<AdminUserShowResponse>(`/admin/users/${id}`);
+    return res.data;
+}
+
+export async function listRoleOptions(): Promise<AdminRoleOptionsResponse> {
+    const res = await apiClient.get<AdminRoleOptionsResponse>('/admin/users/role-options');
+    return res.data;
+}
+
+export async function updateAdminUser(
+    id: number,
+    payload: UpdateAdminUserRequest,
+): Promise<AdminUserShowResponse> {
+    const res = await apiClient.patch<AdminUserShowResponse>(
+        `/admin/users/${id}`,
+        payload,
+    );
+    return res.data;
+}
+
+export async function inviteUser(
+    payload: InviteUserRequest,
+): Promise<AdminInvitationResponse> {
+    const res = await apiClient.post<AdminInvitationResponse>(
+        '/admin/users/invitations',
+        payload,
+    );
+    return res.data;
+}
+
+// ─── Lifecycle transitions ─────────────────────────────────────────────────
+// Each transition is its own endpoint (state-machine pattern, §10.2).
+// All return the updated AdminUserShowResponse so the caller can
+// hydrate the detail page without a refetch.
+
+export async function disableAdminUser(id: number): Promise<AdminUserShowResponse> {
+    const res = await apiClient.post<AdminUserShowResponse>(
+        `/admin/users/${id}/disable`,
+    );
+    return res.data;
+}
+
+export async function enableAdminUser(id: number): Promise<AdminUserShowResponse> {
+    const res = await apiClient.post<AdminUserShowResponse>(
+        `/admin/users/${id}/enable`,
+    );
+    return res.data;
+}
+
+export async function deactivateAdminUser(id: number): Promise<AdminUserShowResponse> {
+    const res = await apiClient.post<AdminUserShowResponse>(
+        `/admin/users/${id}/deactivate`,
+    );
+    return res.data;
+}
+
+export async function restoreAdminUser(id: number): Promise<AdminUserShowResponse> {
+    const res = await apiClient.post<AdminUserShowResponse>(
+        `/admin/users/${id}/restore`,
+    );
     return res.data;
 }

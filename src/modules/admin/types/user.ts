@@ -120,3 +120,58 @@ export interface AdminUserListResponse {
 export interface AdminUserShowResponse {
     data: AdminUser;
 }
+
+/**
+ * Role option returned by GET /admin/users/role-options. Populates
+ * the role Select in the invite + edit forms.
+ */
+export interface AdminRoleOption {
+    id: number;
+    name: string;
+}
+
+export interface AdminRoleOptionsResponse {
+    data: AdminRoleOption[];
+}
+
+/**
+ * Request body for POST /admin/users/invitations (Phase 2A invite).
+ * Empty `name` is allowed (the invitee can set it during accept).
+ */
+export interface InviteUserRequest {
+    email: string;
+    name?: string | null;
+    role_id: number;
+}
+
+/**
+ * Response from POST /admin/users/invitations — wraps the persisted
+ * Invitation row. The raw token is NEVER returned to the caller; it
+ * ships only via the UserInvited event into the queued listener.
+ */
+export interface AdminInvitation {
+    id: number;
+    email: string;
+    name: string | null;
+    role_id: number;
+    status: 'pending' | 'accepted' | 'cancelled' | 'expired';
+    expires_at: string;
+    accepted_at: string | null;
+    cancelled_at: string | null;
+    created_at: string;
+    invited_by_user_id: number;
+}
+
+export interface AdminInvitationResponse {
+    data: AdminInvitation;
+}
+
+/**
+ * Request body for PATCH /admin/users/{id} — name + role only.
+ * Status transitions go through dedicated /disable, /enable,
+ * /deactivate, /restore endpoints per CLAUDE.md §10.2.
+ */
+export interface UpdateAdminUserRequest {
+    name?: string;
+    role_id?: number;
+}
