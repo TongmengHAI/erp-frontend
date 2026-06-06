@@ -92,6 +92,11 @@ const PERMISSION_DESCRIPTIONS = {
             'hrm.employee.create': 'Create employees',
             'settings.hrm.view': 'View HRM settings',
         },
+        permission_ids: {
+            'hrm.employee.view': 1,
+            'hrm.employee.create': 2,
+            'settings.hrm.view': 3,
+        },
     },
 };
 

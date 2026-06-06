@@ -88,10 +88,6 @@ export const adminRoutes: RouteRecordRaw[] = [
         },
     },
     // ─── Phase 2B — Roles ──────────────────────────────────────────────────
-    // List is the surface; detail is read-only-with-edit-affordance; the
-    // create + edit form pages land in Session 4 (placeholders here would
-    // 404 the route at runtime, so the form routes are intentionally
-    // omitted until S4 ships RoleFormPage).
     {
         path: 'roles',
         name: ADMIN_ROUTES.ROLE_LIST,
@@ -102,6 +98,17 @@ export const adminRoutes: RouteRecordRaw[] = [
         },
     },
     {
+        // Create lands BEFORE :id(\\d+) so the literal 'new' segment
+        // isn't caught by the digit constraint.
+        path: 'roles/new',
+        name: ADMIN_ROUTES.ROLE_CREATE,
+        component: () => import('./pages/RoleFormPage.vue'),
+        meta: {
+            permission: 'roles.create',
+            breadcrumb: 'admin.roles.create.breadcrumb',
+        },
+    },
+    {
         path: 'roles/:id(\\d+)',
         name: ADMIN_ROUTES.ROLE_DETAIL,
         component: () => import('./pages/RoleDetailPage.vue'),
@@ -109,6 +116,16 @@ export const adminRoutes: RouteRecordRaw[] = [
         meta: {
             permission: 'roles.view',
             breadcrumb: 'admin.roles.detail.breadcrumb',
+        },
+    },
+    {
+        path: 'roles/:id(\\d+)/edit',
+        name: ADMIN_ROUTES.ROLE_EDIT,
+        component: () => import('./pages/RoleFormPage.vue'),
+        props: (route) => ({ id: Number(route.params.id) }),
+        meta: {
+            permission: 'roles.update',
+            breadcrumb: 'admin.roles.edit.breadcrumb',
         },
     },
 ];
