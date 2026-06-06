@@ -261,3 +261,102 @@ describe('InviteUserForm — LOAD-BEARING 422 UX paths', () => {
         expect(text).toContain('already registered to another organization');
     });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Phase 2B Session 5 — roles.assign granularity passive note.
+//
+// The role-options endpoint is server-filtered (Session 2's
+// RoleOptionsController Tightening 2 — system rows only when the
+// actor lacks roles.assign). The passive note is a UX hint about
+// the filtered shape, NOT the filtering itself; it reads the actor's
+// own permission via auth.can('roles.assign'), not the response.
+//
+// Architectural separation: visible affordance is a hint; actual
+// filtering is server-enforced. The test pins both halves — note
+// presence when permission absent + note absence when permission
+// present.
+// ─────────────────────────────────────────────────────────────────────────────
+
+function seedInviterWithoutAssign(): void {
+    const auth = useAuthStore();
+    auth.$patch({
+        user: {
+            id: 3,
+            name: 'Inviter (no roles.assign)',
+            email: 'inviter@example.com',
+            email_verified_at: null,
+            type: 'tenant_user',
+            is_super_admin: false,
+        },
+        permissions: ['users.view', 'users.invite'],
+    });
+}
+
+function seedInviterWithAssign(): void {
+    const auth = useAuthStore();
+    auth.$patch({
+        user: {
+            id: 4,
+            name: 'Inviter (with roles.assign)',
+            email: 'inviter2@example.com',
+            email_verified_at: null,
+            type: 'tenant_user',
+            is_super_admin: false,
+        },
+        permissions: ['users.view', 'users.invite', 'roles.assign'],
+    });
+}
+
+describe('InviteUserForm — roles.assign granularity passive note', () => {
+    beforeEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    it('LOAD-BEARING: passive note renders when actor lacks roles.assign', async () => {
+        vi.spyOn(adminUsersApi, 'listRoleOptions').mockResolvedValue(
+            ROLE_OPTIONS_RESPONSE,
+        );
+
+        const w = await mountWithGlobals(InviteUserForm, {
+            extraPlugins: [ToastService, ConfirmationService, freshVueQueryPlugin()],
+            routes: ADMIN_TEST_ROUTES,
+            initialRoute: '/admin/users/invite',
+        });
+        seedInviterWithoutAssign();
+
+        await new Promise((resolve) => setTimeout(resolve, 200));
+        await w.vm.$nextTick();
+        await new Promise((resolve) => setTimeout(resolve, 50));
+        await w.vm.$nextTick();
+
+        // The form mounted (positive proof we're at the populated branch).
+        expect(w.find('[data-testid="invite-user-email"]').exists()).toBe(true);
+        // The passive note renders.
+        expect(w.find('[data-testid="invite-user-role-assign-note"]').exists()).toBe(true);
+    });
+
+    it('positive control: passive note does NOT render when actor has roles.assign', async () => {
+        vi.spyOn(adminUsersApi, 'listRoleOptions').mockResolvedValue(
+            ROLE_OPTIONS_RESPONSE,
+        );
+
+        const w = await mountWithGlobals(InviteUserForm, {
+            extraPlugins: [ToastService, ConfirmationService, freshVueQueryPlugin()],
+            routes: ADMIN_TEST_ROUTES,
+            initialRoute: '/admin/users/invite',
+        });
+        seedInviterWithAssign();
+
+        await new Promise((resolve) => setTimeout(resolve, 200));
+        await w.vm.$nextTick();
+        await new Promise((resolve) => setTimeout(resolve, 50));
+        await w.vm.$nextTick();
+
+        expect(w.find('[data-testid="invite-user-email"]').exists()).toBe(true);
+        expect(w.find('[data-testid="invite-user-role-assign-note"]').exists()).toBe(false);
+    });
+});

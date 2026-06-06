@@ -61,6 +61,19 @@ const auth = useAuthStore();
 
 const canEdit = computed<boolean>(() => auth.can('users.update'));
 
+// Phase 2B Q11 + Session 5 Tightening 1: roles.assign is SEPARATE from
+// users.update. When the actor LACKS roles.assign, the role dropdown
+// shows the current role pre-filled but is non-interactive (disabled),
+// AND the submit handler OMITS role_id from the PATCH body — backend
+// stays the single source of truth on the granularity boundary.
+//
+// A future change that sends role_id with the current value "because
+// the form serializes it" would 403 with error_code='missing_permission'
+// (per UserUpdateRolesAssignGranularityTest). The OMIT-on-submit guard
+// keeps the form usable for name-only edits without the backend
+// rejecting the request.
+const canAssignRole = computed<boolean>(() => auth.can('roles.assign'));
+
 const userId = computed<number>(() => props.id ?? 0);
 
 const userQuery = useAdminUserQuery(userId);
@@ -126,12 +139,19 @@ const onSubmit = handleSubmit(async (vals) => {
     formError.value = null;
 
     try {
+        // Tightening 1: only include role_id if the actor has
+        // roles.assign. Without the permission, OMIT the key entirely
+        // — backend rejects ANY role_id without the perm (even if the
+        // value matches the current role).
+        const payload: { name?: string; role_id?: number } = {
+            name: vals.name?.trim(),
+        };
+        if (canAssignRole.value && vals.role_id !== 0) {
+            payload.role_id = vals.role_id;
+        }
         await updateMutation.mutateAsync({
             id: props.id,
-            payload: {
-                name: vals.name?.trim(),
-                role_id: vals.role_id !== 0 ? vals.role_id : undefined,
-            },
+            payload,
         });
         toast.add({
             severity: 'success',
@@ -265,12 +285,27 @@ const breadcrumbs = computed<BreadcrumbItem[]>(() => [
                             :options="roleOptions"
                             option-label="name"
                             option-value="id"
+                            :disabled="!canAssignRole"
                             class="w-full"
                             data-testid="edit-user-role"
                             @update:model-value="handleRoleIdChange"
                             @blur="handleRoleIdBlur"
                         />
                     </FormField>
+
+                    <!-- roles.assign granularity note (Phase 2B). When
+                         the actor has users.update but NOT roles.assign,
+                         the dropdown is disabled (read-only display) and
+                         this passive note explains why. The submit
+                         handler OMITS role_id from the PATCH body — see
+                         the canAssignRole branch in onSubmit. -->
+                    <p
+                        v-if="!canAssignRole"
+                        class="-mt-2 text-xs text-text-tertiary"
+                        data-testid="edit-user-role-assign-note"
+                    >
+                        {{ t('admin.users.edit.fields.roleAssignNote') }}
+                    </p>
 
                     <FormActions
                         :submit-label="t('admin.users.edit.submit')"

@@ -62,6 +62,19 @@ const auth = useAuthStore();
 
 const canInvite = computed<boolean>(() => auth.can('users.invite'));
 
+// Phase 2B Q11 + Session 5: passive note when the actor lacks
+// roles.assign. The role-options endpoint already filters server-
+// side (RoleOptionsController Tightening 2 — system rows only for
+// users without roles.assign). This frontend check reads the actor's
+// own permission, NOT the response shape — the note is a UX hint
+// about WHY the dropdown shows only system roles, not the
+// filtering itself.
+//
+// Architectural separation: visible affordance is a hint; actual
+// filtering is server-enforced. A FE that drifted on its own
+// permission check still gets the filtered list from the server.
+const canAssignRole = computed<boolean>(() => auth.can('roles.assign'));
+
 const roleOptionsQuery = useRoleOptionsQuery();
 const inviteMutation = useInviteUserMutation();
 
@@ -270,6 +283,20 @@ const breadcrumbs = computed<BreadcrumbItem[]>(() => [
                             @blur="handleRoleIdBlur"
                         />
                     </FormField>
+
+                    <!-- roles.assign granularity note (Phase 2B). The
+                         server already filters role-options to system
+                         rows only when the actor lacks roles.assign;
+                         this passive note explains the filtered shape
+                         to the inviter. Reads FE permission, not the
+                         response shape. -->
+                    <p
+                        v-if="!canAssignRole"
+                        class="-mt-3 text-xs text-text-tertiary"
+                        data-testid="invite-user-role-assign-note"
+                    >
+                        {{ t('admin.users.invite.fields.roleAssignNote') }}
+                    </p>
 
                     <FormActions
                         :submit-label="t('admin.users.invite.submit')"

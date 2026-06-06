@@ -1185,7 +1185,8 @@
                     "name": "Name (optional)",
                     "nameHelp": "Pre-fills the invitee's display name. They can override during signup.",
                     "role": "Role",
-                    "roleHelp": "Determines what this user can do once they accept."
+                    "roleHelp": "Determines what this user can do once they accept.",
+                    "roleAssignNote": "Showing system roles only. Custom-role assignment requires the Manage roles permission."
                 },
                 "submit": "Send invitation",
                 "submitting": "Sending...",
@@ -1210,7 +1211,8 @@
                 "fields": {
                     "name": "Name",
                     "role": "Role",
-                    "roleHelp": "Changes take effect on the user's next request."
+                    "roleHelp": "Changes take effect on the user's next request.",
+                    "roleAssignNote": "Role assignment requires the Manage roles permission. Other fields remain editable."
                 },
                 "submit": "Save changes",
                 "submitting": "Saving...",
