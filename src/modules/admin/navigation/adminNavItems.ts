@@ -25,13 +25,21 @@ export const ADMIN_NAV_ITEMS: readonly SidebarModule[] = Object.freeze([
     {
         // Phase 2A — User management. Permission prefix is `users`
         // (any users.* perm unlocks the rail entry; the full surface
-        // requires users.view per the route-level meta gate, but
-        // viewer + admin who have users.view will see it). Phase 2B
-        // will eventually add a Roles entry between this and the
-        // future module-entitlement entry.
+        // requires users.view per the route-level meta gate).
         label: 'admin.navigation.users',
         icon: 'pi pi-users',
         routeName: 'admin.users.list',
         permissionPrefix: 'users',
+    },
+    {
+        // Phase 2B — Role management. Permission prefix is `roles`
+        // (any roles.* perm unlocks the rail entry; the full surface
+        // requires roles.view per the route-level meta gate).
+        // Sidebar order per locked decision Q13:
+        // HRM Settings → Users → Roles.
+        label: 'admin.navigation.roles',
+        icon: 'pi pi-shield',
+        routeName: 'admin.roles.list',
+        permissionPrefix: 'roles',
     },
 ]);

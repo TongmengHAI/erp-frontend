@@ -21,6 +21,10 @@ export const ADMIN_ROUTES = {
     USER_INVITE: 'admin.users.invite',
     USER_DETAIL: 'admin.users.detail',
     USER_EDIT: 'admin.users.edit',
+    ROLE_LIST: 'admin.roles.list',
+    ROLE_CREATE: 'admin.roles.create',
+    ROLE_DETAIL: 'admin.roles.detail',
+    ROLE_EDIT: 'admin.roles.edit',
 } as const;
 
 export const adminRoutes: RouteRecordRaw[] = [
@@ -81,6 +85,30 @@ export const adminRoutes: RouteRecordRaw[] = [
         meta: {
             permission: 'users.update',
             breadcrumb: 'admin.users.edit.breadcrumb',
+        },
+    },
+    // ─── Phase 2B — Roles ──────────────────────────────────────────────────
+    // List is the surface; detail is read-only-with-edit-affordance; the
+    // create + edit form pages land in Session 4 (placeholders here would
+    // 404 the route at runtime, so the form routes are intentionally
+    // omitted until S4 ships RoleFormPage).
+    {
+        path: 'roles',
+        name: ADMIN_ROUTES.ROLE_LIST,
+        component: () => import('./pages/RoleListPage.vue'),
+        meta: {
+            permission: 'roles.view',
+            breadcrumb: 'admin.roles.list.breadcrumb',
+        },
+    },
+    {
+        path: 'roles/:id(\\d+)',
+        name: ADMIN_ROUTES.ROLE_DETAIL,
+        component: () => import('./pages/RoleDetailPage.vue'),
+        props: (route) => ({ id: Number(route.params.id) }),
+        meta: {
+            permission: 'roles.view',
+            breadcrumb: 'admin.roles.detail.breadcrumb',
         },
     },
 ];

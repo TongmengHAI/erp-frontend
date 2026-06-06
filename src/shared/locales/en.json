@@ -1086,7 +1086,8 @@
     "admin": {
         "navigation": {
             "hrmSettings": "HRM Settings",
-            "users": "Users"
+            "users": "Users",
+            "roles": "Roles"
         },
         "users": {
             "list": {
@@ -1248,6 +1249,90 @@
                 "deactivated": "User deactivated.",
                 "restored": "User restored.",
                 "selfAction": "You can't perform this action on your own account.",
+                "unknown": "Something went wrong. Please try again."
+            }
+        },
+        "roles": {
+            "list": {
+                "title": "Roles",
+                "breadcrumb": "Roles",
+                "intro": "System roles ship with the platform; custom roles are tenant-specific. System roles cannot be edited or deleted.",
+                "search": {
+                    "placeholder": "Search by name or description"
+                },
+                "filters": {
+                    "kind": {
+                        "label": "Kind",
+                        "all": "All roles",
+                        "system": "System",
+                        "custom": "Custom"
+                    }
+                },
+                "chip": {
+                    "kind": "Kind: {value}"
+                },
+                "columns": {
+                    "label": "Role",
+                    "kind": "Kind",
+                    "usersCount": "Users",
+                    "createdAt": "Created"
+                },
+                "kind": {
+                    "system": "System",
+                    "custom": "Custom"
+                },
+                "actions": {
+                    "view": "View"
+                },
+                "empty": {
+                    "title": "No custom roles yet",
+                    "description": "Custom roles let you tailor permissions for groups of users beyond the system defaults."
+                },
+                "emptyFiltered": {
+                    "title": "No roles match these filters",
+                    "description": "Try clearing the search or kind filter.",
+                    "cta": "Clear filters"
+                },
+                "error": {
+                    "title": "Couldn't load roles",
+                    "description": "Something went wrong loading the role list. Try again, or refresh the page."
+                }
+            },
+            "detail": {
+                "breadcrumb": "Role",
+                "sections": {
+                    "overview": "Overview",
+                    "permissions": "Permissions"
+                },
+                "fields": {
+                    "name": "Name",
+                    "kind": "Kind",
+                    "description": "Description",
+                    "usersCount": "Users assigned",
+                    "createdAt": "Created"
+                },
+                "values": {
+                    "noDescription": "No description provided."
+                }
+            },
+            "permissions": {
+                "empty": "This role has no permissions assigned."
+            },
+            "actions": {
+                "create": "Create role",
+                "edit": "Edit role",
+                "delete": "Delete role"
+            },
+            "confirm": {
+                "delete": {
+                    "message": "Delete the \"{name}\" role? This action cannot be undone, but if any users are assigned to it the deletion is blocked.",
+                    "accept": "Delete role"
+                }
+            },
+            "toast": {
+                "deleted": "Role deleted.",
+                "roleInUse": "Cannot delete — {count} users are currently assigned to this role. Reassign them first.",
+                "systemImmutable": "System roles cannot be modified.",
                 "unknown": "Something went wrong. Please try again."
             }
         },
