@@ -262,13 +262,14 @@ const breadcrumbs = computed<BreadcrumbItem[]>(() => [
 
                 <form class="flex flex-col gap-5" novalidate @submit.prevent="onSubmit">
                     <FormField
-                        v-slot="{ field }"
+                        v-slot="{ field, errorMessage }"
                         name="name"
                         :label="t('admin.users.edit.fields.name')"
                         required
                     >
                         <InputText
                             v-bind="field"
+                            :invalid="!!errorMessage"
                             autocomplete="name"
                             class="w-full"
                             data-testid="edit-user-name"

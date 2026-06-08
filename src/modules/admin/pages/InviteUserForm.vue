@@ -237,7 +237,7 @@ const breadcrumbs = computed<BreadcrumbItem[]>(() => [
 
                 <form class="flex flex-col gap-5" novalidate @submit.prevent="onSubmit">
                     <FormField
-                        v-slot="{ field }"
+                        v-slot="{ field, errorMessage }"
                         name="email"
                         :label="t('admin.users.invite.fields.email')"
                         :help="t('admin.users.invite.fields.emailHelp')"
@@ -245,6 +245,7 @@ const breadcrumbs = computed<BreadcrumbItem[]>(() => [
                     >
                         <InputText
                             v-bind="field"
+                            :invalid="!!errorMessage"
                             type="email"
                             autocomplete="email"
                             class="w-full"
@@ -253,13 +254,14 @@ const breadcrumbs = computed<BreadcrumbItem[]>(() => [
                     </FormField>
 
                     <FormField
-                        v-slot="{ field }"
+                        v-slot="{ field, errorMessage }"
                         name="name"
                         :label="t('admin.users.invite.fields.name')"
                         :help="t('admin.users.invite.fields.nameHelp')"
                     >
                         <InputText
                             v-bind="field"
+                            :invalid="!!errorMessage"
                             autocomplete="name"
                             class="w-full"
                             data-testid="invite-user-name"

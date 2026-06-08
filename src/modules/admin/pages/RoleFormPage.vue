@@ -430,9 +430,10 @@ const breadcrumbs = computed<BreadcrumbItem[]>(() => {
                         :required="true"
                         :help="t('admin.roles.form.fields.nameHelp')"
                     >
-                        <template #default="{ field }">
+                        <template #default="{ field, errorMessage }">
                             <InputText
                                 v-bind="field"
+                                :invalid="!!errorMessage"
                                 data-testid="role-form-name"
                                 class="w-full"
                             />
@@ -444,9 +445,10 @@ const breadcrumbs = computed<BreadcrumbItem[]>(() => {
                         :label="t('admin.roles.form.fields.description')"
                         :help="t('admin.roles.form.fields.descriptionHelp')"
                     >
-                        <template #default="{ field }">
+                        <template #default="{ field, errorMessage }">
                             <Textarea
                                 v-bind="field"
+                                :invalid="!!errorMessage"
                                 rows="3"
                                 data-testid="role-form-description"
                                 class="w-full"
